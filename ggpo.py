@@ -11,6 +11,13 @@ import sys
 import signal
 from subprocess import call
 
+USERNAME="pof"
+PASSWORD="XXXXXXXX"
+CHANNEL="ssf2t"
+
+DEBUG=0
+TIMEOUT=3
+
 def interrupted(signum, frame):
 	"called when read times out"
 	#print 'interrupted!'
@@ -25,7 +32,6 @@ def input():
 	except:
 		# timeout
 		return
-
 
 def readdata():
 	global s
@@ -42,166 +48,211 @@ def pad(value,length=4):
 		l = len(value)
 	return value
 
-USERNAME="pof"
-PASSWORD="XXXXXXXX"
-CHANNEL="ssf2t"
+def parse(cmd):
 
-VERBOSE=1  # set to 1 to see join/leave/play messages
-DEBUG=0
-TIMEOUT=3
+	pdulen = int(cmd[0:4].encode('hex'), 16)
+	action = cmd[4:8]
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(('ggpo.net', 7000))
+	# chat
+	if (action == "\xff\xff\xff\xfe"):
+		nicklen = int(cmd[8:12].encode('hex'),16)
+		nick = cmd[12:12+nicklen]
+		msglen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
+		msg = cmd[12+nicklen+4:pdulen+4]
+		print "<" + str(nick) + "> " + str(msg)
 
-# welcome packet (?)
-s.send('\x00\x00\x00\x14\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
+	# state changes (away/back/playing)
+	elif (action == "\xff\xff\xff\xfd"):
 
-# authentication
-sequence=0x2
-pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4
-s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79")
-sequence=sequence+1
+		unk1 = cmd[8:12]
+		unk2 = cmd[12:16]
 
-# choose channel
-channellen = len(CHANNEL)
-pdulen = 4 + 4 + 4 + channellen
-s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
-sequence=sequence+1
+		nicklen = int(cmd[16:20].encode('hex'),16)
+		nick = cmd[20:20+nicklen]
 
-# start away by default
-s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
-sequence=sequence+1
 
-while 1:
-	# set alarm
-	signal.alarm(TIMEOUT)
-	line = input()
-	# disable the alarm after success
-	signal.alarm(0)
+		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"): print "LEAVE: " + str(nick)
 
-	#line = sys.stdin.readline()
-	#line = os.fdopen(sys.stdin.fileno(), 'r', 30)
-	#line = raw_input('> ')
-	#if not line: break
+		elif ((unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x01") or (unk1 == "\x00\x00\x00\x02" and unk2 == "\x00\x00\x00\x01")):
 
-	if (line != None and not line.startswith("/")):
-		#print line
-		msglen = len(line)
-		pdulen = 4 + 4 + 4 + msglen
-		# [ 4-byte pdulen ] [ 4-byte sequence ] [ 4-byte command ] [ 4-byte msglen ] [ msglen-bytes msg ]
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x07" + pad(chr(msglen)) + line)
-		sequence=sequence+1
+			state = int(cmd[20+nicklen:20+nicklen+4].encode('hex'),16)  # 1=away, 0=back, 2=play
 
-	# send a challenge request
-	if (line != None and line.startswith("/challenge ")):
-		nick = line[11:]
-		nicklen = len(nick)
-		pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
-		sequence=sequence+1
+			if (state==2):
+				nick2len = int(cmd[24+nicklen:28+nicklen].encode('hex'),16)
+				nick2 = cmd[28+nicklen:28+nicklen+nick2len]
 
-	# cancel an ongoing challenge request
-	if (line != None and line.startswith("/cancel ")):
-		nick = line[8:]
-		nicklen = len(nick)
-		pdulen = 4 + 4 + 4 + nicklen
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
-		sequence=sequence+1
+				print "NEW GAME: " + str(nick) + " vs " + str(nick2)
 
-	# set away status (can't be challenged)
-	if (line == "/away"):
-		pdulen = 4+4+4
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x01')
-		sequence=sequence+1
+			elif (state <2):
+				unk4 = cmd[20+nicklen+4:20+nicklen+8]
 
-	# return back from away (can be challenged)
-	if (line == "/back"):
-		pdulen = 4+4+4
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x00')
-		sequence=sequence+1
+				iplen = int(cmd[20+nicklen+8:20+nicklen+12].encode('hex'),16)
+				ip = cmd[32+nicklen:32+nicklen+iplen]
 
-	# view channel intro
-	if (line == "/intro"):
-		pdulen = 4+4
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
-		sequence=sequence+1
+				unk6 = cmd[32+nicklen+iplen:32+nicklen+iplen+4]
+				unk7 = cmd[36+nicklen+iplen:36+nicklen+iplen+4]
 
-	# list channels
-	if (line == "/list"):
-		pdulen = 4+4
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
-		sequence=sequence+1
+				citylen = int(cmd[40+nicklen+iplen:44+nicklen+iplen].encode('hex'),16)
+				city = cmd[44+nicklen+iplen:44+nicklen+iplen+citylen]
 
-	# list users
-	if (line == "/users"):
-		pdulen = 4+4
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
-		sequence=sequence+1
+				cclen = int(cmd[44+nicklen+iplen+citylen:48+nicklen+iplen+citylen].encode('hex'),16)
+				cc = cmd[48+nicklen+iplen+citylen:48+nicklen+iplen+citylen+cclen]
 
-	if (line == "/quit"):
-		s.close()
-		sys.exit(0)
+				countrylen = int(cmd[48+nicklen+iplen+citylen+cclen:48+nicklen+iplen+citylen+cclen+4].encode('hex'),16)
+				country = cmd[52+nicklen+iplen+citylen+cclen:52+nicklen+iplen+citylen+cclen+countrylen]
 
-	signal.alarm(TIMEOUT)
-	data = readdata()
-	signal.alarm(0)
-	if not data: continue
+				print "STATE: [",
+				if (state == 0): print "back",
+				if (state == 1): print "away",
+				print "] nick=" + str(nick) + " ip=" + str(ip) + " city=" + str(city) + " cc=" + cc + " country=" + str(country)
 
-	orig = data
+		else:
+			print "ACTION: " + repr(action) + " + DATA: " + str(cmd[8:pdulen+4])
 
-	if (DEBUG==1):
-		print "HEX: ",repr(data)
+	# challenge
+	elif (action == "\xff\xff\xff\xfc"):
 
-	if ("quark:" in data):
-		index = data.find("quark:")
-		cmd = data[index:]
-		# WARNING: cmd is unsanitized
-		args = ['/opt/ggpo/ggpofba.exe', cmd]
-		call(args)
+		nicklen = int(cmd[8:12].encode('hex'),16)
+		nick = cmd[12:12+nicklen]
 
-	if (VERBOSE==1):
-		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\n','JOIN01: ', data)
-		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00.','JOIN02: ', data)	# Enter & change state (away/available)
-		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\n','PLAY01: ', data)
-		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00.','PLAY02: ', data)
-		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\n','JOIN03: ', data)
-		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00.','LEAVE: ', data)	# leave/part
-		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00.\x00\x00\x00.\x00\x00\x00\n','JOIN04: ',data)
-		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00.\x00\x00\x00.\x00\x00\x00.','JOIN05: ',data)
+		channellen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
+		channel = cmd[16+nicklen:16+nicklen+channellen]
+
+		print "INCOMING CHALLENGE FROM " + str(nick) + "@ " + channel
+
+	# cancel challenge
+	elif (action == "\xff\xff\xff\xef"):
+
+		nicklen = int(cmd[8:12].encode('hex'),16)
+		nick = cmd[12:12+nicklen]
+
+		print "CANCEL CHALLENGE " + str(nick)
+
+
+	elif (action == "\xff\xff\xff\xff"):
+		print "> Connected ok!"
+
+	# unknown action
 	else:
-		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00.\x00\x00\x00.\x00\x00\x00\n.*','',data)
-		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00.\x00\x00\x00.\x00\x00\x00.*','',data)
-		data = re.sub('\n.*','',data)
+		print "ACTION: " + repr(action) + " + DATA: " + str(cmd[8:pdulen+4])
 
-	# when someone challenges you:
-	data = re.sub('\x00\x00.*\xff\xff\xff\xfc\x00\x00\x00.', 'CHALLENGE: ', data)
-	if "CHALLENGE" in data:
-		data = re.sub('\x00\x00\x00\x05', ' @ ', data);
+	#print ("PDULEN: " + str(pdulen) + " ACTION: " + str(action))
+	#print ("PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd)))
+	if ( len(cmd) > pdulen+4 ): 
+		parse(cmd[pdulen+4:])
+		
 
-	# cancel challenge:
-	data = re.sub('\x00\x00.*\xff\xff\xff\xef\x00\x00\x00.', 'CANCELED CHALLENGE: ', data)
+if __name__ == '__main__':
 
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect(('ggpo.net', 7000))
 
-	# put <> between nick names (this must be done the latest):
-	data = re.sub('\x00\x00\x00.*\xff\xff\xff\xfe\x00\x00\x00\n','<', data)
-	data = re.sub('\x00\x00.*\xff\xff\xff\xfe\x00\x00\x00\n', '<', data)
-	data = re.sub('\x00\x00.*\xff\xff\xff\xfe\x00\x00\x00.', '<', data)
-	data = re.sub('\x00\x00.*\xff\xff\xff\xfe\x00\x00\x00', '<', data)
-	data = re.sub('.*\xff\xff\xff\xfe\x00\x00\x00\n', '<', data)
-	data = re.sub('\x00\x00..\xff\xff\xff\xfe\x00\x00\x00\n', '<', data)
-	data = re.sub('\x00\x00..\xff\xff\xff\xfe\x00\x00\x00.', '<', data)
-	data = re.sub('\x00\x00\x00\n', '> ', data)
-	data = re.sub('\x00\x00..','> ', data)
+	# welcome packet (?)
+	s.send('\x00\x00\x00\x14\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
 
-	# fix 3 >>>
-	data = re.sub('> > > ', ' * ', data)
-	data = re.sub('> $', '', data)
+	# authentication
+	sequence=0x2
+	pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4
+	s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79")
+	sequence=sequence+1
 
-	if (data!='' and data.startswith("<")==False and "CHALLENGE" not in data and "JOIN" not in data and "LEAVE" not in data and "PLAY" not in data):
-		print "HEX1-ORIG: ",repr(orig)
-		print "HEX2-DATA: ",repr(data)
-	if (data!=''):
-		filtered_data = filter(lambda x: x in string.printable, data)
-		print filtered_data
+	# choose channel
+	channellen = len(CHANNEL)
+	pdulen = 4 + 4 + 4 + channellen
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
+	sequence=sequence+1
 
-s.close()
+	# start away by default
+	s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
+	sequence=sequence+1
+
+	while 1:
+		# set alarm
+		signal.alarm(TIMEOUT)
+		line = input()
+		# disable the alarm after success
+		signal.alarm(0)
+
+		#line = sys.stdin.readline()
+		#line = os.fdopen(sys.stdin.fileno(), 'r', 30)
+		#line = raw_input('> ')
+		#if not line: break
+
+		if (line != None and not line.startswith("/")):
+			#print line
+			msglen = len(line)
+			pdulen = 4 + 4 + 4 + msglen
+			# [ 4-byte pdulen ] [ 4-byte sequence ] [ 4-byte command ] [ 4-byte msglen ] [ msglen-bytes msg ]
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x07" + pad(chr(msglen)) + line)
+			sequence=sequence+1
+
+		# send a challenge request
+		if (line != None and line.startswith("/challenge ")):
+			nick = line[11:]
+			nicklen = len(nick)
+			pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
+			sequence=sequence+1
+
+		# cancel an ongoing challenge request
+		if (line != None and line.startswith("/cancel ")):
+			nick = line[8:]
+			nicklen = len(nick)
+			pdulen = 4 + 4 + 4 + nicklen
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
+			sequence=sequence+1
+
+		# set away status (can't be challenged)
+		if (line == "/away"):
+			pdulen = 4+4+4
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x01')
+			sequence=sequence+1
+
+		# return back from away (can be challenged)
+		if (line == "/back"):
+			pdulen = 4+4+4
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x00')
+			sequence=sequence+1
+
+		# view channel intro
+		if (line == "/intro"):
+			pdulen = 4+4
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
+			sequence=sequence+1
+
+		# list channels
+		if (line == "/list"):
+			pdulen = 4+4
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
+			sequence=sequence+1
+
+		# list users
+		if (line == "/users"):
+			pdulen = 4+4
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
+			sequence=sequence+1
+
+		if (line == "/quit"):
+			s.close()
+			sys.exit(0)
+
+		signal.alarm(TIMEOUT)
+		data = readdata()
+		signal.alarm(0)
+		if not data: continue
+
+		orig = data
+
+		if (DEBUG==1):
+			print "HEX: ",repr(data)
+
+		parse(data)
+
+		if ("quark:" in data):
+			index = data.find("quark:")
+			cmd = data[index:]
+			# WARNING: cmd is unsanitized
+			args = ['/opt/ggpo/ggpofba.exe', cmd]
+			call(args)
+
+	s.close()
