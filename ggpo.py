@@ -62,10 +62,7 @@ s.send('\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00\x04')
 s.send('\x00\x00\x00\x08\x00\x00\x00\x0a\x00\x00\x00\x02')
 s.send('\x00\x00\x00\x08\x00\x00\x00\x0b\x00\x00\x00\x04')
 
-# away 
-s.send('\x00\x00\x00\x0c\x00\x00\x00\x0c\x00\x00\x00\x06\x00\x00\x00\x01')
-
-sequence=0xd
+sequence=0xc
 
 while 1:
 	# set alarm
@@ -93,6 +90,16 @@ while 1:
 		channellen = len(CHANNEL)
 		pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
+		sequence=sequence+1
+
+	if (line == "/away"):
+		pdulen = 4+4+4
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x01')
+		sequence=sequence+1
+
+	if (line == "/back"):
+		pdulen = 4+4+4
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x00')
 		sequence=sequence+1
 
 	if (line == "/quit"):
