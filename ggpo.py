@@ -53,16 +53,24 @@ TIMEOUT=3
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(('ggpo.net', 7000))
 
+# welcome packet (?)
 s.send('\x00\x00\x00\x14\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
-s.send("\x00\x00\x00\x30\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00" + chr(len(USERNAME)) + USERNAME + "\x00\x00\x00" + chr(len(PASSWORD)) + PASSWORD + "\x00\x00\x17\x79")
-s.send('\x00\x00\x00\x08\x00\x00\x00\x03\x00\x00\x00\x03')
-s.send("\x00\x00\x00\x11\x00\x00\x00\x04\x00\x00\x00\x05\x00\x00\x00" + chr(len(CHANNEL)) + CHANNEL + "\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00\x02\x00\x00\x00\x08\x00\x00\x00\x0a\x00\x00\x00\x03\x00\x00\x00\x08\x00\x00\x00\x0b\x00\x00\x00\x02")
-s.send('\x00\x00\x00\x08\x00\x00\x00\x08\x00\x00\x00\x04')
-s.send('\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00\x04')
-s.send('\x00\x00\x00\x08\x00\x00\x00\x0a\x00\x00\x00\x02')
-s.send('\x00\x00\x00\x08\x00\x00\x00\x0b\x00\x00\x00\x04')
 
-sequence=0xc
+# authentication
+sequence=0x2
+pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4
+s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79")
+sequence=sequence+1
+
+# choose channel
+channellen = len(CHANNEL)
+pdulen = 4 + 4 + 4 + channellen
+s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
+sequence=sequence+1
+
+# start away by default
+s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
+sequence=sequence+1
 
 while 1:
 	# set alarm
@@ -84,22 +92,50 @@ while 1:
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x07" + pad(chr(msglen)) + line)
 		sequence=sequence+1
 
+	# send a challenge request
 	if (line != None and line.startswith("/challenge ")):
 		nick = line[11:]
 		nicklen = len(nick)
-		channellen = len(CHANNEL)
 		pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 		sequence=sequence+1
 
+	# cancel an ongoing challenge request
+	if (line != None and line.startswith("/cancel ")):
+		nick = line[8:]
+		nicklen = len(nick)
+		pdulen = 4 + 4 + 4 + nicklen
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
+		sequence=sequence+1
+
+	# set away status (can't be challenged)
 	if (line == "/away"):
 		pdulen = 4+4+4
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x01')
 		sequence=sequence+1
 
+	# return back from away (can be challenged)
 	if (line == "/back"):
 		pdulen = 4+4+4
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x00')
+		sequence=sequence+1
+
+	# view channel intro
+	if (line == "/intro"):
+		pdulen = 4+4
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
+		sequence=sequence+1
+
+	# list channels
+	if (line == "/list"):
+		pdulen = 4+4
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
+		sequence=sequence+1
+
+	# list users
+	if (line == "/users"):
+		pdulen = 4+4
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
 		sequence=sequence+1
 
 	if (line == "/quit"):
