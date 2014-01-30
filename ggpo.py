@@ -18,6 +18,8 @@ CHANNEL="ssf2t"
 DEBUG=0
 TIMEOUT=3
 
+SPECIAL=""
+
 def interrupted(signum, frame):
 	"called when read times out"
 	#print 'interrupted!'
@@ -49,6 +51,7 @@ def pad(value,length=4):
 	return value
 
 def parse(cmd):
+	global SPECIAL
 
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 	action = cmd[4:8]
@@ -72,6 +75,16 @@ def parse(cmd):
 
 
 		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"): print "LEAVE: " + str(nick)
+
+
+#ACTION: '\xff\xff\xff\xfd' + DATA: '\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00\x06WoRKeR\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e88.226.227.119\x00\x00\x00"\x00\x00\x00&\x00\x00\x00\x08Nevsehir\x00\x00\x00\x02TR\x00\x00\x00\x06Turkey\x00\x00\x17y\x00\x00\x00\x01\x00\x00\x00\x06WoRKeR\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e88.226.227.119\x00\x00\x00"\x00\x00\x00&\x00\x00\x00\x08Nevsehir\x00\x00\x00\x02TR\x00\x00\x00\x06Turkey\x00\x00\x17y\x00\x00\x00\x01\x00\x00\x00\x06djkeco\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\r188.77.72.142\xff\xff\xff\xfc\x00\x00\x00(\x00\x00\x00\x00\x00\x00\x00\x02ES\x00\x00\x00\x05Spain\x00\x00\x17y\x00\x00\x00\x01\x00\x00\x00\x06djkeco\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\r188.77.72.142\xff\xff\xff\xfc\x00\x00\x00(\x00\x00\x00\x00\x00\x00\x00\x02ES\x00\x00\x00\x05Spain\x00\x00\x17y'
+#ACTION: '\xff\xff\xff\xfd' + DATA: '\x00\x00\x00\x03\x00\x00\x00\x01\x00\x00\x00\tCronobest\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c87.12.238.77\x00\x00\x00\x0c\x00\x00\x00+\x00\x00\x00\x07Perugia\x00\x00\x00\x02IT\x00\x00\x00\x05Italy\x00\x00\x17y\x00\x00\x00\x01\x00\x00\x00\tCronobest\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c87.12.238.77\x00\x00\x00\x0c\x00\x00\x00+\x00\x00\x00\x07Perugia\x00\x00\x00\x02IT\x00\x00\x00\x05Italy\x00\x00\x17y\x00\x00\x00\x00\x00\x00\x00\tCronobest'
+
+
+		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x00"):
+		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x01"):
+		#if (unk1 == "\x00\x00\x00\x04" and unk2 == "\x00\x00\x00\x01"):
+		#if (unk1 == "\x00\x00\x00\x05" and unk2 == "\x00\x00\x00\x01\):
 
 		elif ((unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x01") or (unk1 == "\x00\x00\x00\x02" and unk2 == "\x00\x00\x00\x01")):
 
@@ -107,7 +120,7 @@ def parse(cmd):
 				print "] nick=" + str(nick) + " ip=" + str(ip) + " city=" + str(city) + " cc=" + cc + " country=" + str(country)
 
 		else:
-			print "ACTION: " + repr(action) + " + DATA: " + str(cmd[8:pdulen+4])
+			print "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4])
 
 	# challenge
 	elif (action == "\xff\xff\xff\xfc"):
@@ -134,13 +147,139 @@ def parse(cmd):
 
 	# unknown action
 	else:
-		print "ACTION: " + repr(action) + " + DATA: " + str(cmd[8:pdulen+4])
+		if (SPECIAL == "" ):
+			print "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4])
+		else:
+			parsespecial(cmd)
 
 	#print ("PDULEN: " + str(pdulen) + " ACTION: " + str(action))
 	#print ("PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd)))
 	if ( len(cmd) > pdulen+4 ): 
 		parse(cmd[pdulen+4:])
 		
+
+def parsespecial(cmd):
+	global SPECIAL
+
+	pdulen = int(cmd[0:4].encode('hex'), 16)
+	#myseqnum = int(cmd[4:8].encode('hex'),16)
+
+	if (SPECIAL=="INTRO"):
+		channellen = int(cmd[12:12+4].encode('hex'),16)
+		channel = cmd[16:16+channellen]
+
+		topiclen = int(cmd[16+channellen:20+channellen].encode('hex'),16)
+		topic = cmd[20+channellen:20+channellen+topiclen]
+
+		msglen = int(cmd[20+channellen+topiclen:24+channellen+topiclen].encode('hex'),16)
+		msg = cmd[24+channellen+topiclen:24+channellen+topiclen+msglen]
+
+		print "\n" + str(channel) + " || " + str(topic)
+		print str(msg) + "\n"
+		SPECIAL=""
+
+	elif (SPECIAL=="AWAY"):
+		SPECIAL=""
+
+	elif (SPECIAL=="BACK"):
+		SPECIAL=""
+
+	elif (SPECIAL=="LIST"):
+		parselist(cmd)
+		SPECIAL=""
+
+	elif (SPECIAL=="USERS"):
+		parseusers(cmd)
+		SPECIAL=""
+
+	else:
+		print "SPECIAL=" + SPECIAL + " + DATA: " + repr(cmd[8:pdulen+4])
+
+def parseusers(cmd):
+
+	pdulen = int(cmd[0:4].encode('hex'), 16)
+
+	#print repr(cmd[8:pdulen+4])
+
+	i=16
+	#while (i<pdulen):
+	while (i<len(cmd)-4):
+
+		len1 = int(cmd[i:i+4].encode('hex'),16)
+		i=i+4
+		nick = cmd[i:i+len1]
+		i=i+len1
+
+		status = int(cmd[i:i+4].encode('hex'),16)  # 1=away, 2=playing, 0=available?
+		i=i+4
+
+		p2len = int(cmd[i:i+4].encode('hex'),16)  # should be 0 when not playing
+		i=i+4
+
+		if (p2len > 0):
+			p2nick = cmd[i:i+p2len]
+			i=i+p2len
+
+		iplen = int(cmd[i:i+4].encode('hex'),16)
+		i=i+4
+
+		ip = cmd[i:i+iplen]
+		i=i+iplen
+
+		unk1 = cmd[i:i+4]
+		i=i+4
+
+		unk2 = cmd[i:i+4]
+		i=i+4
+
+		citylen = int(cmd[i:i+4].encode('hex'),16)
+		i=i+4
+
+		city = cmd[i:i+citylen]
+		i=i+citylen
+
+		cclen = int(cmd[i:i+4].encode('hex'),16)
+		i=i+4
+
+		cc = cmd[i:i+cclen]
+		i=i+cclen
+
+		countrylen = int(cmd[i:i+4].encode('hex'),16)
+		i=i+4
+
+		country = cmd[i:i+countrylen]
+		i=i+countrylen
+
+		unk3 = cmd[i:i+4]
+		i=i+4
+
+		if (status==0): print nick + " (" + ip + ") " + city + " " + country + " [available]"
+		elif (status==1): print nick + " (" + ip + ") " + city + " " + country + " [away]"
+		elif (status==2): print nick + " (" + ip + ") " + city + " " + country + " [playing against " + p2nick + "]"
+		else: print nick + " (" + ip + ") " + city + " " + country + " [Unknown status: " + str(status) + "]"
+
+def parselist(cmd):
+
+	pdulen = int(cmd[0:4].encode('hex'), 16)
+
+	i=12
+	#while (i<pdulen):
+	while (i<len(cmd)-4):
+		#num = int(cmd[i:i+4].encode('hex'),16)
+		i=i+4
+		len1 = int(cmd[i:i+4].encode('hex'),16)
+		i=i+4
+		name1 = cmd[i:i+len1]
+		i=i+len1
+		len2 = int(cmd[i:i+4].encode('hex'),16)
+		i=i+4
+		name2 = cmd[i:i+len2]
+		i=i+len2
+		len3 = int(cmd[i:i+4].encode('hex'),16)
+		i=i+4
+		name3 = cmd[i:i+len3]
+		i=i+len3
+		print str(name1) + " - " + str(name2) + " - " + str(name3)
 
 if __name__ == '__main__':
 
@@ -205,30 +344,35 @@ if __name__ == '__main__':
 		# set away status (can't be challenged)
 		if (line == "/away"):
 			pdulen = 4+4+4
+			SPECIAL="AWAY"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x01')
 			sequence=sequence+1
 
 		# return back from away (can be challenged)
 		if (line == "/back"):
 			pdulen = 4+4+4
+			SPECIAL="BACK"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x00')
 			sequence=sequence+1
 
 		# view channel intro
 		if (line == "/intro"):
 			pdulen = 4+4
+			SPECIAL="INTRO"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
 			sequence=sequence+1
 
 		# list channels
 		if (line == "/list"):
 			pdulen = 4+4
+			SPECIAL="LIST"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
 			sequence=sequence+1
 
 		# list users
 		if (line == "/users"):
 			pdulen = 4+4
+			SPECIAL="USERS"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
 			sequence=sequence+1
 
