@@ -8,8 +8,8 @@ import socket
 import string
 import re
 import sys
-import os
 import signal
+from subprocess import call
 
 def interrupted(signum, frame):
 	"called when read times out"
@@ -35,13 +35,20 @@ def readdata():
 	except:
 		return
 
-TIMEOUT=3
+def pad(value,length=4):
+	l = len(value)
+	while (l<length):
+		value="\x00" + value
+		l = len(value)
+	return value
+
 USERNAME="pof"
 PASSWORD="XXXXXXXX"
 CHANNEL="ssf2t"
 
 VERBOSE=1  # set to 1 to see join/leave/play messages
 DEBUG=0
+TIMEOUT=3
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(('ggpo.net', 7000))
@@ -72,11 +79,20 @@ while 1:
 	#line = raw_input('> ')
 	#if not line: break
 
-	if (line != None):
-		print line
+	if (line != None and not line.startswith("/")):
+		#print line
 		msglen = len(line)
-		pdulen = msglen + 12
-		s.send("\x00\x00\x00" + chr(pdulen) + "\x00\x00\x00" + chr(sequence) + "\x00\x00\x00\x07\x00\x00\x00" + chr(msglen) + line)
+		pdulen = 4 + 4 + 4 + msglen
+		# [ 4-byte pdulen ] [ 4-byte sequence ] [ 4-byte command ] [ 4-byte msglen ] [ msglen-bytes msg ]
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x07" + pad(chr(msglen)) + line)
+		sequence=sequence+1
+
+	if (line != None and line.startswith("/challenge ")):
+		nick = line[11:]
+		nicklen = len(nick)
+		channellen = len(CHANNEL)
+		pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 		sequence=sequence+1
 
 	if (line == "/quit"):
@@ -92,6 +108,13 @@ while 1:
 
 	if (DEBUG==1):
 		print "HEX: ",repr(data)
+
+	if ("quark:" in data):
+		index = data.find("quark:")
+		cmd = data[index:]
+		# WARNING: cmd is unsanitized
+		args = ['/opt/ggpo/ggpofba.exe', cmd]
+		call(args)
 
 	if (VERBOSE==1):
 		data = re.sub('\x00\x00.*\xff\xff\xff\xfd\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\n','JOIN01: ', data)
@@ -139,11 +162,3 @@ while 1:
 		print filtered_data
 
 s.close()
-
-
-### TODO: ability to challenge someone
-# 4th byte = length of message
-# 8th byte = sequence number
-# 12th byte == 08 == challenge someone
-# 12th byte == 1c == cancel challenge
-# 16th byte == length of nickname
