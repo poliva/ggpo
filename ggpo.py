@@ -58,6 +58,8 @@ s.send('\x00\x00\x00\x08\x00\x00\x00\x0b\x00\x00\x00\x04')
 # away 
 s.send('\x00\x00\x00\x0c\x00\x00\x00\x0c\x00\x00\x00\x06\x00\x00\x00\x01')
 
+sequence=0xd
+
 while 1:
 	# set alarm
 	signal.alarm(TIMEOUT)
@@ -70,12 +72,16 @@ while 1:
 	#line = raw_input('> ')
 	#if not line: break
 
+	if (line != None):
+		print line
+		msglen = len(line)
+		pdulen = msglen + 12
+		s.send("\x00\x00\x00" + chr(pdulen) + "\x00\x00\x00" + chr(sequence) + "\x00\x00\x00\x07\x00\x00\x00" + chr(msglen) + line)
+		sequence=sequence+1
+
 	if (line == "/quit"):
 		s.close()
 		sys.exit(0)
-
-	if (line != None):
-		print "LINE: ",line
 
 	signal.alarm(TIMEOUT)
 	data = readdata()
