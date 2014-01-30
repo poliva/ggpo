@@ -7,7 +7,35 @@
 import socket
 import string
 import re
+import sys
+import os
+import signal
 
+def interrupted(signum, frame):
+	"called when read times out"
+	#print 'interrupted!'
+signal.signal(signal.SIGALRM, interrupted)
+
+def input():
+	try:
+		#print "> ",
+		foo = sys.stdin.readline()
+		foo = foo.strip(' \t\n\r')
+		return foo
+	except:
+		# timeout
+		return
+
+
+def readdata():
+	global s
+	try:
+		foo = s.recv(4096)
+		return foo
+	except:
+		return
+
+TIMEOUT=3
 USERNAME="pof"
 PASSWORD="XXXXXXXX"
 CHANNEL="ssf2t"
@@ -31,8 +59,28 @@ s.send('\x00\x00\x00\x08\x00\x00\x00\x0b\x00\x00\x00\x04')
 s.send('\x00\x00\x00\x0c\x00\x00\x00\x0c\x00\x00\x00\x06\x00\x00\x00\x01')
 
 while 1:
-	data = s.recv(4096)
-	if not data: break
+	# set alarm
+	signal.alarm(TIMEOUT)
+	line = input()
+	# disable the alarm after success
+	signal.alarm(0)
+
+	#line = sys.stdin.readline()
+	#line = os.fdopen(sys.stdin.fileno(), 'r', 30)
+	#line = raw_input('> ')
+	#if not line: break
+
+	if (line == "/quit"):
+		s.close()
+		sys.exit(0)
+
+	if (line != None):
+		print "LINE: ",line
+
+	signal.alarm(TIMEOUT)
+	data = readdata()
+	signal.alarm(0)
+	if not data: continue
 
 	orig = data
 
