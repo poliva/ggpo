@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# command line client ggpo client
+# command line ggpo client
 # protocol reverse engineered from the official adobe air client
 # 
 #  (c) 2014 Pau Oliva Fora (@pof)
@@ -503,7 +503,7 @@ if __name__ == '__main__':
 			#print "\r" + GREEN + "-!- you are away now" + END
 
 		# return back from away (can be challenged)
-		if (line == "/back"):
+		if (line == "/back" or line == "/available"):
 			pdulen = 4+4+4
 			SPECIAL="BACK"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x00')
@@ -525,11 +525,30 @@ if __name__ == '__main__':
 			sequence=sequence+1
 
 		# list users
-		if (line == "/users"):
+		if (line == "/users" or line == "/who"):
 			pdulen = 4+4
 			SPECIAL="USERS"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
 			sequence=sequence+1
+
+		if (line == "/help"):
+			print "\r" + BLUE + "-!- available commands:" + END
+			print BLUE + "-!- /challenge <nick>\tsend a challenge request to <nick>" + END
+			print BLUE + "-!- /cancel    <nick>\tcancel an ongoing challenge request to <nick>" + END
+			print BLUE + "-!- /accept    <nick>\taccept a challenge request initiated by <nick>" + END
+			print BLUE + "-!- /decline   <nick>\tdecline a challenge request initiated by <nick>" + END
+			print BLUE + "-!- /watch     <nick>\twatch the game that <nick> is currently playing" + END
+			print BLUE + "-!- /join   <channel>\tjoin the chat/game room <channel>" + END
+			print BLUE + "-!- /list \t\tlist all available channels or chat/game rooms" + END
+			print BLUE + "-!- /users \t\tlist all users in the current channel" + END
+			print BLUE + "-!- /intro \t\tview the channel welcome text" + END
+			print BLUE + "-!- /away \t\tset away status (you can't be challenged)" + END
+			print BLUE + "-!- /back \t\tset available status (you can be challenged)" + END
+			print BLUE + "-!- /clear \t\tclear the screen" + END
+			print BLUE + "-!- /quit \t\tquit ggpo" + END
+
+		if (line == "/clear"):
+			call(['clear'])
 
 		if (line == "/quit"):
 			print "\r" + BLUE + "-!- have a nice day :)" + END
