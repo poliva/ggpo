@@ -166,6 +166,12 @@ def parse(cmd):
 		print "\r" + RED + "-!- INCOMING CHALLENGE REQUEST FROM " + B_RED + str(nick) + RED + " @ " + channel + END
 		print RED + "-!- TYPE '/accept " + B_RED + str(nick) + RED + "' to accept it, or '/decline " + B_RED + str(nick) + RED + "' to wimp out." + END
 
+		args = ['mplayer', '/opt/ggpo/assets/challenger-comes.mp3']
+		FNULL = open(os.devnull, 'w')
+		call(args, stdout=FNULL, stderr=FNULL)
+		FNULL.close()
+
+
 	# cancel challenge
 	elif (action == "\xff\xff\xff\xef"):
 
