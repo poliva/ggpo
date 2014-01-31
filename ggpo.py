@@ -15,10 +15,29 @@ USERNAME="pof"
 PASSWORD="XXXXXXXX"
 CHANNEL="ssf2t"
 
-DEBUG=0
+DEBUG=0 # values: 0,1,2
 TIMEOUT=3
 
 SPECIAL=""
+OLDDATA=""
+
+GRAY = '\033[0;30m'
+RED = '\033[0;31m'
+GREEN = '\033[0;32m'
+YELLOW = '\033[0;33m'
+BLUE = '\033[0;34m'
+MAGENTA = '\033[0;35m'
+CYAN = '\033[0;36m'
+
+B_GRAY = '\033[1;30m'
+B_RED = '\033[1;31m'
+B_GREEN = '\033[1;32m'
+B_YELLOW = '\033[1;33m'
+B_BLUE = '\033[1;34m'
+B_MAGENTA = '\033[1;35m'
+B_CYAN = '\033[1;36m'
+
+END = '\033[0;m'
 
 def interrupted(signum, frame):
 	"called when read times out"
@@ -62,9 +81,9 @@ def parse(cmd):
 		nick = cmd[12:12+nicklen]
 		msglen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
 		msg = cmd[12+nicklen+4:pdulen+4]
-		print "<" + str(nick) + "> " + str(msg)
+		print CYAN + "<" + str(nick) + "> " + END + str(msg)
 
-	# state changes (away/back/playing)
+	# state changes (away/available/playing)
 	elif (action == "\xff\xff\xff\xfd"):
 
 		unk1 = cmd[8:12]
@@ -74,16 +93,11 @@ def parse(cmd):
 		nick = cmd[20:20+nicklen]
 
 
-		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"): print "LEAVE: " + str(nick)
-
-
-#ACTION: '\xff\xff\xff\xfd' + DATA: '\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00\x06WoRKeR\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e88.226.227.119\x00\x00\x00"\x00\x00\x00&\x00\x00\x00\x08Nevsehir\x00\x00\x00\x02TR\x00\x00\x00\x06Turkey\x00\x00\x17y\x00\x00\x00\x01\x00\x00\x00\x06WoRKeR\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e88.226.227.119\x00\x00\x00"\x00\x00\x00&\x00\x00\x00\x08Nevsehir\x00\x00\x00\x02TR\x00\x00\x00\x06Turkey\x00\x00\x17y\x00\x00\x00\x01\x00\x00\x00\x06djkeco\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\r188.77.72.142\xff\xff\xff\xfc\x00\x00\x00(\x00\x00\x00\x00\x00\x00\x00\x02ES\x00\x00\x00\x05Spain\x00\x00\x17y\x00\x00\x00\x01\x00\x00\x00\x06djkeco\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\r188.77.72.142\xff\xff\xff\xfc\x00\x00\x00(\x00\x00\x00\x00\x00\x00\x00\x02ES\x00\x00\x00\x05Spain\x00\x00\x17y'
-#ACTION: '\xff\xff\xff\xfd' + DATA: '\x00\x00\x00\x03\x00\x00\x00\x01\x00\x00\x00\tCronobest\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c87.12.238.77\x00\x00\x00\x0c\x00\x00\x00+\x00\x00\x00\x07Perugia\x00\x00\x00\x02IT\x00\x00\x00\x05Italy\x00\x00\x17y\x00\x00\x00\x01\x00\x00\x00\tCronobest\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c87.12.238.77\x00\x00\x00\x0c\x00\x00\x00+\x00\x00\x00\x07Perugia\x00\x00\x00\x02IT\x00\x00\x00\x05Italy\x00\x00\x17y\x00\x00\x00\x00\x00\x00\x00\tCronobest'
-
+		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"): print GRAY + "-!- " + B_GRAY + str(nick) + GRAY +" has quit" + END
 
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x00"):
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x01"):
-		#if (unk1 == "\x00\x00\x00\x04" and unk2 == "\x00\x00\x00\x01"):
+		#if (unk1 == "\x00\x00\x00\x04" and unk2 == "\x00\x00\x00\x01"): # match ended?
 		#if (unk1 == "\x00\x00\x00\x05" and unk2 == "\x00\x00\x00\x01\):
 
 		elif ((unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x01") or (unk1 == "\x00\x00\x00\x02" and unk2 == "\x00\x00\x00\x01")):
@@ -94,7 +108,7 @@ def parse(cmd):
 				nick2len = int(cmd[24+nicklen:28+nicklen].encode('hex'),16)
 				nick2 = cmd[28+nicklen:28+nicklen+nick2len]
 
-				print "NEW GAME: " + str(nick) + " vs " + str(nick2)
+				print MAGENTA + "-!- new match " + B_MAGENTA + str(nick) + MAGENTA + " vs " + B_MAGENTA + str(nick2) + END
 
 			elif (state <2):
 				unk4 = cmd[20+nicklen+4:20+nicklen+8]
@@ -114,13 +128,15 @@ def parse(cmd):
 				countrylen = int(cmd[48+nicklen+iplen+citylen+cclen:48+nicklen+iplen+citylen+cclen+4].encode('hex'),16)
 				country = cmd[52+nicklen+iplen+citylen+cclen:52+nicklen+iplen+citylen+cclen+countrylen]
 
-				print "STATE: [",
-				if (state == 0): print "back",
-				if (state == 1): print "away",
-				print "] nick=" + str(nick) + " ip=" + str(ip) + " city=" + str(city) + " cc=" + cc + " country=" + str(country)
+				print GRAY + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
+				if (city != "" and cc != ""): print "(" + city + ", " + cc + ")",
+				elif (city == "" and cc != ""): print "(" + cc + ")",
+				if (state == 0): print "is available",
+				if (state == 1): print "is away",
+				print END
 
 		else:
-			print "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4])
+			if (DEBUG==1): print BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END
 
 	# challenge
 	elif (action == "\xff\xff\xff\xfc"):
@@ -131,7 +147,7 @@ def parse(cmd):
 		channellen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
 		channel = cmd[16+nicklen:16+nicklen+channellen]
 
-		print "INCOMING CHALLENGE FROM " + str(nick) + "@ " + channel
+		print RED + "INCOMING CHALLENGE FROM " + str(nick) + " @ " + channel + END
 
 	# cancel challenge
 	elif (action == "\xff\xff\xff\xef"):
@@ -139,16 +155,32 @@ def parse(cmd):
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
 
-		print "CANCEL CHALLENGE " + str(nick)
+		print YELLOW + "CANCEL CHALLENGE " + str(nick) + END
 
 
 	elif (action == "\xff\xff\xff\xff"):
-		print "> Connected ok!"
+		print GRAY + "-!- Connection established" + END
+
+	# watch
+	elif (action == "\xff\xff\xff\xfa"):
+
+		nick1len = int(cmd[8:12].encode('hex'),16)
+		nick1 = cmd[12:12+nick1len]
+		nick2len = int(cmd[12+nick1len:16+nick1len].encode('hex'),16)
+		nick2 = cmd[16+nick1len:16+nick1len+nick2len]
+
+		print GRAY + "> watch " + nick1 + " vs " + nick2 + END
+
+		quark = cmd[20+nick1len+nick2len:pdulen+4]
+		args = ['/opt/ggpo/ggpofba.exe', quark]
+		call(args)
+
+		#\x00\x00\x00[\xff\xff\xff\xfa\x00\x00\x00\x0fsmoothmacgroove\x00\x00\x00\x07manelxd\x00\x00\x005quark:stream,ssf2t,challenge-06228-1391119057.75,7000
 
 	# unknown action
 	else:
 		if (SPECIAL == "" ):
-			print "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4])
+			if (DEBUG==1): print BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END
 		else:
 			parsespecial(cmd)
 
@@ -174,8 +206,8 @@ def parsespecial(cmd):
 		msglen = int(cmd[20+channellen+topiclen:24+channellen+topiclen].encode('hex'),16)
 		msg = cmd[24+channellen+topiclen:24+channellen+topiclen+msglen]
 
-		print "\n" + str(channel) + " || " + str(topic)
-		print str(msg) + "\n"
+		print "\n" + B_GREEN + str(channel) + GREEN + " || " + B_GREEN + str(topic) + GREEN
+		print str(msg) + END
 		SPECIAL=""
 
 	elif (SPECIAL=="AWAY"):
@@ -185,25 +217,40 @@ def parsespecial(cmd):
 		SPECIAL=""
 
 	elif (SPECIAL=="LIST"):
-		parselist(cmd)
 		SPECIAL=""
+		parselist(cmd)
 
 	elif (SPECIAL=="USERS"):
-		parseusers(cmd)
 		SPECIAL=""
+		parseusers(cmd)
 
 	else:
-		print "SPECIAL=" + SPECIAL + " + DATA: " + repr(cmd[8:pdulen+4])
+		if (DEBUG==1): print BLUE + "SPECIAL=" + SPECIAL + " + DATA: " + repr(cmd[8:pdulen+4]) + END
 
 def parseusers(cmd):
 
+	global SPECIAL, OLDDATA
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 
-	#print repr(cmd[8:pdulen+4])
+	## ugly workaround for when the user list is splitted in 2 PDUs
+	#print "PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd))
+	if (len(cmd)!=pdulen+4 and OLDDATA==""):
+		SPECIAL="USERS"
+		OLDDATA=cmd
+		return
+
+	if (OLDDATA!=""):
+		cmd = OLDDATA + cmd
+		pdulen = int(cmd[0:4].encode('hex'), 16)
+		OLDDATA=""
+		SPECIAL=""
+	## end of workaround
+
+	print YELLOW + "-!- user list:" + END
 
 	i=16
-	#while (i<pdulen):
-	while (i<len(cmd)-4):
+	while (i<pdulen):
+	#while (i<len(cmd)-4):
 
 		len1 = int(cmd[i:i+4].encode('hex'),16)
 		i=i+4
@@ -253,18 +300,41 @@ def parseusers(cmd):
 		unk3 = cmd[i:i+4]
 		i=i+4
 
-		if (status==0): print nick + " (" + ip + ") " + city + " " + country + " [available]"
-		elif (status==1): print nick + " (" + ip + ") " + city + " " + country + " [away]"
-		elif (status==2): print nick + " (" + ip + ") " + city + " " + country + " [playing against " + p2nick + "]"
-		else: print nick + " (" + ip + ") " + city + " " + country + " [Unknown status: " + str(status) + "]"
+		print YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
+		if (city != "" and cc != ""): print "(" + city + ", " + cc + ")",
+		elif (city == "" and cc != ""): print "(" + cc + ")",
+		if (status == 0): print "is available",
+		if (status == 1): print "is away",
+		if (status == 2): print "is playing against " + B_GRAY + p2nick,
+		print END
+
+	print YELLOW + "-!- EOF user list." + END
+
 
 def parselist(cmd):
 
+	global SPECIAL, OLDDATA
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 
+	## ugly workaround for when the channel list is splitted in 2 PDUs
+	print "PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd))
+	if (len(cmd)!=pdulen+4 and OLDDATA==""):
+		SPECIAL="LIST"
+		OLDDATA=cmd
+		return
+
+	if (OLDDATA!=""):
+		cmd = OLDDATA + cmd
+		pdulen = int(cmd[0:4].encode('hex'), 16)
+		OLDDATA=""
+		SPECIAL=""
+	## end of workaround
+
+	print YELLOW + "-!- channel list:" + END
+
 	i=12
-	#while (i<pdulen):
-	while (i<len(cmd)-4):
+	while (i<pdulen):
+	#while (i<len(cmd)-4):
 		#num = int(cmd[i:i+4].encode('hex'),16)
 		i=i+4
 		len1 = int(cmd[i:i+4].encode('hex'),16)
@@ -279,7 +349,9 @@ def parselist(cmd):
 		i=i+4
 		name3 = cmd[i:i+len3]
 		i=i+len3
-		print str(name1) + " - " + str(name2) + " - " + str(name3)
+		print YELLOW + "-!- " + B_GRAY +  str(name1) + GRAY + " (" + str(name2) + ") -- " + str(name3)
+
+	print YELLOW + "-!- EOF channel list." + END
 
 if __name__ == '__main__':
 
@@ -312,11 +384,6 @@ if __name__ == '__main__':
 		# disable the alarm after success
 		signal.alarm(0)
 
-		#line = sys.stdin.readline()
-		#line = os.fdopen(sys.stdin.fileno(), 'r', 30)
-		#line = raw_input('> ')
-		#if not line: break
-
 		if (line != None and not line.startswith("/")):
 			#print line
 			msglen = len(line)
@@ -339,6 +406,14 @@ if __name__ == '__main__':
 			nicklen = len(nick)
 			pdulen = 4 + 4 + 4 + nicklen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
+			sequence=sequence+1
+
+		# watch an ongoing match
+		if (line != None and line.startswith("/watch ")):
+			nick = line[7:]
+			nicklen = len(nick)
+			pdulen = 4 + 4 + 4 + nicklen
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x10" + pad(chr(nicklen)) + nick )
 			sequence=sequence+1
 
 		# set away status (can't be challenged)
@@ -385,18 +460,9 @@ if __name__ == '__main__':
 		signal.alarm(0)
 		if not data: continue
 
-		orig = data
-
-		if (DEBUG==1):
-			print "HEX: ",repr(data)
+		if (DEBUG>1):
+			print BLUE + "HEX: ",repr(data) + END
 
 		parse(data)
-
-		if ("quark:" in data):
-			index = data.find("quark:")
-			cmd = data[index:]
-			# WARNING: cmd is unsanitized
-			args = ['/opt/ggpo/ggpofba.exe', cmd]
-			call(args)
 
 	s.close()
