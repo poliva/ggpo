@@ -170,6 +170,12 @@ def parse(cmd):
 	elif (action == "\xff\xff\xff\xff"):
 		print GRAY + "-!- Connection established" + END
 
+	elif (action == "\x00\x00\x00\x02"):
+		result = cmd[8:12]
+		if (result == "\x00\x00\x00\x06"):
+			print RED + "-!- User or password incorrect" + END
+			sys.exit(0)
+
 	# watch
 	elif (action == "\xff\xff\xff\xfa"):
 
