@@ -14,6 +14,7 @@ from subprocess import call
 USERNAME="pof"
 PASSWORD="XXXXXXXX"
 CHANNEL="ssf2t"
+FBA="/opt/ggpo/ggpofba.exe"
 
 DEBUG=0 # values: 0,1,2
 TIMEOUT=3
@@ -138,6 +139,13 @@ def parse(cmd):
 		else:
 			if (DEBUG==1): print BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END
 
+	# challenge request declined by peer
+	elif (action == "\xff\xff\xff\xfb"):
+		nicklen = int(cmd[8:12].encode('hex'),16)
+		nick = cmd[12:12+nicklen]
+		print RED + "-!- " + B_RED + str(nick) + RED + " declined the challenge request"
+
+
 	# challenge
 	elif (action == "\xff\xff\xff\xfc"):
 
@@ -147,7 +155,8 @@ def parse(cmd):
 		channellen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
 		channel = cmd[16+nicklen:16+nicklen+channellen]
 
-		print RED + "INCOMING CHALLENGE FROM " + str(nick) + " @ " + channel + END
+		print RED + "-!- INCOMING CHALLENGE REQUEST FROM " + B_RED + str(nick) + RED + " @ " + channel + END
+		print RED + "-!- TYPE '/accept " + B_RED + str(nick) + RED + "' to accept it, or '/decline " + B_RED + str(nick) + RED + "' to wimp out." + END
 
 	# cancel challenge
 	elif (action == "\xff\xff\xff\xef"):
@@ -155,7 +164,7 @@ def parse(cmd):
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
 
-		print YELLOW + "CANCEL CHALLENGE " + str(nick) + END
+		print YELLOW + "-!- CHALLENGE REQUEST CANCELED BY " + B_YELLOW + str(nick) + END
 
 
 	elif (action == "\xff\xff\xff\xff"):
@@ -169,13 +178,11 @@ def parse(cmd):
 		nick2len = int(cmd[12+nick1len:16+nick1len].encode('hex'),16)
 		nick2 = cmd[16+nick1len:16+nick1len+nick2len]
 
-		print GRAY + "> watch " + nick1 + " vs " + nick2 + END
+		print GREEN + "-!- watch " + B_GREEN + str(nick1) + GREEN + " vs " + B_GREEN + str(nick2) + END
 
 		quark = cmd[20+nick1len+nick2len:pdulen+4]
-		args = ['/opt/ggpo/ggpofba.exe', quark]
+		args = [FBA, quark]
 		call(args)
-
-		#\x00\x00\x00[\xff\xff\xff\xfa\x00\x00\x00\x0fsmoothmacgroove\x00\x00\x00\x07manelxd\x00\x00\x005quark:stream,ssf2t,challenge-06228-1391119057.75,7000
 
 	# unknown action
 	else:
@@ -266,6 +273,8 @@ def parseusers(cmd):
 		if (p2len > 0):
 			p2nick = cmd[i:i+p2len]
 			i=i+p2len
+		else:
+			p2nick="None"
 
 		iplen = int(cmd[i:i+4].encode('hex'),16)
 		i=i+4
@@ -317,7 +326,7 @@ def parselist(cmd):
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 
 	## ugly workaround for when the channel list is splitted in 2 PDUs
-	print "PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd))
+	#print "PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd))
 	if (len(cmd)!=pdulen+4 and OLDDATA==""):
 		SPECIAL="LIST"
 		OLDDATA=cmd
@@ -399,14 +408,35 @@ if __name__ == '__main__':
 			pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 			sequence=sequence+1
+			print GREEN + "-!- challenge request sent to " + B_GREEN + str(nick) + END
+			print GREEN + "-!- type '/cancel " + B_GREEN + str(nick) + GREEN + "' to cancel it" + END
 
-		# cancel an ongoing challenge request
+		# accept a challenge request (initiated by peer)
+		if (line != None and line.startswith("/accept ")):
+			nick = line[8:]
+			nicklen = len(nick)
+			pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x09" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
+			sequence=sequence+1
+			print GREEN + "-!- accepted challenge request from " + B_GREEN + str(nick) + END
+
+		# decline a challenge request (initiated by peer)
+		if (line != None and line.startswith("/decline ")):
+			nick = line[9:]
+			nicklen = len(nick)
+			pdulen = 4 + 4 + 4 + nicklen
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x0a" + pad(chr(nicklen)) + nick )
+			sequence=sequence+1
+			print YELLOW + "-!- declined challenge request from " + B_YELLOW + str(nick) + END
+
+		# cancel an ongoing challenge request (initiated by us)
 		if (line != None and line.startswith("/cancel ")):
 			nick = line[8:]
 			nicklen = len(nick)
 			pdulen = 4 + 4 + 4 + nicklen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
 			sequence=sequence+1
+			print YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END
 
 		# watch an ongoing match
 		if (line != None and line.startswith("/watch ")):
@@ -415,6 +445,7 @@ if __name__ == '__main__':
 			pdulen = 4 + 4 + 4 + nicklen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x10" + pad(chr(nicklen)) + nick )
 			sequence=sequence+1
+			#print GREEN + "-!- watch challenge from " + B_GREEN + str(nick) + END
 
 		# set away status (can't be challenged)
 		if (line == "/away"):
@@ -422,6 +453,7 @@ if __name__ == '__main__':
 			SPECIAL="AWAY"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x01')
 			sequence=sequence+1
+			#print GREEN + "-!- you are away now" + END
 
 		# return back from away (can be challenged)
 		if (line == "/back"):
@@ -429,6 +461,7 @@ if __name__ == '__main__':
 			SPECIAL="BACK"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x00')
 			sequence=sequence+1
+			#print GREEN + "-!- you are available now" + END
 
 		# view channel intro
 		if (line == "/intro"):
@@ -452,6 +485,7 @@ if __name__ == '__main__':
 			sequence=sequence+1
 
 		if (line == "/quit"):
+			print BLUE + "-!- have a nice day :)" + END
 			s.close()
 			sys.exit(0)
 
