@@ -405,6 +405,7 @@ if __name__ == '__main__':
 		if (line != None and line.startswith("/challenge ")):
 			nick = line[11:]
 			nicklen = len(nick)
+			channellen = len(CHANNEL)
 			pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 			sequence=sequence+1
@@ -415,6 +416,7 @@ if __name__ == '__main__':
 		if (line != None and line.startswith("/accept ")):
 			nick = line[8:]
 			nicklen = len(nick)
+			channellen = len(CHANNEL)
 			pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x09" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 			sequence=sequence+1
@@ -446,6 +448,14 @@ if __name__ == '__main__':
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x10" + pad(chr(nicklen)) + nick )
 			sequence=sequence+1
 			#print GREEN + "-!- watch challenge from " + B_GREEN + str(nick) + END
+
+		# choose channel
+		if (line != None and line.startswith("/join ")):
+			CHANNEL = line[6:]
+			channellen = len(CHANNEL)
+			pdulen = 4 + 4 + 4 + channellen
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
+			sequence=sequence+1
 
 		# set away status (can't be challenged)
 		if (line == "/away"):
