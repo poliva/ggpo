@@ -17,12 +17,12 @@ Edit ggpo.py to set your username and password.
 $ /opt/ggpo/ggpo.py
 ggpo> /help
 -!- available commands:
--!- /challenge <nick>	send a challenge request to <nick>
--!- /cancel    <nick>	cancel an ongoing challenge request to <nick>
--!- /accept    <nick>	accept a challenge request initiated by <nick>
--!- /decline   <nick>	decline a challenge request initiated by <nick>
--!- /watch     <nick>	watch the game that <nick> is currently playing
--!- /join   <channel>	join the chat/game room <channel>
+-!- /challenge &lt;nick&gt;	send a challenge request to &lt;nick&gt;
+-!- /cancel    &lt;nick&gt;	cancel an ongoing challenge request to &lt;nick&gt;
+-!- /accept    &lt;nick&gt;	accept a challenge request initiated by &lt;nick&gt;
+-!- /decline   &lt;nick&gt;	decline a challenge request initiated by &lt;nick&gt;
+-!- /watch     &lt;nick&gt;	watch the game that &lt;nick&gt; is currently playing
+-!- /join   &lt;channel&gt;	join the chat/game room &lt;channel&gt;
 -!- /list 		list all available channels or chat/game rooms
 -!- /users 		list all users in the current channel
 -!- /intro 		view the channel welcome text
