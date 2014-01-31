@@ -6,10 +6,10 @@
 
 import socket
 import string
-import re
 import sys
 import signal
 from subprocess import call
+from threading import Thread
 
 USERNAME="pof"
 PASSWORD="XXXXXXXX"
@@ -137,7 +137,7 @@ def parse(cmd):
 				print END
 
 		else:
-			if (DEBUG==1): print BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END
+			if (DEBUG>0): print BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END
 
 	# challenge request declined by peer
 	elif (action == "\xff\xff\xff\xfb"):
@@ -193,7 +193,7 @@ def parse(cmd):
 	# unknown action
 	else:
 		if (SPECIAL == "" ):
-			if (DEBUG==1): print BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END
+			if (DEBUG>0): print BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END
 		else:
 			parsespecial(cmd)
 
@@ -238,7 +238,7 @@ def parsespecial(cmd):
 		parseusers(cmd)
 
 	else:
-		if (DEBUG==1): print BLUE + "SPECIAL=" + SPECIAL + " + DATA: " + repr(cmd[8:pdulen+4]) + END
+		if (DEBUG>0): print BLUE + "SPECIAL=" + SPECIAL + " + DATA: " + repr(cmd[8:pdulen+4]) + END
 
 def parseusers(cmd):
 
@@ -312,7 +312,7 @@ def parseusers(cmd):
 		country = cmd[i:i+countrylen]
 		i=i+countrylen
 
-		unk3 = cmd[i:i+4]
+		port = int(cmd[i:i+4].encode('hex'),16)
 		i=i+4
 
 		print YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
@@ -368,10 +368,30 @@ def parselist(cmd):
 
 	print YELLOW + "-!- EOF channel list." + END
 
+def pingcheck():
+	global u
+
+	while 1:
+		dgram, addr = u.recvfrom(64)
+		if (DEBUG>0): print GRAY + "-!- UDP msg: " + dgram + " from " + str(addr) + END
+		if (dgram[0:9] == "GGPO PING"):
+			val = dgram[10:]
+			u.sendto("GGPO PONG " + val, addr)
+			if (DEBUG>0): print GRAY + "-!- UDP rpl: GGPO PONG " + val + " to " + str(addr) + END
+
+
+
 if __name__ == '__main__':
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect(('ggpo.net', 7000))
+
+	u = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+	u.bind(('0.0.0.0', 6009))
+
+	t = Thread(target=pingcheck)
+	t.daemon = True
+	t.start()
 
 	# welcome packet (?)
 	s.send('\x00\x00\x00\x14\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
@@ -503,6 +523,7 @@ if __name__ == '__main__':
 		if (line == "/quit"):
 			print BLUE + "-!- have a nice day :)" + END
 			s.close()
+			u.close()
 			sys.exit(0)
 
 		signal.alarm(TIMEOUT)
