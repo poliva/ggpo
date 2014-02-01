@@ -60,7 +60,7 @@ def blank_current_readline():
 	# Next line said to be reasonably portable for various Unixes
 	(rows,cols) = struct.unpack('hh', fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ,'1234'))
 
-	text_len = len(readline.get_line_buffer())+2
+	text_len = len(readline.get_line_buffer().strip('\t\n\r'))+2
 
 	# ANSI escape sequences (All VT100 except ESC[0G)
 	sys.stdout.write('\x1b[2K')                         # Clear current line
@@ -70,7 +70,7 @@ def blank_current_readline():
 def print_line(line):
 	blank_current_readline()
 	print line,
-	sys.stdout.write(readline.get_line_buffer())
+	sys.stdout.write(readline.get_line_buffer().strip('\t\n\r'))
 	sys.stdout.flush()
 
 def readdata():
@@ -679,6 +679,7 @@ if __name__ == '__main__':
 
 	while 1:
 		line = raw_input()
+		line = line.strip(' \t\n\r')
 
 		if (line == "/help"):
 			print "\r" + BLUE + "-!- available commands:" + END
@@ -687,9 +688,11 @@ if __name__ == '__main__':
 			print BLUE + "-!- /accept    <nick>\taccept a challenge request initiated by <nick>" + END
 			print BLUE + "-!- /decline   <nick>\tdecline a challenge request initiated by <nick>" + END
 			print BLUE + "-!- /watch     <nick>\twatch the game that <nick> is currently playing" + END
+			print BLUE + "-!- /whois     <nick>\tdisplay information about the user <nick>" + END
 			print BLUE + "-!- /join   <channel>\tjoin the chat/game room <channel>" + END
 			print BLUE + "-!- /list \t\tlist all available channels or chat/game rooms" + END
-			print BLUE + "-!- /users \t\tlist all users in the current channel" + END
+			print BLUE + "-!- /users (<modifier>)\tlist all users in the current channel" + END
+			print BLUE + "-!-          modifier: 'available', 'away' or 'playing'" + END
 			print BLUE + "-!- /intro \t\tview the channel welcome text" + END
 			print BLUE + "-!- /away \t\tset away status (you can't be challenged)" + END
 			print BLUE + "-!- /back \t\tset available status (you can be challenged)" + END
