@@ -89,7 +89,7 @@ def pad(value,length=4):
 	return value
 
 def parse(cmd):
-	global SPECIAL,challengers,challenged
+	global SPECIAL,challengers,challenged,sequence
 
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 	action = cmd[4:8]
@@ -196,6 +196,11 @@ def parse(cmd):
 
 	elif (action == "\xff\xff\xff\xff"):
 		print "\r" + GRAY + "-!- Connection established" + END
+		pdulen = 4+4
+		SPECIAL="INTRO"
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
+		sequence=sequence+1
+
 
 	elif (action == "\x00\x00\x00\x02"):
 		result = cmd[8:12]
@@ -249,7 +254,7 @@ def parsespecial(cmd):
 		msglen = int(cmd[20+channellen+topiclen:24+channellen+topiclen].encode('hex'),16)
 		msg = cmd[24+channellen+topiclen:24+channellen+topiclen+msglen]
 
-		print "\r" + "\n" + B_GREEN + str(channel) + GREEN + " || " + B_GREEN + str(topic) + GREEN
+		print "\r" + B_GREEN + str(channel) + GREEN + " || " + B_GREEN + str(topic) + GREEN
 		print str(msg) + END
 		SPECIAL=""
 
