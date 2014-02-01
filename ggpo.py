@@ -294,7 +294,7 @@ def parseusers(cmd):
 		SPECIAL=""
 	## end of workaround
 
-	print "\r" + YELLOW + "-!- user list:" + END
+	userlist=[]
 
 	i=16
 	while (i<pdulen):
@@ -315,7 +315,7 @@ def parseusers(cmd):
 			p2nick = cmd[i:i+p2len]
 			i=i+p2len
 		else:
-			p2nick="None"
+			p2nick="null"
 
 		iplen = int(cmd[i:i+4].encode('hex'),16)
 		i=i+4
@@ -350,16 +350,88 @@ def parseusers(cmd):
 		port = int(cmd[i:i+4].encode('hex'),16)
 		i=i+4
 
-		print YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
-		if (city != "" and cc != ""): print "(" + city + ", " + cc + ")",
-		elif (city == "" and cc != ""): print "(" + cc + ")",
-		if (status == 0): print "is available",
-		if (status == 1): print "is away",
-		if (status == 2): print "is playing against " + B_GRAY + p2nick,
-		print END
+		user = (nick,ip,city,cc,country,port,status,p2nick)
+		userlist.append(user)
 
-	print YELLOW + "-!- EOF user list." + END
+	userlist.sort()
 
+	if (users_option.startswith("/whois ")):
+		query=users_option[7:]
+
+		ip=""
+		for user in userlist:
+			nick=user[0]
+			if (nick == query):
+				ip=user[1]
+				city=user[2]
+				cc=user[3]
+				country=user[4]
+				port=user[5]
+				status=user[6]
+				p2nick=user[7]
+
+				print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END
+				print "\r" + YELLOW + "-!- " + GRAY + "  channel  : " + CHANNEL + END
+				print "\r" + YELLOW + "-!- " + GRAY + "  hostname :",
+				hostname = socket.gethostbyaddr(ip)
+				if (hostname[0] != ""): print hostname[0] + END
+				else: print ip + END
+				print "\r" + YELLOW + "-!- " + GRAY + "  location :",
+				if (city != "" and cc != ""): print city + ", " + cc + ", " + country
+				elif (city == "" and cc != ""): print cc + ", " + country
+				else: print "unknown"
+				print "\r" + YELLOW + "-!- " + GRAY + "  status   :",
+				if (status == 0): print "available"
+				if (status == 1): print "away"
+				if (status == 2): print "playing against " + B_GRAY + p2nick
+				print "\r" + YELLOW + "-!- " + GRAY + "End of WHOIS" + END
+		if (ip==""): print "\r" + YELLOW + "-!- There is no such nick " + B_YELLOW + query + END
+
+	elif (users_option.startswith("/users ")):
+		subcmd=users_option[7:]
+
+		print "\r" + YELLOW + "-!- user list:" + END
+		for user in userlist:
+			nick=user[0]
+			ip=user[1]
+			city=user[2]
+			cc=user[3]
+			country=user[4]
+			port=user[5]
+			status=user[6]
+			p2nick=user[7]
+
+			if (subcmd=="available" and status==0):
+				print_user(nick,ip,city,cc,status,p2nick)
+			if (subcmd=="away" and status==1):
+				print_user(nick,ip,city,cc,status,p2nick)
+			if (subcmd=="playing" and status==2):
+				print_user(nick,ip,city,cc,status,p2nick)
+
+		print "\r" + YELLOW + "-!- EOF user list." + END
+
+	else:
+		print "\r" + YELLOW + "-!- user list:" + END
+		for user in userlist:
+			nick=user[0]
+			ip=user[1]
+			city=user[2]
+			cc=user[3]
+			country=user[4]
+			port=user[5]
+			status=user[6]
+			p2nick=user[7]
+			print_user(nick,ip,city,cc,status,p2nick)
+		print "\r" + YELLOW + "-!- EOF user list." + END
+
+def print_user(nick,ip,city,cc,status,p2nick):
+	print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
+	if (city != "" and cc != ""): print "(" + city + ", " + cc + ")",
+	elif (city == "" and cc != ""): print "(" + cc + ")",
+	if (status == 0): print "is available",
+	if (status == 1): print "is away",
+	if (status == 2): print "is playing against " + B_GRAY + p2nick,
+	print END
 
 def parselist(cmd):
 
@@ -416,7 +488,7 @@ def pingcheck():
 
 
 def mainloop():
-	global line,sequence,SPECIAL,challengers,challenged,CHANNEL
+	global line,sequence,SPECIAL,challengers,challenged,CHANNEL,users_option
 
 	processed=0
 
@@ -539,7 +611,8 @@ def mainloop():
 			sequence=sequence+1
 
 		# list users
-		if (line == "/users" or line == "/who"):
+		if (line != None and ( line.startswith("/users") or line.startswith("/whois ") or line=="/who" )):
+			users_option=line
 			pdulen = 4+4
 			SPECIAL="USERS"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
@@ -602,6 +675,7 @@ if __name__ == '__main__':
 	line=""
 	challengers=set()
 	challenged=set()
+	users_option=""
 
 	while 1:
 		line = raw_input()
