@@ -164,7 +164,7 @@ def parse(cmd):
 	elif (action == "\xff\xff\xff\xfb"):
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
-		challenged.remove(nick)
+		if nick in challenged: challenged.remove(nick)
 		print "\r" + RED + "-!- " + B_RED + str(nick) + RED + " declined the challenge request"
 
 
@@ -193,7 +193,7 @@ def parse(cmd):
 
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
-		challengers.remove(nick)
+		if nick in challengers: challengers.remove(nick)
 		print "\r" + YELLOW + "-!- CHALLENGE REQUEST CANCELED BY " + B_YELLOW + str(nick) + END
 
 
@@ -208,6 +208,9 @@ def parse(cmd):
 	elif (action == "\x00\x00\x00\x02"):
 		result = cmd[8:12]
 		if (result == "\x00\x00\x00\x06"):
+			s.close()
+			u.close()
+			call(['reset'])
 			print "\r" + RED + "-!- User or password incorrect" + END
 			os._exit(0)
 
@@ -551,6 +554,7 @@ def mainloop():
 				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x0a" + pad(chr(nicklen)) + nick )
 				sequence=sequence+1
 				print "\r" + YELLOW + "-!- declined challenge request from " + B_YELLOW + str(nick) + END
+				challengers.remove(nick)
 			else:
 				print "\r" + YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END
 
@@ -666,11 +670,11 @@ if __name__ == '__main__':
 	s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
 	sequence=sequence+1
 
-	t2 = Thread(target=mainloop)
+	t2 = Thread(target=datathread)
 	t2.daemon = False
 	t2.start()
 
-	t3 = Thread(target=datathread)
+	t3 = Thread(target=mainloop)
 	t3.daemon = False
 	t3.start()
 
@@ -705,7 +709,8 @@ if __name__ == '__main__':
 			call(['clear'])
 
 		if (line == "/quit"):
-			print "\r" + BLUE + "-!- have a nice day :)" + END
 			s.close()
 			u.close()
+			#call(['reset'])
+			print "\r" + BLUE + "-!- have a nice day :)" + END
 			os._exit(0)
