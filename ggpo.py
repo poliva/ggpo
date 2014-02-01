@@ -48,10 +48,11 @@ B_YELLOW = '\033[1;33m'
 B_BLUE = '\033[1;34m'
 B_MAGENTA = '\033[1;35m'
 B_CYAN = '\033[1;36m'
+B_WHITE = '\033[1;37m'
 
 END = '\033[0;m'
 
-PROMPT = "\rggpo" + RED + "> " + END
+PROMPT = B_WHITE + "\rggpo" + RED + "> " + END
 
 def blank_current_readline():
 	# thanks http://stackoverflow.com/questions/7907827/
