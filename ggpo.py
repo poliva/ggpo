@@ -70,7 +70,7 @@ def print_line(text):
 	blank_current_readline()
 	linebuffer = readline.get_line_buffer()
 	print text,
-	if "\r" in linebuffer:
+	if "\n" in linebuffer:
 		sys.stdout.write(text)
 	else:
 		sys.stdout.write(linebuffer.strip('\t\n\r'))
