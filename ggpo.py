@@ -88,7 +88,7 @@ def pad(value,length=4):
 	return value
 
 def parse(cmd):
-	global SPECIAL
+	global SPECIAL,challengers,challenged
 
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 	action = cmd[4:8]
@@ -160,6 +160,7 @@ def parse(cmd):
 	elif (action == "\xff\xff\xff\xfb"):
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
+		challenged.remove(nick)
 		print "\r" + RED + "-!- " + B_RED + str(nick) + RED + " declined the challenge request"
 
 
@@ -175,6 +176,8 @@ def parse(cmd):
 		print "\r" + RED + "-!- INCOMING CHALLENGE REQUEST FROM " + B_RED + str(nick) + RED + " @ " + channel + END
 		print RED + "-!- TYPE '/accept " + B_RED + str(nick) + RED + "' to accept it, or '/decline " + B_RED + str(nick) + RED + "' to wimp out." + END
 
+		challengers.add(nick)
+
 		args = ['mplayer', '/opt/ggpo/assets/challenger-comes.mp3']
 		FNULL = open(os.devnull, 'w')
 		call(args, stdout=FNULL, stderr=FNULL)
@@ -186,7 +189,7 @@ def parse(cmd):
 
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
-
+		challengers.remove(nick)
 		print "\r" + YELLOW + "-!- CHALLENGE REQUEST CANCELED BY " + B_YELLOW + str(nick) + END
 
 
@@ -197,7 +200,7 @@ def parse(cmd):
 		result = cmd[8:12]
 		if (result == "\x00\x00\x00\x06"):
 			print "\r" + RED + "-!- User or password incorrect" + END
-			sys.exit(0)
+			os._exit(0)
 
 	# watch
 	elif (action == "\xff\xff\xff\xfa"):
@@ -407,7 +410,7 @@ def pingcheck():
 
 
 def mainloop():
-	global line,sequence,SPECIAL
+	global line,sequence,SPECIAL,challengers,challenged,CHANNEL
 
 	processed=0
 
@@ -439,36 +442,48 @@ def mainloop():
 			pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 			sequence=sequence+1
+			challenged.add(nick)
 			print "\r" + GREEN + "-!- challenge request sent to " + B_GREEN + str(nick) + END
 			print GREEN + "-!- type '/cancel " + B_GREEN + str(nick) + GREEN + "' to cancel it" + END
 
 		# accept a challenge request (initiated by peer)
 		if (line != None and line.startswith("/accept ")):
 			nick = line[8:]
-			nicklen = len(nick)
-			channellen = len(CHANNEL)
-			pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
-			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x09" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
-			sequence=sequence+1
-			print "\r" + GREEN + "-!- accepted challenge request from " + B_GREEN + str(nick) + END
+			if nick in challengers:
+				nicklen = len(nick)
+				channellen = len(CHANNEL)
+				pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
+				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x09" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
+				sequence=sequence+1
+				print "\r" + GREEN + "-!- accepted challenge request from " + B_GREEN + str(nick) + END
+				challengers.remove(nick)
+			else:
+				print "\r" + YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END
 
 		# decline a challenge request (initiated by peer)
 		if (line != None and line.startswith("/decline ")):
 			nick = line[9:]
-			nicklen = len(nick)
-			pdulen = 4 + 4 + 4 + nicklen
-			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x0a" + pad(chr(nicklen)) + nick )
-			sequence=sequence+1
-			print "\r" + YELLOW + "-!- declined challenge request from " + B_YELLOW + str(nick) + END
+			if nick in challengers:
+				nicklen = len(nick)
+				pdulen = 4 + 4 + 4 + nicklen
+				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x0a" + pad(chr(nicklen)) + nick )
+				sequence=sequence+1
+				print "\r" + YELLOW + "-!- declined challenge request from " + B_YELLOW + str(nick) + END
+			else:
+				print "\r" + YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END
 
 		# cancel an ongoing challenge request (initiated by us)
 		if (line != None and line.startswith("/cancel ")):
 			nick = line[8:]
-			nicklen = len(nick)
-			pdulen = 4 + 4 + 4 + nicklen
-			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
-			sequence=sequence+1
-			print "\r" + YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END
+			if nick in challenged:
+				nicklen = len(nick)
+				pdulen = 4 + 4 + 4 + nicklen
+				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
+				sequence=sequence+1
+				challenged.remove(nick)
+				print "\r" + YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END
+			else:
+				print "\r" + YELLOW + "-!- you aren't challenging " + B_YELLOW + str(nick) + END
 
 		# watch an ongoing match
 		if (line != None and line.startswith("/watch ")):
@@ -579,6 +594,8 @@ if __name__ == '__main__':
 	t3.start()
 
 	line=""
+	challengers=set()
+	challenged=set()
 
 	while 1:
 		line = raw_input()
@@ -607,5 +624,3 @@ if __name__ == '__main__':
 			s.close()
 			u.close()
 			os._exit(0)
-
-	s.close()
