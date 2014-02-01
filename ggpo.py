@@ -48,11 +48,10 @@ B_YELLOW = '\033[1;33m'
 B_BLUE = '\033[1;34m'
 B_MAGENTA = '\033[1;35m'
 B_CYAN = '\033[1;36m'
-B_WHITE = '\033[1;37m'
 
 END = '\033[0;m'
 
-PROMPT = B_WHITE + "\rggpo" + RED + "> " + END
+PROMPT = "\rggpo" + RED + "> " + END
 
 def blank_current_readline():
 	# thanks http://stackoverflow.com/questions/7907827/
@@ -67,10 +66,14 @@ def blank_current_readline():
 	sys.stdout.write('\x1b[1A\x1b[2K'*(text_len/cols))  # Move cursor up and clear line
 	sys.stdout.write('\x1b[0G')                         # Move to start of line
 
-def print_line(line):
+def print_line(text):
 	blank_current_readline()
-	print line,
-	sys.stdout.write(readline.get_line_buffer().strip('\t\n\r'))
+	linebuffer = readline.get_line_buffer()
+	print text,
+	if "\r" in linebuffer:
+		sys.stdout.write(text)
+	else:
+		sys.stdout.write(linebuffer.strip('\t\n\r'))
 	sys.stdout.flush()
 
 def readdata():
@@ -662,8 +665,6 @@ if __name__ == '__main__':
 	# start away by default
 	s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
 	sequence=sequence+1
-
-	#print PROMPT,
 
 	t2 = Thread(target=mainloop)
 	t2.daemon = False
