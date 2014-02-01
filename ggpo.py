@@ -369,13 +369,14 @@ def parseusers(cmd):
 				port=user[5]
 				status=user[6]
 				p2nick=user[7]
+				try:
+					hostname = socket.gethostbyaddr(ip)
+				except socket.herror:
+					hostname = (ip,ip,ip)
 
 				print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END
 				print "\r" + YELLOW + "-!- " + GRAY + "  channel  : " + CHANNEL + END
-				print "\r" + YELLOW + "-!- " + GRAY + "  hostname :",
-				hostname = socket.gethostbyaddr(ip)
-				if (hostname[0] != ""): print hostname[0] + END
-				else: print ip + END
+				print "\r" + YELLOW + "-!- " + GRAY + "  hostname : " + hostname[0] + END
 				print "\r" + YELLOW + "-!- " + GRAY + "  location :",
 				if (city != "" and cc != ""): print city + ", " + cc + ", " + country
 				elif (city == "" and cc != ""): print cc + ", " + country
