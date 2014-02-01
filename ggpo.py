@@ -14,8 +14,12 @@
 import socket
 import string
 import sys
-import signal
+import time
 import os
+import struct
+import readline
+import termios
+import fcntl
 from subprocess import call
 from threading import Thread
 
@@ -25,7 +29,6 @@ CHANNEL="ssf2t"
 FBA="/opt/ggpo/ggpofba.sh"
 
 DEBUG=0 # values: 0,1,2
-TIMEOUT=3
 
 SPECIAL=""
 OLDDATA=""
@@ -48,20 +51,26 @@ B_CYAN = '\033[1;36m'
 
 END = '\033[0;m'
 
-def interrupted(signum, frame):
-	"called when read times out"
-	#print 'interrupted!'
-signal.signal(signal.SIGALRM, interrupted)
+PROMPT = "\rggpo" + RED + "> " + END
 
-def input():
-	try:
-		print "\rggpo> ",
-		foo = sys.stdin.readline()
-		foo = foo.strip(' \t\n\r')
-		return foo
-	except:
-		# timeout
-		return
+def blank_current_readline():
+	# thanks http://stackoverflow.com/questions/7907827/
+
+	# Next line said to be reasonably portable for various Unixes
+	(rows,cols) = struct.unpack('hh', fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ,'1234'))
+
+	text_len = len(readline.get_line_buffer())+2
+
+	# ANSI escape sequences (All VT100 except ESC[0G)
+	sys.stdout.write('\x1b[2K')                         # Clear current line
+	sys.stdout.write('\x1b[1A\x1b[2K'*(text_len/cols))  # Move cursor up and clear line
+	sys.stdout.write('\x1b[0G')                         # Move to start of line
+
+def print_line(line):
+	blank_current_readline()
+	print line,
+	sys.stdout.write(readline.get_line_buffer())
+	sys.stdout.flush()
 
 def readdata():
 	global s
@@ -397,46 +406,24 @@ def pingcheck():
 			if (DEBUG>0): print GRAY + "-!- UDP rpl: GGPO PONG " + val + " to " + str(addr) + END
 
 
+def mainloop():
+	global line,sequence,SPECIAL
 
-if __name__ == '__main__':
-
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.connect(('ggpo.net', 7000))
-
-	u = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-	u.bind(('0.0.0.0', 6009))
-
-	t = Thread(target=pingcheck)
-	t.daemon = True
-	t.start()
-
-	# welcome packet (?)
-	s.send('\x00\x00\x00\x14\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
-
-	# authentication
-	sequence=0x2
-	pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4
-	s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79")
-	sequence=sequence+1
-
-	# choose channel
-	channellen = len(CHANNEL)
-	pdulen = 4 + 4 + 4 + channellen
-	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
-	sequence=sequence+1
-
-	# start away by default
-	s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
-	sequence=sequence+1
+	processed=0
 
 	while 1:
-		# set alarm
-		signal.alarm(TIMEOUT)
-		line = input()
-		# disable the alarm after success
-		signal.alarm(0)
 
-		if (line != None and not line.startswith("/")):
+		print_line(PROMPT)
+		time.sleep(1)
+
+		if (processed==1):
+			line=""
+			processed=0
+
+		if (line != ""):
+			processed=1
+
+		if (line != None and line != "" and not line.startswith("/")):
 			#print line
 			msglen = len(line)
 			pdulen = 4 + 4 + 4 + msglen
@@ -537,6 +524,65 @@ if __name__ == '__main__':
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
 			sequence=sequence+1
 
+		if (DEBUG>1):
+			print "\r" + BLUE + "HEX: ",repr(data) + END
+
+
+
+def datathread():
+	global data
+	while 1:
+		data = readdata()
+		parse(data)
+		print_line(PROMPT)
+		time.sleep(2)
+
+if __name__ == '__main__':
+
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect(('ggpo.net', 7000))
+
+	u = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+	u.bind(('0.0.0.0', 6009))
+
+	t = Thread(target=pingcheck)
+	t.daemon = True
+	t.start()
+
+	# welcome packet (?)
+	s.send('\x00\x00\x00\x14\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
+
+	# authentication
+	sequence=0x2
+	pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4
+	s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79")
+	sequence=sequence+1
+
+	# choose channel
+	channellen = len(CHANNEL)
+	pdulen = 4 + 4 + 4 + channellen
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
+	sequence=sequence+1
+
+	# start away by default
+	s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
+	sequence=sequence+1
+
+	#print PROMPT,
+
+	t2 = Thread(target=mainloop)
+	t2.daemon = False
+	t2.start()
+
+	t3 = Thread(target=datathread)
+	t3.daemon = False
+	t3.start()
+
+	line=""
+
+	while 1:
+		line = raw_input()
+
 		if (line == "/help"):
 			print "\r" + BLUE + "-!- available commands:" + END
 			print BLUE + "-!- /challenge <nick>\tsend a challenge request to <nick>" + END
@@ -560,17 +606,6 @@ if __name__ == '__main__':
 			print "\r" + BLUE + "-!- have a nice day :)" + END
 			s.close()
 			u.close()
-			#call(['reset'])
-			sys.exit(0)
-
-		signal.alarm(TIMEOUT)
-		data = readdata()
-		signal.alarm(0)
-		if not data: continue
-
-		if (DEBUG>1):
-			print "\r" + BLUE + "HEX: ",repr(data) + END
-
-		parse(data)
+			os._exit(0)
 
 	s.close()
