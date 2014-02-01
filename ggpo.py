@@ -251,17 +251,20 @@ def parsespecial(cmd):
 	#myseqnum = int(cmd[4:8].encode('hex'),16)
 
 	if (SPECIAL=="INTRO"):
-		channellen = int(cmd[12:12+4].encode('hex'),16)
-		channel = cmd[16:16+channellen]
+		try:
+			channellen = int(cmd[12:12+4].encode('hex'),16)
+			channel = cmd[16:16+channellen]
 
-		topiclen = int(cmd[16+channellen:20+channellen].encode('hex'),16)
-		topic = cmd[20+channellen:20+channellen+topiclen]
+			topiclen = int(cmd[16+channellen:20+channellen].encode('hex'),16)
+			topic = cmd[20+channellen:20+channellen+topiclen]
 
-		msglen = int(cmd[20+channellen+topiclen:24+channellen+topiclen].encode('hex'),16)
-		msg = cmd[24+channellen+topiclen:24+channellen+topiclen+msglen]
+			msglen = int(cmd[20+channellen+topiclen:24+channellen+topiclen].encode('hex'),16)
+			msg = cmd[24+channellen+topiclen:24+channellen+topiclen+msglen]
 
-		print "\r" + B_GREEN + str(channel) + GREEN + " || " + B_GREEN + str(topic) + GREEN
-		print str(msg) + END
+			print "\r" + B_GREEN + str(channel) + GREEN + " || " + B_GREEN + str(topic) + GREEN
+			print str(msg) + END
+		except ValueError:
+			pass
 		SPECIAL=""
 
 	elif (SPECIAL=="AWAY"):
