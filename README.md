@@ -22,9 +22,11 @@ ggpo> /help
 -!- /accept    &lt;nick&gt;	accept a challenge request initiated by &lt;nick&gt;
 -!- /decline   &lt;nick&gt;	decline a challenge request initiated by &lt;nick&gt;
 -!- /watch     &lt;nick&gt;	watch the game that &lt;nick&gt; is currently playing
+-!- /whois     &lt;nick&gt;	display information about the user &lt;nick&gt;
 -!- /join   &lt;channel&gt;	join the chat/game room &lt;channel&gt;
 -!- /list 		list all available channels or chat/game rooms
--!- /users 		list all users in the current channel
+-!- /users (&lt;modifier&gt;)	list all users in the current channel
+-!-          modifier: 'available', 'away' or 'playing'
 -!- /intro 		view the channel welcome text
 -!- /away 		set away status (you can't be challenged)
 -!- /back 		set available status (you can be challenged)
