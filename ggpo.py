@@ -634,6 +634,7 @@ def mainloop():
 	global line,sequence,SPECIAL,challengers,challenged,CHANNEL,users_option
 
 	processed=0
+	olddata=""
 
 	while 1:
 
@@ -765,8 +766,9 @@ def mainloop():
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
 			sequence=sequence+1
 
-		if (DEBUG>1):
+		if (DEBUG>1 and olddata!=data):
 			print "\r" + BLUE + "HEX: ",repr(data) + END
+			olddata=data
 
 
 
