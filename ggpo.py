@@ -22,6 +22,7 @@ import termios
 import fcntl
 from subprocess import call
 from threading import Thread
+from random import randint
 
 USERNAME="pof"
 PASSWORD="XXXXXXXX"
@@ -284,6 +285,33 @@ def parsespecial(cmd):
 	else:
 		if (DEBUG>0): print "\r" + BLUE + "SPECIAL=" + SPECIAL + " + DATA: " + repr(cmd[8:pdulen+4]) + END
 
+def check_ping(nick,ip,port):
+	global pinglist
+
+	num1 = randint(500000,30000000)
+	num2 = randint(4000000,900000000)
+	message = "GGPO PING " + str(num1) + " " + str(num2)
+	u.sendto(message, (ip, port))
+	mytime = time.time()
+	found=0
+	for i in range( len( pinglist ) ):
+		if (pinglist[i][1]==nick and pinglist[i][2]==ip):
+			pinglist[i][0]=mytime
+			pinglist[i][4]=str(num1)+" "+str(num2)
+			found=1
+			break
+	if (found==0):
+		# last digit used to store the ping value in msec
+		pingquery=[mytime,nick,ip,port,str(num1)+" "+str(num2),0]
+		pinglist.append(pingquery)
+
+def get_ping_msec(nick,ip):
+	for i in range( len( pinglist ) ):
+		if (pinglist[i][1]==nick and pinglist[i][2]==ip):
+			ping = pinglist[i][5]
+			break
+	return ping
+
 def parseusers(cmd):
 
 	global SPECIAL, OLDDATA
@@ -359,6 +387,7 @@ def parseusers(cmd):
 		port = int(cmd[i:i+4].encode('hex'),16)
 		i=i+4
 
+		check_ping(nick,ip,port)
 		user = (nick,ip,city,cc,country,port,status,p2nick)
 		userlist.append(user)
 
@@ -383,6 +412,7 @@ def parseusers(cmd):
 				except socket.herror:
 					hostname = (ip,ip,ip)
 
+				ping = get_ping_msec(nick,ip)
 				print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END
 				print "\r" + YELLOW + "-!- " + GRAY + "  channel  : " + CHANNEL + END
 				print "\r" + YELLOW + "-!- " + GRAY + "  hostname : " + hostname[0] + END
@@ -394,6 +424,7 @@ def parseusers(cmd):
 				if (status == 0): print "available"
 				if (status == 1): print "away"
 				if (status == 2): print "playing against " + B_GRAY + p2nick
+				if (ping != 0): print "\r" + YELLOW + "-!- " + GRAY + "  ping     : " + str(int(ping)) + " ms" + END
 				print "\r" + YELLOW + "-!- " + GRAY + "End of WHOIS" + END
 		if (ip==""): print "\r" + YELLOW + "-!- There is no such nick " + B_YELLOW + query + END
 
@@ -435,12 +466,15 @@ def parseusers(cmd):
 		print "\r" + YELLOW + "-!- EOF user list." + END
 
 def print_user(nick,ip,city,cc,status,p2nick):
+
+	ping = get_ping_msec(nick,ip)
 	print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
 	if (city != "" and cc != ""): print "(" + city + ", " + cc + ")",
 	elif (city == "" and cc != ""): print "(" + cc + ")",
 	if (status == 0): print "is available",
 	if (status == 1): print "is away",
 	if (status == 2): print "is playing against " + B_GRAY + p2nick,
+	if (ping != 0): print GRAY + "[" + str(int(ping)) + " ms]",
 	print END
 
 def parselist(cmd):
@@ -486,7 +520,7 @@ def parselist(cmd):
 	print YELLOW + "-!- EOF channel list." + END
 
 def pingcheck():
-	global u
+	global u, pinglist
 
 	while 1:
 		dgram, addr = u.recvfrom(64)
@@ -495,7 +529,14 @@ def pingcheck():
 			val = dgram[10:]
 			u.sendto("GGPO PONG " + val, addr)
 			if (DEBUG>0): print GRAY + "-!- UDP rpl: GGPO PONG " + val + " to " + str(addr) + END
-
+		if (dgram[0:9] == "GGPO PONG"):
+			mytime = time.time()
+			val = dgram[10:]
+			for i in range( len( pinglist ) ):
+				if (pinglist[i][4]==val and pinglist[i][2]==addr[0]):
+					msec = (mytime-pinglist[i][0])*1000
+					pinglist[i][5]=msec
+					break
 
 def mainloop():
 	global line,sequence,SPECIAL,challengers,challenged,CHANNEL,users_option
@@ -685,6 +726,7 @@ if __name__ == '__main__':
 	challengers=set()
 	challenged=set()
 	users_option=""
+	pinglist=[]
 
 	while 1:
 		line = raw_input()
