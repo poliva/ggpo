@@ -165,7 +165,7 @@ def parse(cmd):
 	elif (action == "\xff\xff\xff\xfb"):
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
-		if nick in challenged: challenged.remove(nick)
+		if nick in list(challenged): challenged.remove(nick)
 		print "\r" + RED + "-!- " + B_RED + str(nick) + RED + " declined the challenge request"
 
 
@@ -197,7 +197,7 @@ def parse(cmd):
 
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
-		if nick in challengers: challengers.remove(nick)
+		if nick in list(challengers): challengers.remove(nick)
 		print "\r" + YELLOW + "-!- CHALLENGE REQUEST CANCELED BY " + B_YELLOW + str(nick) + END
 
 
@@ -698,7 +698,7 @@ def mainloop():
 		# cancel an ongoing challenge request (initiated by us)
 		if (line != None and line.startswith("/cancel ")):
 			nick = line[8:]
-			if nick in challenged:
+			if nick in list(challenged):
 				pdu_cancel(nick)
 			else:
 				print "\r" + YELLOW + "-!- you aren't challenging " + B_YELLOW + str(nick) + END
