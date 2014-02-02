@@ -34,7 +34,7 @@
 <p>©2014 Pau Oliva Fora (<a href="https://twitter.com/pof">@pof</a>)</p>
 
 <p>This is an alternative <a href="http://ggpo.net/">GGPO</a> command line client written in python.
-I have only tested this on Linux but it might work on other platforms.
+This allows you to play GGPO on Linux and MacOS X systems.
 You'll still need the ggpofba.exe from the original GGPO, which will be launched through wine.</p>
 
 <h2>
@@ -43,8 +43,23 @@ You'll still need the ggpofba.exe from the original GGPO, which will be launched
 <p>Extract the original GGPO in <code>/opt/ggpo</code>, and add ggpo.py and ggpofba.sh in the same folder.
 Edit ggpo.py to set your username and password.</p>
 
-<h2>
+<h3>
+<a name="linux" class="anchor" href="#linux"><span class="octicon octicon-link"></span></a>Linux</h3>
+
+<ol>
+<li>Make sure you have <a href="http://www.winehq.org/">wine</a> installed on your distribution (usually <code>apt-get install wine</code> on debian based systems)</li>
+<li>run 'winecfg' and check the option to "Emulate a virtual desktop"</li>
+</ol><h3>
+<a name="mac" class="anchor" href="#mac"><span class="octicon octicon-link"></span></a>Mac</h3>
+
+<ol>
+<li>Download <a href="http://sourceforge.net/projects/darwine/files/latest/download">Wine.dmg</a>
+</li>
+<li>Run Wine.dmg and drag the wine icon to your Applications folder</li>
+</ol><h2>
 <a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>Just execute ggpo.py:</p>
 
 <pre>
 $ /opt/ggpo/ggpo.py
