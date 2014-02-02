@@ -23,6 +23,7 @@ ggpo> /help
 -!- /decline   &lt;nick&gt;	decline a challenge request initiated by &lt;nick&gt;
 -!- /watch     &lt;nick&gt;	watch the game that &lt;nick&gt; is currently playing
 -!- /whois     &lt;nick&gt;	display information about the user &lt;nick&gt;
+-!- /whowas    &lt;nick&gt;	information about &lt;nick&gt; that is no longer connected
 -!- /join   &lt;channel&gt;	join the chat/game room &lt;channel&gt;
 -!- /list 		list all available channels or chat/game rooms
 -!- /users (&lt;modifier&gt;)	list all users in the current channel
@@ -31,7 +32,7 @@ ggpo> /help
 -!- /away 		set away status (you can't be challenged)
 -!- /back 		set available status (you can be challenged)
 -!- /clear 		clear the screen
--!- /quit 		quit ggpo
+-!- /quit 		disconnect from ggpo server
 </pre>
 
 ## Screenshots
