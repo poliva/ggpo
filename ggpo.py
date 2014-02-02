@@ -501,6 +501,10 @@ def print_user_long(nick,command):
 	if (status == 1): print "away"
 	if (status == 2): print "playing against " + B_GRAY + p2nick
 	if (ping != 0): print "\r" + YELLOW + "-!- " + GRAY + "  ping     : " + str(int(ping)) + " ms" + END
+	if nick in challenged:
+		print "\r" + YELLOW + "-!- " + GRAY + " you have challenged " + B_GRAY + str(nick) + END
+	if nick in challengers:
+		print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + " has challenged you" + END
 	return 1
 
 def print_user(user):
@@ -523,6 +527,11 @@ def print_user(user):
 	if (status == 1): print "is away",
 	if (status == 2): print "is playing against " + B_GRAY + p2nick,
 	if (ping != 0): print GRAY + "[" + str(int(ping)) + " ms]",
+	if nick in challenged:
+		print GREEN + "*challenged",
+	if nick in challengers:
+		print RED + "*challenging",
+
 	print END
 
 def parselist(cmd):
