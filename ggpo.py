@@ -23,6 +23,7 @@ import fcntl
 from subprocess import call
 from threading import Thread
 from random import randint
+from operator import itemgetter
 
 USERNAME="pof"
 PASSWORD="XXXXXXXX"
@@ -388,12 +389,18 @@ def parseusers(cmd):
 		i=i+4
 
 		check_ping(nick,ip,port)
-		user = (nick,ip,city,cc,country,port,status,p2nick)
+		user = [nick,ip,city,cc,country,port,status,p2nick,0]
 		userlist.append(user)
 
-	userlist.sort()
 	# sleep 1sec to collect ping data
 	time.sleep(1)
+	for user in userlist:
+		nick=user[0]
+		ip=user[1]
+		user[8]=get_ping_msec(nick,ip)
+
+	# sort userlist by ping value
+	userlist = sorted(userlist, key=itemgetter(8), reverse=False)
 
 	if (users_option.startswith("/whois ")):
 		query=users_option[7:]
@@ -409,12 +416,12 @@ def parseusers(cmd):
 				port=user[5]
 				status=user[6]
 				p2nick=user[7]
+				ping=user[8]
 				try:
 					hostname = socket.gethostbyaddr(ip)
 				except socket.herror:
 					hostname = (ip,ip,ip)
 
-				ping = get_ping_msec(nick,ip)
 				print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END
 				print "\r" + YELLOW + "-!- " + GRAY + "  channel  : " + CHANNEL + END
 				print "\r" + YELLOW + "-!- " + GRAY + "  hostname : " + hostname[0] + END
