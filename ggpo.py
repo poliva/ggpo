@@ -810,6 +810,16 @@ if __name__ == '__main__':
 			else:
 				print "\r" + YELLOW + "-!- There was no such nick " + B_YELLOW + nick + END
 
+		# hidden command, not present in /help
+		if (line.startswith("/debug ")):
+			debug = line[7:]
+			if (int(debug) == 0): DEBUG=0
+			elif (int(debug) == 1): DEBUG=1
+			elif (int(debug) == 2): DEBUG=2
+			else: print "\r" + YELLOW + "-!- possible values are /debug [0|1|2]" + END
+		if (line == "/debug"):
+			print "\r" + YELLOW + "-!- " + GRAY + "DEBUG: " + str(DEBUG) + END
+
 		if (line == "/clear"):
 			call(['clear'])
 
