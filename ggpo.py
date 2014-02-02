@@ -131,6 +131,8 @@ def parse(cmd):
 					nick2len = int(cmd[24+nicklen:28+nicklen].encode('hex'),16)
 					nick2 = cmd[28+nicklen:28+nicklen+nick2len]
 					print "\r" + MAGENTA + "-!- new match " + B_MAGENTA + str(nick) + MAGENTA + " vs " + B_MAGENTA + str(nick2) + END
+					# remove from challenged set when nick2 accepts our challenge
+					if (nick1==USERNAME and nick2 in list(challenged)): challenged.remove(nick2)
 
 			elif (state <2):
 				if (VERBOSE>2):
