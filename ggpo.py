@@ -594,6 +594,36 @@ def pingcheck():
 					msec = (mytime-pinglist[i][0])*1000
 					pinglist[i][5]=msec
 					break
+def pdu_accept(nick):
+	global sequence,challengers
+
+	nicklen = len(nick)
+	channellen = len(CHANNEL)
+	pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x09" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
+	sequence=sequence+1
+	print "\r" + GREEN + "-!- accepted challenge request from " + B_GREEN + str(nick) + END
+	challengers.remove(nick)
+
+def pdu_decline(nick):
+	global sequence, challengers
+
+	nicklen = len(nick)
+	pdulen = 4 + 4 + 4 + nicklen
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x0a" + pad(chr(nicklen)) + nick )
+	sequence=sequence+1
+	print "\r" + YELLOW + "-!- declined challenge request from " + B_YELLOW + str(nick) + END
+	challengers.remove(nick)
+
+def pdu_cancel(nick):
+	global sequence,challenged
+
+	nicklen = len(nick)
+	pdulen = 4 + 4 + 4 + nicklen
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
+	sequence=sequence+1
+	print "\r" + YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END
+	challenged.remove(nick)
 
 def mainloop():
 	global line,sequence,SPECIAL,challengers,challenged,CHANNEL,users_option
@@ -635,55 +665,45 @@ def mainloop():
 		# accept a challenge request (initiated by peer)
 		if (line != None and line.startswith("/accept ")):
 			nick = line[8:]
-			if nick in challengers:
-				nicklen = len(nick)
-				channellen = len(CHANNEL)
-				pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
-				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x09" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
-				sequence=sequence+1
-				print "\r" + GREEN + "-!- accepted challenge request from " + B_GREEN + str(nick) + END
-				challengers.remove(nick)
+			if nick in list(challengers):
+				pdu_accept(nick)
 			else:
 				print "\r" + YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END
+
+		# if there's only one incoming challenge request, allow the user to type /accept without parameters (no need to specify nick)
+		if (line == "/accept"):
+			if (len(challengers)==1):
+				for nick in list(challengers):
+					pdu_accept(nick)
+					break
+			else:
+				print "\r" + YELLOW + "-!- " + "There's more than one incoming challenge request: you need to specify the nick." + END
 
 		# decline a challenge request (initiated by peer)
 		if (line != None and line.startswith("/decline ")):
 			nick = line[9:]
-			if nick in challengers:
-				nicklen = len(nick)
-				pdulen = 4 + 4 + 4 + nicklen
-				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x0a" + pad(chr(nicklen)) + nick )
-				sequence=sequence+1
-				print "\r" + YELLOW + "-!- declined challenge request from " + B_YELLOW + str(nick) + END
-				challengers.remove(nick)
+			if nick in list(challengers):
+				pdu_decline(nick)
 			else:
 				print "\r" + YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END
+
+		# /decline without parameters declines all incoming challenge requests
+		if (line == "/decline"):
+			for nick in list(challengers):
+				pdu_decline(nick)
 
 		# cancel an ongoing challenge request (initiated by us)
 		if (line != None and line.startswith("/cancel ")):
 			nick = line[8:]
 			if nick in challenged:
-				nicklen = len(nick)
-				pdulen = 4 + 4 + 4 + nicklen
-				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
-				sequence=sequence+1
-				challenged.remove(nick)
-				print "\r" + YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END
+				pdu_cancel(nick)
 			else:
 				print "\r" + YELLOW + "-!- you aren't challenging " + B_YELLOW + str(nick) + END
 
 		# /cancel without parameters: cancel all ongoing challenge requests
 		if (line == "/cancel"):
-			tmplist=[]
-			for nick in challenged:
-				nicklen = len(nick)
-				pdulen = 4 + 4 + 4 + nicklen
-				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
-				sequence=sequence+1
-				tmplist.append(nick)
-				print "\r" + YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END
-			for nick in tmplist:
-				challenged.remove(nick)
+			for nick in list(challenged):
+				pdu_cancel(nick)
 
 		# watch an ongoing match
 		if (line != None and line.startswith("/watch ")):
