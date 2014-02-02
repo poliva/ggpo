@@ -4,7 +4,7 @@ ggpo
 &copy;2014 Pau Oliva Fora ([@pof](https://twitter.com/pof))
 
 This is an alternative [GGPO](http://ggpo.net/) command line client written in python.
-I have only tested this on Linux but it might work on other platforms.
+This allows you to play GGPO on Linux and MacOS X systems.
 You'll still need the ggpofba.exe from the original GGPO, which will be launched through wine.
 
 ## Installation
@@ -12,7 +12,16 @@ You'll still need the ggpofba.exe from the original GGPO, which will be launched
 Extract the original GGPO in ```/opt/ggpo```, and add ggpo.py and ggpofba.sh in the same folder.
 Edit ggpo.py to set your username and password.
 
+### Linux
+1. Make sure you have [wine](http://www.winehq.org/) installed on your distribution (usually ```apt-get install wine``` on debian based systems)
+2. run 'winecfg' and check the option to "Emulate a virtual desktop"
+
+### Mac
+1. Download [Wine.dmg](http://sourceforge.net/projects/darwine/files/latest/download)
+2. Run Wine.dmg and drag the wine icon to your Applications folder
+
 ## Usage
+Just execute ggpo.py:
 <pre>
 $ /opt/ggpo/ggpo.py
 ggpo> /help
