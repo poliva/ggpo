@@ -184,9 +184,12 @@ def parse(cmd):
 		challengers.add(nick)
 
 		args = ['mplayer', '/opt/ggpo/assets/challenger-comes.mp3']
-		FNULL = open(os.devnull, 'w')
-		call(args, stdout=FNULL, stderr=FNULL)
-		FNULL.close()
+		try:
+			FNULL = open(os.devnull, 'w')
+			call(args, stdout=FNULL, stderr=FNULL)
+			FNULL.close()
+		except OSError:
+			pass
 
 
 	# cancel challenge
@@ -840,8 +843,8 @@ if __name__ == '__main__':
 			print "\r" + BLUE + "-!- available commands:" + END
 			print "\r" + BLUE + "-!- /challenge [<nick>]\tsend a challenge request to <nick>" + END
 			print "\r" + BLUE + "-!- /cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END
-			print "\r" + BLUE + "-!- /accept    <nick>\taccept a challenge request initiated by <nick>" + END
-			print "\r" + BLUE + "-!- /decline   <nick>\tdecline a challenge request initiated by <nick>" + END
+			print "\r" + BLUE + "-!- /accept    [<nick>]\taccept a challenge request initiated by <nick>" + END
+			print "\r" + BLUE + "-!- /decline   [<nick>]\tdecline a challenge request initiated by <nick>" + END
 			print "\r" + BLUE + "-!- /watch     <nick>\twatch the game that <nick> is currently playing" + END
 			print "\r" + BLUE + "-!- /whois     <nick>\tdisplay information about the user <nick>" + END
 			print "\r" + BLUE + "-!- /whowas    <nick>\tinfo about <nick> that is no longer connected" + END
