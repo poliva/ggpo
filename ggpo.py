@@ -395,13 +395,27 @@ def parseusers(cmd):
 
 	# sleep 1sec to collect ping data
 	time.sleep(1)
+
+	# create 3 lists
+	available_users=[]
+	away_users=[]
+	playing_users=[]
+
 	for user in userlist:
 		nick=user[0]
 		ip=user[1]
 		user[8]=get_ping_msec(nick,ip)
+		# put the users on each list
+		status=user[6]
+		if (status == 0): available_users.append(user)
+		elif (status == 1): away_users.append(user)
+		elif (status == 2): playing_users.append(user)
 
 	# sort userlist by ping value
 	userlist = sorted(userlist, key=itemgetter(8), reverse=False)
+	available_users = sorted(available_users, key=itemgetter(8), reverse=False)
+	away_users = sorted(away_users, key=itemgetter(8), reverse=False)
+	playing_users = sorted(playing_users, key=itemgetter(8), reverse=False)
 
 	if (users_option.startswith("/whois ")):
 		query=users_option[7:]
@@ -442,42 +456,38 @@ def parseusers(cmd):
 		subcmd=users_option[7:]
 
 		print "\r" + YELLOW + "-!- user list:" + END
-		for user in userlist:
-			nick=user[0]
-			ip=user[1]
-			city=user[2]
-			cc=user[3]
-			country=user[4]
-			port=user[5]
-			status=user[6]
-			p2nick=user[7]
-
-			if (subcmd=="available" and status==0):
-				print_user(nick,ip,city,cc,status,p2nick)
-			if (subcmd=="away" and status==1):
-				print_user(nick,ip,city,cc,status,p2nick)
-			if (subcmd=="playing" and status==2):
-				print_user(nick,ip,city,cc,status,p2nick)
+		if (subcmd == "available"):
+			for user in available_users: print_user(user)
+		elif (subcmd=="away"):
+			for user in away_users: print_user(user)
+		elif (subcmd=="playing"):
+			for user in playing_users: print_user(user)
+		else:
+			print "\r" + YELLOW + "-!- possible modifiers are: available, away, playing" + END
 
 		print "\r" + YELLOW + "-!- EOF user list." + END
 
 	else:
 		print "\r" + YELLOW + "-!- user list:" + END
-		for user in userlist:
-			nick=user[0]
-			ip=user[1]
-			city=user[2]
-			cc=user[3]
-			country=user[4]
-			port=user[5]
-			status=user[6]
-			p2nick=user[7]
-			print_user(nick,ip,city,cc,status,p2nick)
+		for user in available_users: print_user(user)
+		for user in playing_users: print_user(user)
+		for user in away_users: print_user(user)
 		print "\r" + YELLOW + "-!- EOF user list." + END
 
-def print_user(nick,ip,city,cc,status,p2nick):
 
-	ping = get_ping_msec(nick,ip)
+def print_user(user):
+
+	nick=user[0]
+	ip=user[1]
+	city=user[2]
+	cc=user[3]
+	country=user[4]
+	port=user[5]
+	status=user[6]
+	p2nick=user[7]
+	ping=user[8]
+
+	if (ping==0): ping = get_ping_msec(nick,ip)
 	print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
 	if (city != "" and cc != ""): print "(" + city + ", " + cc + ")",
 	elif (city == "" and cc != ""): print "(" + cc + ")",
