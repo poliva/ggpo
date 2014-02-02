@@ -672,6 +672,19 @@ def mainloop():
 			else:
 				print "\r" + YELLOW + "-!- you aren't challenging " + B_YELLOW + str(nick) + END
 
+		# /cancel without parameters: cancel all ongoing challenge requests
+		if (line == "/cancel"):
+			tmplist=[]
+			for nick in challenged:
+				nicklen = len(nick)
+				pdulen = 4 + 4 + 4 + nicklen
+				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
+				sequence=sequence+1
+				tmplist.append(nick)
+				print "\r" + YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END
+			for nick in tmplist:
+				challenged.remove(nick)
+
 		# watch an ongoing match
 		if (line != None and line.startswith("/watch ")):
 			nick = line[7:]
@@ -806,7 +819,7 @@ if __name__ == '__main__':
 		if (line == "/help"):
 			print "\r" + BLUE + "-!- available commands:" + END
 			print "\r" + BLUE + "-!- /challenge [<nick>]\tsend a challenge request to <nick>" + END
-			print "\r" + BLUE + "-!- /cancel    <nick>\tcancel an ongoing challenge request to <nick>" + END
+			print "\r" + BLUE + "-!- /cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END
 			print "\r" + BLUE + "-!- /accept    <nick>\taccept a challenge request initiated by <nick>" + END
 			print "\r" + BLUE + "-!- /decline   <nick>\tdecline a challenge request initiated by <nick>" + END
 			print "\r" + BLUE + "-!- /watch     <nick>\twatch the game that <nick> is currently playing" + END
@@ -857,7 +870,7 @@ if __name__ == '__main__':
 		if (line == "/challenge"):
 			print "\r" + YELLOW + "-!- " + GRAY + "challenging:",
 			for nick in challenged:
-				print "["+ B_GRAY + nick + GRAY + "]",
+				print "["+ B_GREEN + nick + GRAY + "]",
 			print END
 
 		if (line == "/clear"):
