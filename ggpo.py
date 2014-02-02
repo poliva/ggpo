@@ -31,11 +31,6 @@ PASSWORD="XXXXXXXX"
 CHANNEL="ssf2t"
 FBA="/opt/ggpo/ggpofba.sh"
 
-DEBUG=0 # values: 0,1,2
-
-SPECIAL=""
-OLDDATA=""
-
 GRAY = '\033[0;30m'
 RED = '\033[0;31m'
 GREEN = '\033[0;32m'
@@ -102,11 +97,12 @@ def parse(cmd):
 
 	# chat
 	if (action == "\xff\xff\xff\xfe"):
-		nicklen = int(cmd[8:12].encode('hex'),16)
-		nick = cmd[12:12+nicklen]
-		msglen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
-		msg = cmd[12+nicklen+4:pdulen+4]
-		print "\r" + CYAN + "<" + str(nick) + "> " + END + str(msg)
+		if (VERBOSE>0):
+			nicklen = int(cmd[8:12].encode('hex'),16)
+			nick = cmd[12:12+nicklen]
+			msglen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
+			msg = cmd[12+nicklen+4:pdulen+4]
+			print "\r" + CYAN + "<" + str(nick) + "> " + END + str(msg)
 
 	# state changes (away/available/playing)
 	elif (action == "\xff\xff\xff\xfd"):
@@ -118,7 +114,8 @@ def parse(cmd):
 		nick = cmd[20:20+nicklen]
 
 
-		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"): print "\r" + GRAY + "-!- " + B_GRAY + str(nick) + GRAY +" has quit" + END
+		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"):
+			if (VERBOSE>2): print "\r" + GRAY + "-!- " + B_GRAY + str(nick) + GRAY +" has quit" + END
 
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x00"):
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x01"):
@@ -130,35 +127,36 @@ def parse(cmd):
 			state = int(cmd[20+nicklen:20+nicklen+4].encode('hex'),16)  # 1=away, 0=back, 2=play
 
 			if (state==2):
-				nick2len = int(cmd[24+nicklen:28+nicklen].encode('hex'),16)
-				nick2 = cmd[28+nicklen:28+nicklen+nick2len]
-
-				print "\r" + MAGENTA + "-!- new match " + B_MAGENTA + str(nick) + MAGENTA + " vs " + B_MAGENTA + str(nick2) + END
+				if (VERBOSE>1):
+					nick2len = int(cmd[24+nicklen:28+nicklen].encode('hex'),16)
+					nick2 = cmd[28+nicklen:28+nicklen+nick2len]
+					print "\r" + MAGENTA + "-!- new match " + B_MAGENTA + str(nick) + MAGENTA + " vs " + B_MAGENTA + str(nick2) + END
 
 			elif (state <2):
-				unk4 = cmd[20+nicklen+4:20+nicklen+8]
+				if (VERBOSE>2):
+					unk4 = cmd[20+nicklen+4:20+nicklen+8]
 
-				iplen = int(cmd[20+nicklen+8:20+nicklen+12].encode('hex'),16)
-				ip = cmd[32+nicklen:32+nicklen+iplen]
+					iplen = int(cmd[20+nicklen+8:20+nicklen+12].encode('hex'),16)
+					ip = cmd[32+nicklen:32+nicklen+iplen]
 
-				unk6 = cmd[32+nicklen+iplen:32+nicklen+iplen+4]
-				unk7 = cmd[36+nicklen+iplen:36+nicklen+iplen+4]
+					unk6 = cmd[32+nicklen+iplen:32+nicklen+iplen+4]
+					unk7 = cmd[36+nicklen+iplen:36+nicklen+iplen+4]
 
-				citylen = int(cmd[40+nicklen+iplen:44+nicklen+iplen].encode('hex'),16)
-				city = cmd[44+nicklen+iplen:44+nicklen+iplen+citylen]
+					citylen = int(cmd[40+nicklen+iplen:44+nicklen+iplen].encode('hex'),16)
+					city = cmd[44+nicklen+iplen:44+nicklen+iplen+citylen]
 
-				cclen = int(cmd[44+nicklen+iplen+citylen:48+nicklen+iplen+citylen].encode('hex'),16)
-				cc = cmd[48+nicklen+iplen+citylen:48+nicklen+iplen+citylen+cclen]
+					cclen = int(cmd[44+nicklen+iplen+citylen:48+nicklen+iplen+citylen].encode('hex'),16)
+					cc = cmd[48+nicklen+iplen+citylen:48+nicklen+iplen+citylen+cclen]
 
-				countrylen = int(cmd[48+nicklen+iplen+citylen+cclen:48+nicklen+iplen+citylen+cclen+4].encode('hex'),16)
-				country = cmd[52+nicklen+iplen+citylen+cclen:52+nicklen+iplen+citylen+cclen+countrylen]
+					countrylen = int(cmd[48+nicklen+iplen+citylen+cclen:48+nicklen+iplen+citylen+cclen+4].encode('hex'),16)
+					country = cmd[52+nicklen+iplen+citylen+cclen:52+nicklen+iplen+citylen+cclen+countrylen]
 
-				print "\r" + GRAY + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
-				if (city != "" and cc != ""): print "(" + city + ", " + cc + ")",
-				elif (city == "" and cc != ""): print "(" + cc + ")",
-				if (state == 0): print "is available",
-				if (state == 1): print "is away",
-				print END
+					print "\r" + GRAY + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
+					if (city != "" and cc != ""): print "(" + city + ", " + cc + ")",
+					elif (city == "" and cc != ""): print "(" + cc + ")",
+					if (state == 0): print "is available",
+					if (state == 1): print "is away",
+					print END
 
 		else:
 			if (DEBUG>0): print "\r" + BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END
@@ -733,7 +731,20 @@ def datathread():
 		print_line(PROMPT)
 		time.sleep(2)
 
+def showverbose():
+	print "\r" + YELLOW + "-!- " + GRAY + "current VERBOSE=" + B_GRAY + str(VERBOSE) + GRAY,
+	if (VERBOSE==0): print "only showing challenge requests/replies" + END
+	if (VERBOSE==1): print "showing challenges + chat" + END
+	elif (VERBOSE==2): print "showing challenges + chat + new matches" + END
+	elif (VERBOSE==3): print "showing challenges + chat + new matches + status changes" + END
+
 if __name__ == '__main__':
+
+	DEBUG=0 # values: 0,1,2
+	VERBOSE=3 # values: 0,1,2,3
+
+	SPECIAL=""
+	OLDDATA=""
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect(('ggpo.net', 7000))
@@ -785,22 +796,24 @@ if __name__ == '__main__':
 
 		if (line == "/help"):
 			print "\r" + BLUE + "-!- available commands:" + END
-			print BLUE + "-!- /challenge <nick>\tsend a challenge request to <nick>" + END
-			print BLUE + "-!- /cancel    <nick>\tcancel an ongoing challenge request to <nick>" + END
-			print BLUE + "-!- /accept    <nick>\taccept a challenge request initiated by <nick>" + END
-			print BLUE + "-!- /decline   <nick>\tdecline a challenge request initiated by <nick>" + END
-			print BLUE + "-!- /watch     <nick>\twatch the game that <nick> is currently playing" + END
-			print BLUE + "-!- /whois     <nick>\tdisplay information about the user <nick>" + END
-			print BLUE + "-!- /whowas    <nick>\tinformation about <nick> that is no longer connected" + END
-			print BLUE + "-!- /join   <channel>\tjoin the chat/game room <channel>" + END
-			print BLUE + "-!- /list \t\tlist all available channels or chat/game rooms" + END
-			print BLUE + "-!- /users (<modifier>)\tlist all users in the current channel" + END
-			print BLUE + "-!-          modifier: 'available', 'away' or 'playing'" + END
-			print BLUE + "-!- /intro \t\tview the channel welcome text" + END
-			print BLUE + "-!- /away \t\tset away status (you can't be challenged)" + END
-			print BLUE + "-!- /back \t\tset available status (you can be challenged)" + END
-			print BLUE + "-!- /clear \t\tclear the screen" + END
-			print BLUE + "-!- /quit \t\tdisconnect from ggpo server" + END
+			print "\r" + BLUE + "-!- /challenge <nick>\tsend a challenge request to <nick>" + END
+			print "\r" + BLUE + "-!- /cancel    <nick>\tcancel an ongoing challenge request to <nick>" + END
+			print "\r" + BLUE + "-!- /accept    <nick>\taccept a challenge request initiated by <nick>" + END
+			print "\r" + BLUE + "-!- /decline   <nick>\tdecline a challenge request initiated by <nick>" + END
+			print "\r" + BLUE + "-!- /watch     <nick>\twatch the game that <nick> is currently playing" + END
+			print "\r" + BLUE + "-!- /whois     <nick>\tdisplay information about the user <nick>" + END
+			print "\r" + BLUE + "-!- /whowas    <nick>\tinfo about <nick> that is no longer connected" + END
+			print "\r" + BLUE + "-!- /join   <channel>\tjoin the chat/game room <channel>" + END
+			print "\r" + BLUE + "-!- /list \t\tlist all available channels or chat/game rooms" + END
+			print "\r" + BLUE + "-!- /users [<modifier>]\tlist all users in the current channel" + END
+			print "\r" + BLUE + "-!-          modifier: 'available', 'away' or 'playing'" + END
+			print "\r" + BLUE + "-!- /intro \t\tview the channel welcome text" + END
+			print "\r" + BLUE + "-!- /away \t\tset away status (you can't be challenged)" + END
+			print "\r" + BLUE + "-!- /back \t\tset available status (you can be challenged)" + END
+			print "\r" + BLUE + "-!- /clear \t\tclear the screen" + END
+			print "\r" + BLUE + "-!- /verbose [<flag>]\tchange verbosity level" + END
+			print "\r" + BLUE + "-!-            flag: '0' challenges, '1' chat, '2' match, '3' status" + END
+			print "\r" + BLUE + "-!- /quit \t\tdisconnect from ggpo server" + END
 
 		if (line.startswith("/whowas ")):
 			nick = line[8:]
@@ -813,12 +826,24 @@ if __name__ == '__main__':
 		# hidden command, not present in /help
 		if (line.startswith("/debug ")):
 			debug = line[7:]
-			if (int(debug) == 0): DEBUG=0
-			elif (int(debug) == 1): DEBUG=1
-			elif (int(debug) == 2): DEBUG=2
-			else: print "\r" + YELLOW + "-!- possible values are /debug [0|1|2]" + END
+			if (debug == "0"): DEBUG=0
+			elif (debug == "1"): DEBUG=1
+			elif (debug == "2"): DEBUG=2
+			else: print "\r" + YELLOW + "-!- possible values are /debug [<0|1|2>]" + END
 		if (line == "/debug"):
 			print "\r" + YELLOW + "-!- " + GRAY + "DEBUG: " + str(DEBUG) + END
+
+		if (line.startswith("/verbose ")):
+			verbose = line[9:]
+			if (verbose == "0"): VERBOSE=0
+			elif (verbose == "1"): VERBOSE=1
+			elif (verbose == "2"): VERBOSE=2
+			elif (verbose == "3"): VERBOSE=3
+			else: print "\r" + YELLOW + "-!- possible values are /verbose [<0|1|2|3>]" + END
+			showverbose()
+
+		if (line == "/verbose"):
+			showverbose()
 
 		if (line == "/clear"):
 			call(['clear'])
