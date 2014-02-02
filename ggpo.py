@@ -392,6 +392,8 @@ def parseusers(cmd):
 		userlist.append(user)
 
 	userlist.sort()
+	# sleep 1sec to collect ping data
+	time.sleep(1)
 
 	if (users_option.startswith("/whois ")):
 		query=users_option[7:]
