@@ -805,7 +805,7 @@ if __name__ == '__main__':
 
 		if (line == "/help"):
 			print "\r" + BLUE + "-!- available commands:" + END
-			print "\r" + BLUE + "-!- /challenge <nick>\tsend a challenge request to <nick>" + END
+			print "\r" + BLUE + "-!- /challenge [<nick>]\tsend a challenge request to <nick>" + END
 			print "\r" + BLUE + "-!- /cancel    <nick>\tcancel an ongoing challenge request to <nick>" + END
 			print "\r" + BLUE + "-!- /accept    <nick>\taccept a challenge request initiated by <nick>" + END
 			print "\r" + BLUE + "-!- /decline   <nick>\tdecline a challenge request initiated by <nick>" + END
@@ -821,7 +821,7 @@ if __name__ == '__main__':
 			print "\r" + BLUE + "-!- /back \t\tset available status (you can be challenged)" + END
 			print "\r" + BLUE + "-!- /clear \t\tclear the screen" + END
 			print "\r" + BLUE + "-!- /verbose [<flag>]\tchange verbosity level" + END
-			print "\r" + BLUE + "-!-            flag: '0' challenges, '1' chat, '2' match, '3' status" + END
+			print "\r" + BLUE + "-!-            flag:'0' challenges, '1' chat, '2' match, '3' status" + END
 			print "\r" + BLUE + "-!- /quit \t\tdisconnect from ggpo server" + END
 
 		if (line.startswith("/whowas ")):
@@ -853,6 +853,12 @@ if __name__ == '__main__':
 
 		if (line == "/verbose"):
 			showverbose()
+
+		if (line == "/challenge"):
+			print "\r" + YELLOW + "-!- " + GRAY + "challenging:",
+			for nick in challenged:
+				print "["+ B_GRAY + nick + GRAY + "]",
+			print END
 
 		if (line == "/clear"):
 			call(['clear'])
