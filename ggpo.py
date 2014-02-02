@@ -15,6 +15,7 @@ import socket
 import string
 import sys
 import time
+import datetime
 import os
 import struct
 import readline
@@ -749,6 +750,7 @@ if __name__ == '__main__':
 			print BLUE + "-!- /decline   <nick>\tdecline a challenge request initiated by <nick>" + END
 			print BLUE + "-!- /watch     <nick>\twatch the game that <nick> is currently playing" + END
 			print BLUE + "-!- /whois     <nick>\tdisplay information about the user <nick>" + END
+			print BLUE + "-!- /whowas    <nick>\tinformation about <nick> that is no longer connected" + END
 			print BLUE + "-!- /join   <channel>\tjoin the chat/game room <channel>" + END
 			print BLUE + "-!- /list \t\tlist all available channels or chat/game rooms" + END
 			print BLUE + "-!- /users (<modifier>)\tlist all users in the current channel" + END
@@ -757,7 +759,33 @@ if __name__ == '__main__':
 			print BLUE + "-!- /away \t\tset away status (you can't be challenged)" + END
 			print BLUE + "-!- /back \t\tset available status (you can be challenged)" + END
 			print BLUE + "-!- /clear \t\tclear the screen" + END
-			print BLUE + "-!- /quit \t\tquit ggpo" + END
+			print BLUE + "-!- /quit \t\tdisconnect from ggpo server" + END
+
+		if (line.startswith("/whowas ")):
+			nick = line[8:]
+			found=0
+			for i in range( len( pinglist ) ):
+				if (pinglist[i][1]==nick):
+					lastseen = pinglist[i][0]
+					ip = pinglist[i][2]
+					port = pinglist[i][3]
+					ping = pinglist[i][5]
+					found=1
+
+					try:
+						hostname = socket.gethostbyaddr(ip)
+					except socket.herror:
+						hostname = (ip,ip,ip)
+
+					print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END
+					print "\r" + YELLOW + "-!- " + GRAY + "  hostname : " + hostname[0] + END
+					print "\r" + YELLOW + "-!- " + GRAY + "  lastseen : " + datetime.datetime.fromtimestamp(int(lastseen)).strftime('%Y-%m-%d %H:%M:%S') + END
+					if (ping != 0): print "\r" + YELLOW + "-!- " + GRAY + "  ping     : " + str(int(ping)) + " ms" + END
+					print "\r" + YELLOW + "-!- " + GRAY + "End of WHOWAS" + END
+					break
+
+			if (found==0):
+				print "\r" + YELLOW + "-!- There was no such nick " + B_YELLOW + nick + END
 
 		if (line == "/clear"):
 			call(['clear'])
