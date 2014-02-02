@@ -17,7 +17,7 @@ Edit ggpo.py to set your username and password.
 2. run 'winecfg' and check the option to "Emulate a virtual desktop"
 
 ### Mac
-1. Download [Wine.dmg](http://sourceforge.net/projects/darwine/files/latest/download)
+1. Download the latest wine in the "[Wine.app Downloads](http://winebottler.kronenberg.org/downloads)" section (you do not need to download WineBottler). Note: You can easily close the sponsor ad after 5 seconds
 2. Run Wine.dmg and drag the wine icon to your Applications folder
 
 ## Usage
