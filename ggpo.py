@@ -203,21 +203,30 @@ def parse(cmd):
 		print "\r" + YELLOW + "-!- CHALLENGE REQUEST CANCELED BY " + B_YELLOW + str(nick) + END
 
 
+	# joining a channel
 	elif (action == "\xff\xff\xff\xff"):
 		print "\r" + GRAY + "-!- Connection established" + END
-		pdulen = 4+4
-		SPECIAL="INTRO"
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
-		sequence=sequence+1
+		pdu_intro()
 
-
+	# password incorrect (reply to request with sequence=2)
 	elif (action == "\x00\x00\x00\x02"):
 		result = cmd[8:12]
 		if (result == "\x00\x00\x00\x06"):
 			s.close()
 			u.close()
 			call(['reset'])
-			print "\r" + RED + "-!- User or password incorrect" + END
+			print "\r" + RED + "-!- Password incorrect" + END
+			os._exit(0)
+
+	# reply to request with sequence=3
+	elif (action == "\x00\x00\x00\x03"):
+		result = cmd[8:12]
+		# user incorrect
+		if (result == "\x00\x00\x00\x04"):
+			s.close()
+			u.close()
+			call(['reset'])
+			print "\r" + RED + "-!- User incorrect" + END
 			os._exit(0)
 
 	# watch
@@ -630,8 +639,26 @@ def pdu_cancel(nick):
 	print "\r" + YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END
 	challenged.remove(nick)
 
+def pdu_intro():
+	global SPECIAL, sequence
+
+	pdulen = 4+4
+	SPECIAL="INTRO"
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
+	sequence=sequence+1
+
+def pdu_users():
+	global users_option, SPECIAL, sequence
+
+	users_option=line
+	pdulen = 4+4
+	SPECIAL="USERS"
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
+	sequence=sequence+1
+
+
 def mainloop():
-	global line,sequence,SPECIAL,challengers,challenged,CHANNEL,users_option
+	global line,sequence,SPECIAL,challengers,challenged,CHANNEL
 
 	processed=0
 	olddata=""
@@ -746,10 +773,7 @@ def mainloop():
 
 		# view channel intro
 		if (line == "/intro"):
-			pdulen = 4+4
-			SPECIAL="INTRO"
-			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
-			sequence=sequence+1
+			pdu_intro()
 
 		# list channels
 		if (line == "/list"):
@@ -760,11 +784,7 @@ def mainloop():
 
 		# list users
 		if (line != None and ( line.startswith("/users") or line.startswith("/whois ") or line=="/who" )):
-			users_option=line
-			pdulen = 4+4
-			SPECIAL="USERS"
-			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
-			sequence=sequence+1
+			pdu_users()
 
 		if (DEBUG>1 and olddata!=data):
 			print "\r" + BLUE + "HEX: ",repr(data) + END
@@ -799,22 +819,28 @@ if __name__ == '__main__':
 	s.connect(('ggpo.net', 7000))
 
 	u = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-	u.bind(('0.0.0.0', 6009))
+	try:
+		u.bind(('0.0.0.0', 6009))
+	except socket.error:
+		pass
 
 	t = Thread(target=pingcheck)
 	t.daemon = True
 	t.start()
 
-	# welcome packet (?)
-	s.send('\x00\x00\x00\x14\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
+	# welcome packet
+	sequence = 0x1
+	s.send('\x00\x00\x00\x14' + pad(chr(sequence)) + '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
+	sequence=sequence+1
 
 	# authentication
-	sequence=0x2
+	# NOTE: this must have sequence=2 as we use the server reply to identify 'incorrect password'
 	pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4
 	s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79")
 	sequence=sequence+1
 
 	# choose channel
+	# NOTE: this must have sequence=3 as we use the server reply to identify 'incorrect user'
 	channellen = len(CHANNEL)
 	pdulen = 4 + 4 + 4 + channellen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
