@@ -316,7 +316,7 @@ def get_ping_msec(nick,ip):
 
 def parseusers(cmd):
 
-	global SPECIAL, OLDDATA
+	global SPECIAL, OLDDATA, userlist
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 
 	## ugly workaround for when the user list is splitted in 2 PDUs
@@ -420,37 +420,11 @@ def parseusers(cmd):
 	if (users_option.startswith("/whois ")):
 		query=users_option[7:]
 
-		ip=""
-		for user in userlist:
-			nick=user[0]
-			if (nick == query):
-				ip=user[1]
-				city=user[2]
-				cc=user[3]
-				country=user[4]
-				port=user[5]
-				status=user[6]
-				p2nick=user[7]
-				ping=user[8]
-				try:
-					hostname = socket.gethostbyaddr(ip)
-				except socket.herror:
-					hostname = (ip,ip,ip)
-
-				print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END
-				print "\r" + YELLOW + "-!- " + GRAY + "  channel  : " + CHANNEL + END
-				print "\r" + YELLOW + "-!- " + GRAY + "  hostname : " + hostname[0] + END
-				print "\r" + YELLOW + "-!- " + GRAY + "  location :",
-				if (city != "" and cc != ""): print city + ", " + cc + ", " + country
-				elif (city == "" and cc != ""): print cc + ", " + country
-				else: print "unknown"
-				print "\r" + YELLOW + "-!- " + GRAY + "  status   :",
-				if (status == 0): print "available"
-				if (status == 1): print "away"
-				if (status == 2): print "playing against " + B_GRAY + p2nick
-				if (ping != 0): print "\r" + YELLOW + "-!- " + GRAY + "  ping     : " + str(int(ping)) + " ms" + END
-				print "\r" + YELLOW + "-!- " + GRAY + "End of WHOIS" + END
-		if (ip==""): print "\r" + YELLOW + "-!- There is no such nick " + B_YELLOW + query + END
+		found = print_user_long(query,"whois")
+		if (found == 1):
+			print "\r" + YELLOW + "-!- " + GRAY + "End of WHOIS" + END
+		else:
+			print "\r" + YELLOW + "-!- There is no such nick " + B_YELLOW + query + END
 
 	elif (users_option.startswith("/users ")):
 		subcmd=users_option[7:]
@@ -474,6 +448,62 @@ def parseusers(cmd):
 		for user in away_users: print_user(user)
 		print "\r" + YELLOW + "-!- EOF user list." + END
 
+def print_user_long(nick,command):
+
+	# initalize values
+	found=0
+	ping=0
+	lastseen=""
+	ip=""
+	port=""
+	city=""
+	cc=""
+	country=""
+	status=""
+	p2nick=""
+
+	for i in range( len( pinglist ) ):
+		if (pinglist[i][1]==nick):
+			lastseen = pinglist[i][0]
+			ip = pinglist[i][2]
+			port = pinglist[i][3]
+			ping = pinglist[i][5]
+			found=1
+			break
+	for i in range(len(userlist)):
+		if (userlist[i][0]==nick):
+			ip = userlist[i][1]
+			city = userlist[i][2]
+			cc = userlist[i][3]
+			country = userlist[i][4]
+			port = userlist[i][5]
+			status = userlist[i][6]
+			p2nick = userlist[i][7]
+			if (ping==0): ping = userlist[i][8]
+			found=1
+			break
+
+	if (found==0): return 0
+
+	try:
+		hostname = socket.gethostbyaddr(ip)
+	except socket.herror:
+		hostname = (ip,ip,ip)
+
+	print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END
+	if (command == "whois"): print "\r" + YELLOW + "-!- " + GRAY + "  channel  : " + CHANNEL + END
+	print "\r" + YELLOW + "-!- " + GRAY + "  hostname : " + hostname[0] + END
+	if (lastseen != ""): print "\r" + YELLOW + "-!- " + GRAY + "  lastseen : " + datetime.datetime.fromtimestamp(int(lastseen)).strftime('%Y-%m-%d %H:%M:%S') + END
+	print "\r" + YELLOW + "-!- " + GRAY + "  location :",
+	if (city != "" and cc != ""): print city + ", " + cc + ", " + country
+	elif (city == "" and cc != ""): print cc + ", " + country
+	else: print "unknown"
+	print "\r" + YELLOW + "-!- " + GRAY + "  status   :",
+	if (status == 0): print "available"
+	if (status == 1): print "away"
+	if (status == 2): print "playing against " + B_GRAY + p2nick
+	if (ping != 0): print "\r" + YELLOW + "-!- " + GRAY + "  ping     : " + str(int(ping)) + " ms" + END
+	return 1
 
 def print_user(user):
 
@@ -747,6 +777,7 @@ if __name__ == '__main__':
 	challenged=set()
 	users_option=""
 	pinglist=[]
+	userlist=[]
 
 	while 1:
 		line = raw_input()
@@ -773,28 +804,10 @@ if __name__ == '__main__':
 
 		if (line.startswith("/whowas ")):
 			nick = line[8:]
-			found=0
-			for i in range( len( pinglist ) ):
-				if (pinglist[i][1]==nick):
-					lastseen = pinglist[i][0]
-					ip = pinglist[i][2]
-					port = pinglist[i][3]
-					ping = pinglist[i][5]
-					found=1
-
-					try:
-						hostname = socket.gethostbyaddr(ip)
-					except socket.herror:
-						hostname = (ip,ip,ip)
-
-					print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END
-					print "\r" + YELLOW + "-!- " + GRAY + "  hostname : " + hostname[0] + END
-					print "\r" + YELLOW + "-!- " + GRAY + "  lastseen : " + datetime.datetime.fromtimestamp(int(lastseen)).strftime('%Y-%m-%d %H:%M:%S') + END
-					if (ping != 0): print "\r" + YELLOW + "-!- " + GRAY + "  ping     : " + str(int(ping)) + " ms" + END
-					print "\r" + YELLOW + "-!- " + GRAY + "End of WHOWAS" + END
-					break
-
-			if (found==0):
+			found = print_user_long(nick,"whowas")
+			if (found==1):
+				print "\r" + YELLOW + "-!- " + GRAY + "End of WHOWAS" + END
+			else:
 				print "\r" + YELLOW + "-!- There was no such nick " + B_YELLOW + nick + END
 
 		if (line == "/clear"):
