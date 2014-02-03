@@ -45,7 +45,7 @@ B_CYAN = '\033[1;36m'
 END = '\033[0;m'
 
 PROMPT = "\rggpo" + RED + "> " + END
-VERSION = "1.0-rc1"
+VERSION = "1.0-rc2"
 
 def blank_current_readline():
 	# thanks http://stackoverflow.com/questions/7907827/
@@ -212,6 +212,7 @@ def parse(cmd):
 			u.close()
 			call(['reset'])
 			print "\r" + RED + "-!- Password incorrect" + END
+			print "\r" + RED + "-!- Check config file at " + CONFIGFILE + END
 			os._exit(0)
 
 	# reply to request with sequence=3
@@ -223,6 +224,7 @@ def parse(cmd):
 			u.close()
 			call(['reset'])
 			print "\r" + RED + "-!- User incorrect" + END
+			print "\r" + RED + "-!- Check config file at " + CONFIGFILE + END
 			os._exit(0)
 
 	# watch
@@ -821,6 +823,13 @@ if __name__ == '__main__':
 
 	SPECIAL=""
 	OLDDATA=""
+
+	# initialize defaults for config
+	USERNAME=""
+	PASSWORD=""
+	CHANNEL="lobby"
+	INSTALLDIR=""
+	VERBOSE=3
 	STARTAWAY=0
 
 	print "\r" + YELLOW + "-!- " + BLUE + "GGPO PYTHON CLIENT " + B_BLUE + "VERSION " + VERSION + END
@@ -843,7 +852,7 @@ if __name__ == '__main__':
 			print "\r" + RED + "-!- ERROR: cannot write to config file at " + CONFIGFILE + END
 			os._exit(1)
 
-		print "\r" + BLUE + "-!- It looks like you're running ggpo for the first time, let's configure it!" + END
+		print "\n\r" + BLUE + "-!- It looks like you're running ggpo for the first time, let's configure it!" + END
 		print "\r" + BLUE + "-!- This quick setup will create a config file at:\n\t" + GREEN + CONFIGFILE + END
 
 		# try to guess install directory:
@@ -861,18 +870,37 @@ if __name__ == '__main__':
 			print "\n\r" + BLUE + "-!- Found GGPO install dir at: " + GREEN + INSTALLDIR + END
 		else:
 			print "\n\r" + BLUE + "-!- Please specify the full path where you have unziped the official GGPO client" + END
-			INSTALLDIR = raw_input("\r" + BLUE + "GGPO INSTALLDIR:" + END + " ")
+			try:
+				INSTALLDIR = raw_input("\r" + BLUE + "GGPO INSTALLDIR:" + END + " ")
+			except KeyboardInterrupt:
+				print "\n" + RED + "-!- ^C interrupted." + END
+				configfile.close()
+				os.unlink(CONFIGFILE)
+				os._exit(1)
 
 		if not os.path.isfile(INSTALLDIR+"/ggpofba.exe"):
 			print "\r" + YELLOW + "-!- WARNING: cannot find ggpofba.exe in " + INSTALLDIR + END
 
 		print "\n\r" + BLUE + "-!- Please specify your GGPO credentials" + END
-		USERNAME = raw_input("\r" + BLUE + "GGPO USERNAME:" + END + " ")
-		PASSWORD = raw_input("\r" + BLUE + "GGPO PASSWORD:" + END + " ")
+		try:
+			USERNAME = raw_input("\r" + BLUE + "GGPO USERNAME:" + END + " ")
+			PASSWORD = raw_input("\r" + BLUE + "GGPO PASSWORD:" + END + " ")
+		except KeyboardInterrupt:
+			print "\n" + RED + "-!- ^C interrupted." + END
+			configfile.close()
+			os.unlink(CONFIGFILE)
+			os._exit(1)
 
 		print "\n\r" + BLUE + "-!- Please specify your GGPO game room, if unsure type 'lobby'" + END
-		CHANNEL = raw_input("\r" + BLUE + "GGPO CHANNEL:" + END + " ")
-		if not os.path.isfile(INSTALLDIR+"/ROMs/" + CHANNEL + ".zip"):
+		try:
+			CHANNEL = raw_input("\r" + BLUE + "GGPO CHANNEL:" + END + " ")
+		except KeyboardInterrupt:
+			print "\n" + RED + "-!- ^C interrupted." + END
+			configfile.close()
+			os.unlink(CONFIGFILE)
+			os._exit(1)
+
+		if not os.path.isfile(INSTALLDIR+"/ROMs/" + CHANNEL + ".zip") and CHANNEL!="lobby":
 			print "\r" + YELLOW + "-!- WARNING: cannot find " + CHANNEL + ".zip in " + INSTALLDIR + "/ROMs/" + END
 
 		configfile.write("#GGPO configuration file\n")
@@ -884,7 +912,15 @@ if __name__ == '__main__':
 		configfile.write("STARTAWAY=0\n")
 		configfile.close()
 
-		print "\r" + BLUE + "-!- Thank you, configuration is completed!" + END
+		print "\n\r" + BLUE + "-!- Thank you, configuration is completed!" + END
+		try:
+			raw_input("\r" + BLUE + "-!- Press ENTER to connect for the fist time" + END + " ")
+		except KeyboardInterrupt:
+			print "\n" + RED + "-!- ^C interrupted." + END
+			configfile.close()
+			os.unlink(CONFIGFILE)
+			os._exit(1)
+
 	try:
 		configfile = open(CONFIGFILE, "r")
 	except IOError:
