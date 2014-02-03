@@ -100,7 +100,15 @@ def parse(cmd):
 			msglen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
 			msg = cmd[12+nicklen+4:pdulen+4]
 			if (USERNAME+" " in msg or " "+USERNAME in msg or msg==USERNAME):
+				args = ['notify-send', '--icon=' + INSTALLDIR + '/assets/icon-128.png', msg]
+				try:
+					FNULL = open(os.devnull, 'w')
+					call(args, stdout=FNULL, stderr=FNULL)
+					FNULL.close()
+				except OSError:
+					pass
 				msg = msg.replace(USERNAME, B_YELLOW + USERNAME + END)
+
 			print "\r" + CYAN + "<" + str(nick) + "> " + END + str(msg)
 
 	# state changes (away/available/playing)
