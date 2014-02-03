@@ -202,7 +202,7 @@ def parse(cmd):
 	# joining a channel
 	elif (action == "\xff\xff\xff\xff"):
 		print "\r" + GRAY + "-!- Connection established" + END
-		pdu_intro()
+		pdu_motd()
 
 	# password incorrect (reply to request with sequence=2)
 	elif (action == "\x00\x00\x00\x02"):
@@ -272,7 +272,7 @@ def parsespecial(cmd):
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 	#myseqnum = int(cmd[4:8].encode('hex'),16)
 
-	if (SPECIAL=="INTRO"):
+	if (SPECIAL=="MOTD"):
 		try:
 			channellen = int(cmd[12:12+4].encode('hex'),16)
 			channel = cmd[16:16+channellen]
@@ -649,11 +649,11 @@ def pdu_cancel(nick):
 	print "\r" + YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END
 	challenged.remove(nick)
 
-def pdu_intro():
+def pdu_motd():
 	global SPECIAL, sequence
 
 	pdulen = 4+4
-	SPECIAL="INTRO"
+	SPECIAL="MOTD"
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
 	sequence=sequence+1
 
@@ -781,9 +781,9 @@ def mainloop():
 			sequence=sequence+1
 			#print "\r" + GREEN + "-!- you are available now" + END
 
-		# view channel intro
-		if (line == "/intro"):
-			pdu_intro()
+		# view channel motd
+		if (line == "/motd"):
+			pdu_motd()
 
 		# list channels
 		if (line == "/list"):
@@ -1011,7 +1011,7 @@ if __name__ == '__main__':
 			print "\r" + YELLOW + "-!- " + BLUE + "/list \t\tlist all available channels or chat/game rooms" + END
 			print "\r" + YELLOW + "-!- " + BLUE + "/users [<modifier>]\tlist all users in the current channel" + END
 			print "\r" + YELLOW + "-!- " + BLUE + "         modifier: 'available', 'away' or 'playing'" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/intro \t\tview the channel welcome text" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/motd \t\tview the channel welcome text" + END
 			print "\r" + YELLOW + "-!- " + BLUE + "/away \t\tset away status (you can't be challenged)" + END
 			print "\r" + YELLOW + "-!- " + BLUE + "/back \t\tset available status (you can be challenged)" + END
 			print "\r" + YELLOW + "-!- " + BLUE + "/clear \t\tclear the screen" + END
