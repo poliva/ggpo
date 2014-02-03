@@ -3,44 +3,46 @@ ggpo
 
 &copy;2014 Pau Oliva Fora ([@pof](https://twitter.com/pof))
 
-This is an alternative [GGPO](http://ggpo.net/) command line client written in python.
-This allows you to play GGPO on Linux and MacOS X systems.
-You'll still need the ggpofba.exe from the original GGPO, which will be launched through wine.
+This is an alternative [GGPO](http://ggpo.net/) command line client written in python.<br />
+This allows you to play GGPO games on Linux and MacOS X systems.<br />
+You'll still need the ggpofba.exe from the original GGPO client, which will be launched through wine.
 
 ## Installation
 
-Extract the original GGPO in ```/opt/ggpo```, and add ggpo.py and ggpofba.sh in the same folder.
-Edit ggpo.py to set your username and password.
+Extract the original [GGPO client](http://ggpo.net/download/), and add ```ggpo.py``` and ```ggpofba.sh``` in the same folder.
 
 ### Linux
-1. Make sure you have [wine](http://www.winehq.org/) installed on your distribution (usually ```apt-get install wine``` on debian based systems)
-2. run 'winecfg' and check the option to "Emulate a virtual desktop"
+1. Make sure you have [wine](http://www.winehq.org/) installed on your Linux distribution (usually ```apt-get install wine``` on Debian based systems)
+2. Run ```winecfg``` and check the option to "Emulate a virtual desktop"
 
 ### Mac
 1. Download the latest wine in the "[Wine.app Downloads](http://winebottler.kronenberg.org/downloads)" section (you do not need to download WineBottler). Note: You can easily close the sponsor ad after 5 seconds
 2. Run Wine.dmg and drag the wine icon to your Applications folder
 
 ## Usage
-Just execute ggpo.py:
+Just execute ```ggpo.py```.<br />
+The first time it runs it will ask you a few questions to generate a config file.
 <pre>
-$ /opt/ggpo/ggpo.py
-ggpo> /help
+$ ./ggpo.py
+ggpo&gt; /help
 -!- available commands:
--!- /challenge &lt;nick&gt;	send a challenge request to &lt;nick&gt;
--!- /cancel    &lt;nick&gt;	cancel an ongoing challenge request to &lt;nick&gt;
--!- /accept    &lt;nick&gt;	accept a challenge request initiated by &lt;nick&gt;
--!- /decline   &lt;nick&gt;	decline a challenge request initiated by &lt;nick&gt;
--!- /watch     &lt;nick&gt;	watch the game that &lt;nick&gt; is currently playing
--!- /whois     &lt;nick&gt;	display information about the user &lt;nick&gt;
--!- /whowas    &lt;nick&gt;	information about &lt;nick&gt; that is no longer connected
--!- /join   &lt;channel&gt;	join the chat/game room &lt;channel&gt;
+-!- /challenge [&lt;nick&gt;]	send a challenge request to &lt;nick&gt;
+-!- /cancel    [&lt;nick&gt;]	cancel an ongoing challenge request to &lt;nick&gt;
+-!- /accept    [&lt;nick&gt;]	accept a challenge request initiated by &lt;nick&gt;
+-!- /decline   [&lt;nick&gt;]	decline a challenge request initiated by &lt;nick&gt;
+-!- /watch      &lt;nick&gt;	watch the game that &lt;nick&gt; is currently playing
+-!- /whois      &lt;nick&gt;	display information about the user &lt;nick&gt;
+-!- /whowas     &lt;nick&gt;	info about &lt;nick&gt; that is no longer connected
+-!- /join    &lt;channel&gt;	join the chat/game room &lt;channel&gt;
 -!- /list 		list all available channels or chat/game rooms
--!- /users (&lt;modifier&gt;)	list all users in the current channel
+-!- /users [&lt;modifier&gt;]	list all users in the current channel
 -!-          modifier: 'available', 'away' or 'playing'
--!- /intro 		view the channel welcome text
+-!- /motd 		view the channel welcome text
 -!- /away 		set away status (you can't be challenged)
 -!- /back 		set available status (you can be challenged)
 -!- /clear 		clear the screen
+-!- /verbose [&lt;flag&gt;]	change verbosity level
+-!-            flag:'0' challenges, '1' chat, '2' match, '3' status
 -!- /quit 		disconnect from ggpo server
 </pre>
 
