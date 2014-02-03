@@ -26,11 +26,6 @@ from threading import Thread
 from random import randint
 from operator import itemgetter
 
-USERNAME="pof"
-PASSWORD="XXXXXXXX"
-CHANNEL="ssf2t"
-FBA="/opt/ggpo/ggpofba.sh"
-
 GRAY = '\033[0;30m'
 RED = '\033[0;31m'
 GREEN = '\033[0;32m'
@@ -50,6 +45,7 @@ B_CYAN = '\033[1;36m'
 END = '\033[0;m'
 
 PROMPT = "\rggpo" + RED + "> " + END
+VERSION = "1.0-rc1"
 
 def blank_current_readline():
 	# thanks http://stackoverflow.com/questions/7907827/
@@ -185,7 +181,7 @@ def parse(cmd):
 
 		challengers.add(nick)
 
-		args = ['mplayer', '/opt/ggpo/assets/challenger-comes.mp3']
+		args = ['mplayer', MP3]
 		try:
 			FNULL = open(os.devnull, 'w')
 			call(args, stdout=FNULL, stderr=FNULL)
@@ -810,10 +806,85 @@ def showverbose():
 if __name__ == '__main__':
 
 	DEBUG=0 # values: 0,1,2
-	VERBOSE=3 # values: 0,1,2,3
 
 	SPECIAL=""
 	OLDDATA=""
+
+	print "\r" + YELLOW + "-!- " + BLUE + "GGPO PYTHON CLIENT " + B_BLUE + "VERSION " + VERSION + END
+	print "\r" + YELLOW + "-!- " + BLUE + "(c) 2014 Pau Oliva Fora (" + B_BLUE + "pof" + BLUE + "). Licensed under GPLv2+." + END
+	print "\r" + YELLOW + "-!- " + BLUE + "If you are lost type '/help' and press enter." + END
+
+	HOMEDIR = os.path.expanduser("~")
+	CONFIGDIR= HOMEDIR + "/.config/ggpo"
+	CONFIGFILE = CONFIGDIR + "/ggpo.config"
+
+	if not os.path.exists(CONFIGDIR):
+		os.makedirs(CONFIGDIR)
+
+	try:
+		configfile = open(CONFIGFILE, "r")
+	except IOError:
+		# file does not exist, create it for the first time:
+		try:
+			configfile = open(CONFIGFILE, "w")
+		except IOError:
+			print "\r" + RED + "-!- ERROR: cannot write to config file at " + CONFIGFILE + END
+			os._exit(1)
+
+		print "\r" + BLUE + "-!- It looks like you're running ggpo for the first time, let's configure it!" + END
+		print "\r" + BLUE + "-!- This quick setup will create a config file at:\n\t" + GREEN + CONFIGFILE + END
+
+		# try to guess install directory:
+
+		# directory of the script being run
+		dirtest1 = os.path.dirname(os.path.abspath(__file__))
+		# current working directory
+		dirtest2 = os.getcwd()
+
+		if (os.path.isfile(dirtest1+"/ggpofba.exe")):
+			INSTALLDIR=dirtest1
+			print "\n\r" + BLUE + "-!- Found GGPO install dir at: " + GREEN + INSTALLDIR + END
+		elif (os.path.isfile(dirtest2+"/ggpofba.exe")):
+			INSTALLDIR=dirtest2
+			print "\n\r" + BLUE + "-!- Found GGPO install dir at: " + GREEN + INSTALLDIR + END
+		else:
+			print "\n\r" + BLUE + "-!- Please specify the full path where you have unziped the official GGPO client" + END
+			INSTALLDIR = raw_input("\r" + BLUE + "GGPO INSTALLDIR:" + END + " ")
+
+		if not os.path.isfile(INSTALLDIR+"/ggpofba.exe"):
+			print "\r" + YELLOW + "-!- WARNING: cannot find ggpofba.exe in " + INSTALLDIR + END
+
+		print "\n\r" + BLUE + "-!- Please specify your GGPO credentials" + END
+		USERNAME = raw_input("\r" + BLUE + "GGPO USERNAME:" + END + " ")
+		PASSWORD = raw_input("\r" + BLUE + "GGPO PASSWORD:" + END + " ")
+
+		configfile.write("#GGPO configuration file\n")
+		configfile.write("USERNAME=" + USERNAME + "\n")
+		configfile.write("PASSWORD=" + PASSWORD + "\n")
+		configfile.write("CHANNEL=lobby\n")
+		configfile.write("INSTALLDIR=" + INSTALLDIR + "\n")
+		configfile.write("VERBOSE=3\n")
+		configfile.close()
+
+		print "\r" + BLUE + "-!- Thank you, configuration is completed!" + END
+	try:
+		configfile = open(CONFIGFILE, "r")
+	except IOError:
+		print "\r" + RED + "-!- ERROR: cannot read config file at " + CONFIGFILE + END
+		os._exit(1)
+
+	# parse configuration file
+	for line in iter(configfile):
+		#print line
+		if (line.startswith("USERNAME=")): USERNAME=line[9:].strip()
+		if (line.startswith("PASSWORD=")): PASSWORD=line[9:].strip()
+		if (line.startswith("CHANNEL=")): CHANNEL=line[8:].strip()
+		if (line.startswith("INSTALLDIR=")): INSTALLDIR=line[11:].strip()
+		if (line.startswith("VERBOSE=")): VERBOSE=int(line[8:].strip())
+	configfile.close()
+
+	FBA = INSTALLDIR + "/ggpofba.sh"
+	MP3 = INSTALLDIR + "/assets/challenger-comes.mp3"
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect(('ggpo.net', 7000))
@@ -822,7 +893,7 @@ if __name__ == '__main__':
 	try:
 		u.bind(('0.0.0.0', 6009))
 	except socket.error:
-		pass
+		print "\r" + YELLOW + "-!- WARNING: cannot bind to port udp/6009" + END
 
 	t = Thread(target=pingcheck)
 	t.daemon = True
@@ -850,6 +921,13 @@ if __name__ == '__main__':
 	s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
 	sequence=sequence+1
 
+	line=""
+	challengers=set()
+	challenged=set()
+	users_option=""
+	pinglist=[]
+	userlist=[]
+
 	t2 = Thread(target=datathread)
 	t2.daemon = False
 	t2.start()
@@ -858,37 +936,30 @@ if __name__ == '__main__':
 	t3.daemon = False
 	t3.start()
 
-	line=""
-	challengers=set()
-	challenged=set()
-	users_option=""
-	pinglist=[]
-	userlist=[]
-
 	while 1:
 		line = raw_input()
 		line = line.strip(' \t\n\r')
 
 		if (line == "/help"):
-			print "\r" + BLUE + "-!- available commands:" + END
-			print "\r" + BLUE + "-!- /challenge [<nick>]\tsend a challenge request to <nick>" + END
-			print "\r" + BLUE + "-!- /cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END
-			print "\r" + BLUE + "-!- /accept    [<nick>]\taccept a challenge request initiated by <nick>" + END
-			print "\r" + BLUE + "-!- /decline   [<nick>]\tdecline a challenge request initiated by <nick>" + END
-			print "\r" + BLUE + "-!- /watch     <nick>\twatch the game that <nick> is currently playing" + END
-			print "\r" + BLUE + "-!- /whois     <nick>\tdisplay information about the user <nick>" + END
-			print "\r" + BLUE + "-!- /whowas    <nick>\tinfo about <nick> that is no longer connected" + END
-			print "\r" + BLUE + "-!- /join   <channel>\tjoin the chat/game room <channel>" + END
-			print "\r" + BLUE + "-!- /list \t\tlist all available channels or chat/game rooms" + END
-			print "\r" + BLUE + "-!- /users [<modifier>]\tlist all users in the current channel" + END
-			print "\r" + BLUE + "-!-          modifier: 'available', 'away' or 'playing'" + END
-			print "\r" + BLUE + "-!- /intro \t\tview the channel welcome text" + END
-			print "\r" + BLUE + "-!- /away \t\tset away status (you can't be challenged)" + END
-			print "\r" + BLUE + "-!- /back \t\tset available status (you can be challenged)" + END
-			print "\r" + BLUE + "-!- /clear \t\tclear the screen" + END
-			print "\r" + BLUE + "-!- /verbose [<flag>]\tchange verbosity level" + END
-			print "\r" + BLUE + "-!-            flag:'0' challenges, '1' chat, '2' match, '3' status" + END
-			print "\r" + BLUE + "-!- /quit \t\tdisconnect from ggpo server" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "available commands:" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/challenge [<nick>]\tsend a challenge request to <nick>" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/accept    [<nick>]\taccept a challenge request initiated by <nick>" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/decline   [<nick>]\tdecline a challenge request initiated by <nick>" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/watch      <nick>\twatch the game that <nick> is currently playing" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/whois      <nick>\tdisplay information about the user <nick>" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/whowas     <nick>\tinfo about <nick> that is no longer connected" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/join    <channel>\tjoin the chat/game room <channel>" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/list \t\tlist all available channels or chat/game rooms" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/users [<modifier>]\tlist all users in the current channel" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "         modifier: 'available', 'away' or 'playing'" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/intro \t\tview the channel welcome text" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/away \t\tset away status (you can't be challenged)" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/back \t\tset available status (you can be challenged)" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/clear \t\tclear the screen" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/verbose [<flag>]\tchange verbosity level" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "           flag:'0' challenges, '1' chat, '2' match, '3' status" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "/quit \t\tdisconnect from ggpo server" + END
 
 		if (line.startswith("/whowas ")):
 			nick = line[8:]
@@ -933,5 +1004,5 @@ if __name__ == '__main__':
 			s.close()
 			u.close()
 			#call(['reset'])
-			print "\r" + BLUE + "-!- have a nice day :)" + END
+			print "\r" + YELLOW + "-!- " + BLUE + "have a nice day :)" + END
 			os._exit(0)
