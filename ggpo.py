@@ -99,6 +99,8 @@ def parse(cmd):
 			nick = cmd[12:12+nicklen]
 			msglen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
 			msg = cmd[12+nicklen+4:pdulen+4]
+			if (USERNAME+" " in msg or " "+USERNAME in msg or msg==USERNAME):
+				msg = msg.replace(USERNAME, B_YELLOW + USERNAME + END)
 			print "\r" + CYAN + "<" + str(nick) + "> " + END + str(msg)
 
 	# state changes (away/available/playing)
