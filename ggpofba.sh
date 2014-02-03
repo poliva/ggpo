@@ -7,12 +7,25 @@
 # For best results run 'winecfg' and check the option to "Emulate a virtual desktop"
 # under the Graphics tab. I've it set to 1152x672 for best full screen aspect ratio.
 
-# Change this to the path of ggpofba.exe on your system:
-FBA="/opt/ggpo/ggpofba.exe"
+
+CONFIGFILE=~/.config/ggpo/ggpo.config
+source ${CONFIGFILE}
+
+if [ -z "${INSTALLDIR}" ]; then
+	echo "-!- Please launch ggpo.py to create your config file"
+	exit 1
+fi
+
+FBA="${INSTALLDIR}/ggpofba.exe"
+if [ ! -e ${FBA} ]; then
+	echo "-!- cannot find ${INSTALLDIR}/ggpofba.exe"
+	exit 1
+fi
 
 OS=$(uname -s)
 case "${OS}" in
 	"Darwin")
+		echo "-!- starting the real ggpofba"
 		/Applications/Wine.app/Contents/Resources/bin/wine ${FBA} ${1+"$@"} &
 	;;
 
