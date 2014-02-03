@@ -821,10 +821,10 @@ if __name__ == '__main__':
 
 	SPECIAL=""
 	OLDDATA=""
+	STARTAWAY=0
 
 	print "\r" + YELLOW + "-!- " + BLUE + "GGPO PYTHON CLIENT " + B_BLUE + "VERSION " + VERSION + END
 	print "\r" + YELLOW + "-!- " + BLUE + "(c) 2014 Pau Oliva Fora (" + B_BLUE + "pof" + BLUE + "). Licensed under GPLv2+." + END
-	print "\r" + YELLOW + "-!- " + BLUE + "If you are lost type '/help' and press enter." + END
 
 	HOMEDIR = os.path.expanduser("~")
 	CONFIGDIR= HOMEDIR + "/.config/ggpo"
@@ -870,12 +870,18 @@ if __name__ == '__main__':
 		USERNAME = raw_input("\r" + BLUE + "GGPO USERNAME:" + END + " ")
 		PASSWORD = raw_input("\r" + BLUE + "GGPO PASSWORD:" + END + " ")
 
+		print "\n\r" + BLUE + "-!- Please specify your GGPO game room, if unsure type 'lobby'" + END
+		CHANNEL = raw_input("\r" + BLUE + "GGPO CHANNEL:" + END + " ")
+		if not os.path.isfile(INSTALLDIR+"/ROMs/" + CHANNEL + ".zip"):
+			print "\r" + YELLOW + "-!- WARNING: cannot find " + CHANNEL + ".zip in " + INSTALLDIR + "/ROMs/" + END
+
 		configfile.write("#GGPO configuration file\n")
 		configfile.write("USERNAME=" + USERNAME + "\n")
 		configfile.write("PASSWORD=" + PASSWORD + "\n")
-		configfile.write("CHANNEL=lobby\n")
+		configfile.write("CHANNEL=" + CHANNEL + "\n")
 		configfile.write("INSTALLDIR=" + INSTALLDIR + "\n")
 		configfile.write("VERBOSE=3\n")
+		configfile.write("STARTAWAY=0\n")
 		configfile.close()
 
 		print "\r" + BLUE + "-!- Thank you, configuration is completed!" + END
@@ -893,7 +899,10 @@ if __name__ == '__main__':
 		if (line.startswith("CHANNEL=")): CHANNEL=line[8:].strip()
 		if (line.startswith("INSTALLDIR=")): INSTALLDIR=line[11:].strip()
 		if (line.startswith("VERBOSE=")): VERBOSE=int(line[8:].strip())
+		if (line.startswith("STARTAWAY=")): STARTAWAY=int(line[10:].strip())
 	configfile.close()
+
+	print "\r" + YELLOW + "-!- " + BLUE + "If you are lost type '/help' and press enter." + END
 
 	FBA = INSTALLDIR + "/ggpofba.sh"
 	MP3 = INSTALLDIR + "/assets/challenger-comes.mp3"
@@ -929,9 +938,10 @@ if __name__ == '__main__':
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
 	sequence=sequence+1
 
-	# start away by default
-	s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
-	sequence=sequence+1
+	# should we start away by default?
+	if (STARTAWAY == 1):
+		s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
+		sequence=sequence+1
 
 	line=""
 	challengers=set()
