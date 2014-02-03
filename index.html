@@ -33,22 +33,21 @@
 
 <p>©2014 Pau Oliva Fora (<a href="https://twitter.com/pof">@pof</a>)</p>
 
-<p>This is an alternative <a href="http://ggpo.net/">GGPO</a> command line client written in python.
-This allows you to play GGPO on Linux and MacOS X systems.
-You'll still need the ggpofba.exe from the original GGPO, which will be launched through wine.</p>
+<p>This is an alternative <a href="http://ggpo.net/">GGPO</a> command line client written in python.<br>
+This allows you to play GGPO games on Linux and MacOS X systems.<br>
+You'll still need the ggpofba.exe from the original GGPO client, which will be launched through wine.</p>
 
 <h2>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
 
-<p>Extract the original GGPO in <code>/opt/ggpo</code>, and add ggpo.py and ggpofba.sh in the same folder.
-Edit ggpo.py to set your username and password.</p>
+<p>Extract the original <a href="http://ggpo.net/download/">GGPO client</a>, and add <code>ggpo.py</code> and <code>ggpofba.sh</code> in the same folder.</p>
 
 <h3>
 <a name="linux" class="anchor" href="#linux"><span class="octicon octicon-link"></span></a>Linux</h3>
 
 <ol>
-<li>Make sure you have <a href="http://www.winehq.org/">wine</a> installed on your distribution (usually <code>apt-get install wine</code> on debian based systems)</li>
-<li>run 'winecfg' and check the option to "Emulate a virtual desktop"</li>
+<li>Make sure you have <a href="http://www.winehq.org/">wine</a> installed on your Linux distribution (usually <code>apt-get install wine</code> on Debian based systems)</li>
+<li>Run <code>winecfg</code> and check the option to "Emulate a virtual desktop"</li>
 </ol><h3>
 <a name="mac" class="anchor" href="#mac"><span class="octicon octicon-link"></span></a>Mac</h3>
 
@@ -58,27 +57,30 @@ Edit ggpo.py to set your username and password.</p>
 </ol><h2>
 <a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
 
-<p>Just execute ggpo.py:</p>
+<p>Just execute <code>ggpo.py</code>.<br>
+The first time it runs it will ask you a few questions to generate a config file.</p>
 
 <pre>
-$ /opt/ggpo/ggpo.py
+$ ./ggpo.py
 ggpo&gt; /help
 -!- available commands:
--!- /challenge &lt;nick&gt; send a challenge request to &lt;nick&gt;
--!- /cancel    &lt;nick&gt; cancel an ongoing challenge request to &lt;nick&gt;
--!- /accept    &lt;nick&gt; accept a challenge request initiated by &lt;nick&gt;
--!- /decline   &lt;nick&gt; decline a challenge request initiated by &lt;nick&gt;
--!- /watch     &lt;nick&gt; watch the game that &lt;nick&gt; is currently playing
--!- /whois     &lt;nick&gt; display information about the user &lt;nick&gt;
--!- /whowas    &lt;nick&gt; information about &lt;nick&gt; that is no longer connected
--!- /join   &lt;channel&gt; join the chat/game room &lt;channel&gt;
+-!- /challenge [&lt;nick&gt;]   send a challenge request to &lt;nick&gt;
+-!- /cancel    [&lt;nick&gt;]   cancel an ongoing challenge request to &lt;nick&gt;
+-!- /accept    [&lt;nick&gt;]   accept a challenge request initiated by &lt;nick&gt;
+-!- /decline   [&lt;nick&gt;]   decline a challenge request initiated by &lt;nick&gt;
+-!- /watch      &lt;nick&gt;    watch the game that &lt;nick&gt; is currently playing
+-!- /whois      &lt;nick&gt;    display information about the user &lt;nick&gt;
+-!- /whowas     &lt;nick&gt;    info about &lt;nick&gt; that is no longer connected
+-!- /join    &lt;channel&gt;    join the chat/game room &lt;channel&gt;
 -!- /list       list all available channels or chat/game rooms
--!- /users (&lt;modifier&gt;)   list all users in the current channel
+-!- /users [&lt;modifier&gt;]   list all users in the current channel
 -!-          modifier: 'available', 'away' or 'playing'
--!- /intro      view the channel welcome text
+-!- /motd       view the channel welcome text
 -!- /away       set away status (you can't be challenged)
 -!- /back       set available status (you can be challenged)
 -!- /clear      clear the screen
+-!- /verbose [&lt;flag&gt;] change verbosity level
+-!-            flag:'0' challenges, '1' chat, '2' match, '3' status
 -!- /quit       disconnect from ggpo server
 </pre>
 
