@@ -21,6 +21,7 @@ import struct
 import readline
 import termios
 import fcntl
+import urllib2
 from subprocess import call
 from threading import Thread
 from random import randint
@@ -45,7 +46,7 @@ B_CYAN = '\033[1;36m'
 END = '\033[0;m'
 
 PROMPT = "\rggpo" + RED + "> " + END
-VERSION = "1.0-rc2"
+VERSION = "1.0"
 
 def blank_current_readline():
 	# thanks http://stackoverflow.com/questions/7907827/
@@ -834,6 +835,12 @@ if __name__ == '__main__':
 
 	print "\r" + YELLOW + "-!- " + BLUE + "GGPO PYTHON CLIENT " + B_BLUE + "VERSION " + VERSION + END
 	print "\r" + YELLOW + "-!- " + BLUE + "(c) 2014 Pau Oliva Fora (" + B_BLUE + "pof" + BLUE + "). Licensed under GPLv2+." + END
+
+	# check for updates
+	response = urllib2.urlopen('https://raw.github.com/poliva/ggpo/master/VERSION')
+	version = response.read().strip()
+	if (version != VERSION):
+		print "\r" + YELLOW + "-!- " + B_BLUE + "New version " + B_YELLOW + version + B_BLUE + " available at " + B_YELLOW + "http://poliva.github.io/ggpo/" + END
 
 	HOMEDIR = os.path.expanduser("~")
 	CONFIGDIR= HOMEDIR + "/.config/ggpo"
