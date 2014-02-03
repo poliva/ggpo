@@ -235,6 +235,15 @@ def parse(cmd):
 
 		print "\r" + GREEN + "-!- watch " + B_GREEN + str(nick1) + GREEN + " vs " + B_GREEN + str(nick2) + END
 
+		if not os.path.isfile(INSTALLDIR+"/ggpofba.sh"):
+			print "\r" + YELLOW + "-!- WARNING: cannot find ggpofba.sh in " + INSTALLDIR + END
+
+		if not os.path.isfile(INSTALLDIR+"/ggpofba.exe"):
+			print "\r" + YELLOW + "-!- WARNING: cannot find ggpofba.exe in " + INSTALLDIR + END
+
+		if not os.path.isfile(INSTALLDIR+"/ROMs/" + CHANNEL + ".zip"):
+			print "\r" + YELLOW + "-!- WARNING: cannot find game ROM at " + INSTALLDIR + "/ROMs/" + CHANNEL + ".zip" + END
+
 		quark = cmd[20+nick1len+nick2len:pdulen+4]
 		args = [FBA, quark]
 		FNULL = open(os.devnull, 'w')
@@ -582,7 +591,10 @@ def parselist(cmd):
 		i=i+4
 		name3 = cmd[i:i+len3]
 		i=i+len3
-		print YELLOW + "-!- " + B_GRAY +  str(name1) + GRAY + " (" + str(name2) + ") -- " + str(name3)
+		if os.path.isfile(INSTALLDIR+"/ROMs/" + name1 + ".zip"):
+			print YELLOW + "-!- " + B_GREEN + str(name1) + GRAY + " (" + GREEN + str(name2) + GRAY + ") -- " + str(name3)
+		else:
+			print YELLOW + "-!- " + B_GRAY + str(name1) + GRAY + " (" + str(name2) + ") -- " + str(name3)
 
 	print YELLOW + "-!- EOF channel list." + END
 
