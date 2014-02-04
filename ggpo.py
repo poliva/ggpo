@@ -72,7 +72,6 @@ def print_line(text):
 	sys.stdout.flush()
 
 def readdata():
-	global s
 	try:
 		foo = s.recv(4096)
 		return foo
@@ -88,6 +87,9 @@ def pad(value,length=4):
 
 def parse(cmd):
 	global SPECIAL,challengers,challenged,sequence
+
+	if (len(cmd) < 8):
+		return
 
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 	action = cmd[4:8]
