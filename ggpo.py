@@ -261,9 +261,12 @@ def parse(cmd):
 
 		quark = cmd[20+nick1len+nick2len:pdulen+4]
 		args = [FBA, quark]
-		FNULL = open(os.devnull, 'w')
-		call(args, stdout=FNULL, stderr=FNULL)
-		FNULL.close()
+		try:
+			FNULL = open(os.devnull, 'w')
+			call(args, stdout=FNULL, stderr=FNULL)
+			FNULL.close()
+		except OSError:
+			print "\r" + RED + "-!- ERROR: can't execute" + FBA + END
 
 	# unknown action
 	else:
