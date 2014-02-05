@@ -139,6 +139,7 @@ def parse(cmd):
 				if (VERBOSE>1):
 					nick2len = int(cmd[24+nicklen:28+nicklen].encode('hex'),16)
 					nick2 = cmd[28+nicklen:28+nicklen+nick2len]
+					if (nick2 == ""): nick2="null"
 					print "\r" + MAGENTA + "-!- new match " + B_MAGENTA + str(nick) + MAGENTA + " vs " + B_MAGENTA + str(nick2) + END
 					# remove from challenged set when nick2 accepts our challenge
 					if (nick==USERNAME and nick2 in list(challenged)): challenged.remove(nick2)
@@ -266,7 +267,7 @@ def parse(cmd):
 			call(args, stdout=FNULL, stderr=FNULL)
 			FNULL.close()
 		except OSError:
-			print "\r" + RED + "-!- ERROR: can't execute" + FBA + END
+			print "\r" + RED + "-!- ERROR: can't execute " + FBA + END
 
 	# unknown action
 	else:
