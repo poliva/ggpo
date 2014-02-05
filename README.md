@@ -1,11 +1,11 @@
-ggpo
-====
+ggpo.py
+=======
 
 &copy;2014 Pau Oliva Fora ([@pof](https://twitter.com/pof))
 
 This is an alternative [GGPO](http://ggpo.net/) command line client written in python.<br />
 This allows you to play GGPO games on Linux and MacOS X systems.<br />
-You'll still need the ggpofba.exe from the original GGPO client, which will be launched through wine.
+You still need the ggpofba.exe from the original GGPO client, which is launched through wine.
 
 ## Installation
 
