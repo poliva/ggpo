@@ -279,15 +279,18 @@ def parse(cmd):
 
 	#print ("PDULEN: " + str(pdulen) + " ACTION: " + str(action))
 	#print ("PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd)))
-	if ( len(cmd) > pdulen+4 ): 
+	if ( len(cmd) > pdulen+4 and len(cmd[pdulen+4:]) >=8 ):
 		parse(cmd[pdulen+4:])
 		
 
 def parsespecial(cmd):
 	global SPECIAL
 
-	pdulen = int(cmd[0:4].encode('hex'), 16)
-	#myseqnum = int(cmd[4:8].encode('hex'),16)
+	try:
+		pdulen = int(cmd[0:4].encode('hex'), 16)
+		#myseqnum = int(cmd[4:8].encode('hex'),16)
+	except:
+		pdulen = 0
 
 	if (SPECIAL=="MOTD"):
 		try:
@@ -353,7 +356,10 @@ def get_ping_msec(nick,ip):
 def parseusers(cmd):
 
 	global SPECIAL, OLDDATA, userlist
-	pdulen = int(cmd[0:4].encode('hex'), 16)
+	try:
+		pdulen = int(cmd[0:4].encode('hex'), 16)
+	except:
+		pdulen = 0
 
 	## ugly workaround for when the user list is splitted in 2 PDUs
 	#print "PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd))
@@ -375,59 +381,63 @@ def parseusers(cmd):
 	while (i<pdulen):
 	#while (i<len(cmd)-4):
 
-		len1 = int(cmd[i:i+4].encode('hex'),16)
-		i=i+4
-		nick = cmd[i:i+len1]
-		i=i+len1
+		try:
+			len1 = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
+			nick = cmd[i:i+len1]
+			i=i+len1
 
-		status = int(cmd[i:i+4].encode('hex'),16)  # 1=away, 2=playing, 0=available?
-		i=i+4
+			status = int(cmd[i:i+4].encode('hex'),16)  # 1=away, 2=playing, 0=available?
+			i=i+4
 
-		p2len = int(cmd[i:i+4].encode('hex'),16)  # should be 0 when not playing
-		i=i+4
+			p2len = int(cmd[i:i+4].encode('hex'),16)  # should be 0 when not playing
+			i=i+4
 
-		if (p2len > 0):
-			p2nick = cmd[i:i+p2len]
-			i=i+p2len
-		else:
-			p2nick="null"
+			if (p2len > 0):
+				p2nick = cmd[i:i+p2len]
+				i=i+p2len
+			else:
+				p2nick="null"
 
-		iplen = int(cmd[i:i+4].encode('hex'),16)
-		i=i+4
+			iplen = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
 
-		ip = cmd[i:i+iplen]
-		i=i+iplen
+			ip = cmd[i:i+iplen]
+			i=i+iplen
 
-		unk1 = cmd[i:i+4]
-		i=i+4
+			unk1 = cmd[i:i+4]
+			i=i+4
 
-		unk2 = cmd[i:i+4]
-		i=i+4
+			unk2 = cmd[i:i+4]
+			i=i+4
 
-		citylen = int(cmd[i:i+4].encode('hex'),16)
-		i=i+4
+			citylen = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
 
-		city = cmd[i:i+citylen]
-		i=i+citylen
+			city = cmd[i:i+citylen]
+			i=i+citylen
 
-		cclen = int(cmd[i:i+4].encode('hex'),16)
-		i=i+4
+			cclen = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
 
-		cc = cmd[i:i+cclen]
-		i=i+cclen
+			cc = cmd[i:i+cclen]
+			i=i+cclen
 
-		countrylen = int(cmd[i:i+4].encode('hex'),16)
-		i=i+4
+			countrylen = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
 
-		country = cmd[i:i+countrylen]
-		i=i+countrylen
+			country = cmd[i:i+countrylen]
+			i=i+countrylen
 
-		port = int(cmd[i:i+4].encode('hex'),16)
-		i=i+4
+			port = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
 
-		check_ping(nick,ip,port)
-		user = [nick,ip,city,cc,country,port,status,p2nick,0]
-		userlist.append(user)
+			check_ping(nick,ip,port)
+			user = [nick,ip,city,cc,country,port,status,p2nick,0]
+			userlist.append(user)
+		except:
+			if (DEBUG>0): print "\r" + BLUE + "error parsing user " + str(nick) + END
+			#pass
 
 	# sleep 1sec to collect ping data
 	time.sleep(1)
@@ -575,7 +585,11 @@ def print_user(user):
 def parselist(cmd):
 
 	global SPECIAL, OLDDATA
-	pdulen = int(cmd[0:4].encode('hex'), 16)
+
+	try:
+		pdulen = int(cmd[0:4].encode('hex'), 16)
+	except:
+		pdulen = 0
 
 	## ugly workaround for when the channel list is splitted in 2 PDUs
 	#print "PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd))
@@ -595,25 +609,27 @@ def parselist(cmd):
 
 	i=12
 	while (i<pdulen):
-	#while (i<len(cmd)-4):
-		#num = int(cmd[i:i+4].encode('hex'),16)
-		i=i+4
-		len1 = int(cmd[i:i+4].encode('hex'),16)
-		i=i+4
-		name1 = cmd[i:i+len1]
-		i=i+len1
-		len2 = int(cmd[i:i+4].encode('hex'),16)
-		i=i+4
-		name2 = cmd[i:i+len2]
-		i=i+len2
-		len3 = int(cmd[i:i+4].encode('hex'),16)
-		i=i+4
-		name3 = cmd[i:i+len3]
-		i=i+len3
-		if os.path.isfile(INSTALLDIR+"/ROMs/" + name1 + ".zip"):
-			print YELLOW + "-!- " + B_GREEN + str(name1) + GRAY + " (" + GREEN + str(name2) + GRAY + ") -- " + str(name3)
-		else:
-			print YELLOW + "-!- " + B_GRAY + str(name1) + GRAY + " (" + str(name2) + ") -- " + str(name3)
+		try :
+			#num = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
+			len1 = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
+			name1 = cmd[i:i+len1]
+			i=i+len1
+			len2 = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
+			name2 = cmd[i:i+len2]
+			i=i+len2
+			len3 = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
+			name3 = cmd[i:i+len3]
+			i=i+len3
+			if os.path.isfile(INSTALLDIR+"/ROMs/" + name1 + ".zip"):
+				print YELLOW + "-!- " + B_GREEN + str(name1) + GRAY + " (" + GREEN + str(name2) + GRAY + ") -- " + str(name3)
+			else:
+				print YELLOW + "-!- " + B_GRAY + str(name1) + GRAY + " (" + str(name2) + ") -- " + str(name3)
+		except:
+			if (DEBUG>0): print "\r" + BLUE + "-!- Error parsing channel " + str(name1) + END
 
 	print YELLOW + "-!- EOF channel list." + END
 
@@ -669,19 +685,21 @@ def pdu_cancel(nick):
 def pdu_motd():
 	global SPECIAL, sequence
 
-	pdulen = 4+4
-	SPECIAL="MOTD"
-	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
-	sequence=sequence+1
+	if (SPECIAL==""):
+		pdulen = 4+4
+		SPECIAL="MOTD"
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
+		sequence=sequence+1
 
 def pdu_users():
 	global users_option, SPECIAL, sequence
 
-	users_option=line
-	pdulen = 4+4
-	SPECIAL="USERS"
-	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
-	sequence=sequence+1
+	if (SPECIAL==""):
+		users_option=line
+		pdulen = 4+4
+		SPECIAL="USERS"
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
+		sequence=sequence+1
 
 
 def mainloop():
@@ -804,10 +822,11 @@ def mainloop():
 
 		# list channels
 		if (line == "/list"):
-			pdulen = 4+4
-			SPECIAL="LIST"
-			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
-			sequence=sequence+1
+			if (SPECIAL == ""):
+				pdulen = 4+4
+				SPECIAL="LIST"
+				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
+				sequence=sequence+1
 
 		# list users
 		if (line != None and ( line.startswith("/users") or line.startswith("/whois ") or line=="/who" )):
@@ -823,7 +842,11 @@ def datathread():
 	global data
 	while 1:
 		data = readdata()
-		parse(data)
+		if (data == None):
+			print "\r" + BLUE + "-!- Connection lost. Reconnecting." + END
+			connect_sequence()
+		if (data != None and len(data) >= 8):
+			parse(data)
 		print_line(PROMPT)
 		time.sleep(2)
 
@@ -833,6 +856,36 @@ def showverbose():
 	if (VERBOSE==1): print "showing challenges + chat" + END
 	elif (VERBOSE==2): print "showing challenges + chat + new matches" + END
 	elif (VERBOSE==3): print "showing challenges + chat + new matches + status changes" + END
+
+def connect_sequence():
+	global s, sequence
+
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect(('ggpo.net', 7000))
+
+	# welcome packet
+	sequence = 0x1
+	s.send('\x00\x00\x00\x14' + pad(chr(sequence)) + '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
+	sequence=sequence+1
+
+	# authentication
+	# NOTE: this must have sequence=2 as we use the server reply to identify 'incorrect password'
+	pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4
+	s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79")
+	sequence=sequence+1
+
+	# choose channel
+	# NOTE: this must have sequence=3 as we use the server reply to identify 'incorrect user'
+	channellen = len(CHANNEL)
+	pdulen = 4 + 4 + 4 + channellen
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
+	sequence=sequence+1
+
+	# should we start away by default?
+	if (STARTAWAY == 1):
+		s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
+		sequence=sequence+1
+
 
 if __name__ == '__main__':
 
@@ -966,9 +1019,6 @@ if __name__ == '__main__':
 	FBA = INSTALLDIR + "/ggpofba.sh"
 	MP3 = INSTALLDIR + "/assets/challenger-comes.mp3"
 
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.connect(('ggpo.net', 7000))
-
 	u = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 	try:
 		u.bind(('0.0.0.0', 6009))
@@ -979,28 +1029,8 @@ if __name__ == '__main__':
 	t.daemon = True
 	t.start()
 
-	# welcome packet
-	sequence = 0x1
-	s.send('\x00\x00\x00\x14' + pad(chr(sequence)) + '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
-	sequence=sequence+1
-
-	# authentication
-	# NOTE: this must have sequence=2 as we use the server reply to identify 'incorrect password'
-	pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4
-	s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79")
-	sequence=sequence+1
-
-	# choose channel
-	# NOTE: this must have sequence=3 as we use the server reply to identify 'incorrect user'
-	channellen = len(CHANNEL)
-	pdulen = 4 + 4 + 4 + channellen
-	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
-	sequence=sequence+1
-
-	# should we start away by default?
-	if (STARTAWAY == 1):
-		s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
-		sequence=sequence+1
+	s=''
+	connect_sequence()
 
 	line=""
 	challengers=set()
