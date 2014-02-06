@@ -22,6 +22,7 @@ import readline
 import termios
 import fcntl
 import urllib2
+from Queue import Queue
 from subprocess import call
 from threading import Thread
 from random import randint
@@ -700,33 +701,25 @@ def pdu_users():
 		sequence=sequence+1
 
 def mainloop():
-	global line,sequence,SPECIAL,challengers,challenged,CHANNEL
-
-	processed=0
+	global sequence,SPECIAL,challengers,challenged,CHANNEL
 
 	while 1:
+
+		command = command_queue.get()
 
 		print_line(PROMPT)
 		time.sleep(1)
 
-		if (processed==1):
-			line=""
-			processed=0
-
-		if (line != ""):
-			processed=1
-
-		if (line != None and line != "" and not line.startswith("/")):
-			#print line
-			msglen = len(line)
+		if (command != None and command != "" and not command.startswith("/")):
+			msglen = len(command)
 			pdulen = 4 + 4 + 4 + msglen
 			# [ 4-byte pdulen ] [ 4-byte sequence ] [ 4-byte command ] [ 4-byte msglen ] [ msglen-bytes msg ]
-			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x07" + pad(chr(msglen)) + line)
+			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x07" + pad(chr(msglen)) + command)
 			sequence=sequence+1
 
 		# send a challenge request
-		if (line != None and line.startswith("/challenge ")):
-			nick = line[11:]
+		if (command != None and command.startswith("/challenge ")):
+			nick = command[11:]
 			nicklen = len(nick)
 			channellen = len(CHANNEL)
 			pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
@@ -737,15 +730,15 @@ def mainloop():
 			print_line ( GREEN + "-!- type '/cancel " + B_GREEN + str(nick) + GREEN + "' to cancel it" + END + "\n")
 
 		# accept a challenge request (initiated by peer)
-		if (line != None and line.startswith("/accept ")):
-			nick = line[8:]
+		if (command != None and command.startswith("/accept ")):
+			nick = command[8:]
 			if nick in list(challengers):
 				pdu_accept(nick)
 			else:
 				print_line ( YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END + "\n")
 
 		# if there's only one incoming challenge request, allow the user to type /accept without parameters (no need to specify nick)
-		if (line == "/accept"):
+		if (command == "/accept"):
 			if (len(challengers)==1):
 				for nick in list(challengers):
 					pdu_accept(nick)
@@ -754,34 +747,34 @@ def mainloop():
 				print_line ( YELLOW + "-!- " + "There's more than one incoming challenge request: you need to specify the nick." + END + "\n")
 
 		# decline a challenge request (initiated by peer)
-		if (line != None and line.startswith("/decline ")):
-			nick = line[9:]
+		if (command != None and command.startswith("/decline ")):
+			nick = command[9:]
 			if nick in list(challengers):
 				pdu_decline(nick)
 			else:
 				print_line ( YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END + "\n")
 
 		# /decline without parameters declines all incoming challenge requests
-		if (line == "/decline"):
+		if (command == "/decline"):
 			for nick in list(challengers):
 				pdu_decline(nick)
 
 		# cancel an ongoing challenge request (initiated by us)
-		if (line != None and line.startswith("/cancel ")):
-			nick = line[8:]
+		if (command != None and command.startswith("/cancel ")):
+			nick = command[8:]
 			if nick in list(challenged):
 				pdu_cancel(nick)
 			else:
 				print_line ( YELLOW + "-!- you aren't challenging " + B_YELLOW + str(nick) + END + "\n")
 
 		# /cancel without parameters: cancel all ongoing challenge requests
-		if (line == "/cancel"):
+		if (command == "/cancel"):
 			for nick in list(challenged):
 				pdu_cancel(nick)
 
 		# watch an ongoing match
-		if (line != None and line.startswith("/watch ")):
-			nick = line[7:]
+		if (command != None and command.startswith("/watch ")):
+			nick = command[7:]
 			nicklen = len(nick)
 			pdulen = 4 + 4 + 4 + nicklen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x10" + pad(chr(nicklen)) + nick )
@@ -789,15 +782,15 @@ def mainloop():
 			#print_line ( GREEN + "-!- watch challenge from " + B_GREEN + str(nick) + END + "\n")
 
 		# choose channel
-		if (line != None and line.startswith("/join ")):
-			CHANNEL = line[6:]
+		if (command != None and command.startswith("/join ")):
+			CHANNEL = command[6:]
 			channellen = len(CHANNEL)
 			pdulen = 4 + 4 + 4 + channellen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
 			sequence=sequence+1
 
 		# set away status (can't be challenged)
-		if (line == "/away"):
+		if (command == "/away"):
 			pdulen = 4+4+4
 			SPECIAL="AWAY"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x01')
@@ -805,7 +798,7 @@ def mainloop():
 			#print_line ( GREEN + "-!- you are away now" + END + "\n")
 
 		# return back from away (can be challenged)
-		if (line == "/back" or line == "/available"):
+		if (command == "/back" or command == "/available"):
 			pdulen = 4+4+4
 			SPECIAL="BACK"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x00')
@@ -813,11 +806,11 @@ def mainloop():
 			#print_line ( GREEN + "-!- you are available now" + END + "\n")
 
 		# view channel motd
-		if (line == "/motd"):
+		if (command == "/motd"):
 			pdu_motd()
 
 		# list channels
-		if (line == "/list"):
+		if (command == "/list"):
 			if (SPECIAL == ""):
 				pdulen = 4+4
 				SPECIAL="LIST"
@@ -825,7 +818,7 @@ def mainloop():
 				sequence=sequence+1
 
 		# list users
-		if (line != None and ( line.startswith("/users") or line.startswith("/whois ") or line=="/who" )):
+		if (command != None and ( command.startswith("/users") or command.startswith("/whois ") or command=="/who" )):
 			pdu_users()
 
 def datathread():
@@ -1027,12 +1020,14 @@ if __name__ == '__main__':
 	s=''
 	connect_sequence()
 
-	line=""
+	command=""
 	challengers=set()
 	challenged=set()
 	users_option=""
 	pinglist=[]
 	userlist=[]
+
+	command_queue = Queue()
 
 	t2 = Thread(target=datathread)
 	t2.daemon = False
@@ -1043,10 +1038,10 @@ if __name__ == '__main__':
 	t3.start()
 
 	while 1:
-		line = raw_input(PROMPT)
-		line = line.strip(' \t\n\r')
+		command = raw_input(PROMPT)
+		command = command.strip(' \t\n\r')
 
-		if (line == "/help"):
+		if (command == "/help"):
 			print_line ( YELLOW + "-!- " + BLUE + "available commands:" + END + "\n")
 			print_line ( YELLOW + "-!- " + BLUE + "/challenge [<nick>]\tsend a challenge request to <nick>" + END + "\n")
 			print_line ( YELLOW + "-!- " + BLUE + "/cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END + "\n")
@@ -1067,8 +1062,8 @@ if __name__ == '__main__':
 			print_line ( YELLOW + "-!- " + BLUE + "           flag:'0' challenges, '1' chat, '2' match, '3' status" + END + "\n")
 			print_line ( YELLOW + "-!- " + BLUE + "/quit \t\tdisconnect from ggpo server" + END + "\n")
 
-		if (line.startswith("/whowas ")):
-			nick = line[8:]
+		elif (command.startswith("/whowas ")):
+			nick = command[8:]
 			found = print_user_long(nick,"whowas")
 			if (found==1):
 				print_line ( YELLOW + "-!- " + GRAY + "End of WHOWAS" + END + "\n")
@@ -1076,17 +1071,17 @@ if __name__ == '__main__':
 				print_line ( YELLOW + "-!- There was no such nick " + B_YELLOW + nick + END + "\n")
 
 		# hidden command, not present in /help
-		if (line.startswith("/debug ")):
-			debug = line[7:]
+		elif (command.startswith("/debug ")):
+			debug = command[7:]
 			if (debug == "0"): DEBUG=0
 			elif (debug == "1"): DEBUG=1
 			elif (debug == "2"): DEBUG=2
 			else: print_line ( YELLOW + "-!- possible values are /debug [<0|1|2>]" + END + "\n")
-		if (line == "/debug"):
+		elif (command == "/debug"):
 			print_line ( YELLOW + "-!- " + GRAY + "DEBUG: " + str(DEBUG) + END + "\n")
 
-		if (line.startswith("/verbose ")):
-			verbose = line[9:]
+		elif (command.startswith("/verbose ")):
+			verbose = command[9:]
 			if (verbose == "0"): VERBOSE=0
 			elif (verbose == "1"): VERBOSE=1
 			elif (verbose == "2"): VERBOSE=2
@@ -1094,22 +1089,24 @@ if __name__ == '__main__':
 			else: print_line ( YELLOW + "-!- possible values are /verbose [<0|1|2|3>]" + END + "\n")
 			showverbose()
 
-		if (line == "/verbose"):
+		elif (command == "/verbose"):
 			showverbose()
 
-		if (line == "/challenge"):
+		elif (command == "/challenge"):
 			text= YELLOW + "-!- " + GRAY + "challenging:",
 			for nick in challenged:
 				text+= "["+ B_GREEN + nick + GRAY + "]",
 			text+=END+"\n",
 			print_line(' '.join(text))
 
-		if (line == "/clear"):
+		elif (command == "/clear"):
 			call(['clear'])
 
-		if (line == "/quit"):
+		elif (command == "/quit"):
 			s.close()
 			u.close()
 			#call(['reset'])
 			print_line ( YELLOW + "-!- " + BLUE + "have a nice day :)" + END + "\n")
 			os._exit(0)
+		else:
+			command_queue.put(command)
