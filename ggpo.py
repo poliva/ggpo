@@ -111,7 +111,7 @@ def parse(cmd):
 					pass
 				msg = msg.replace(USERNAME, B_YELLOW + USERNAME + END)
 
-			print "\r" + CYAN + "<" + str(nick) + "> " + END + str(msg)
+			print_line ( CYAN + "<" + str(nick) + "> " + END + str(msg) + "\n")
 
 	# state changes (away/available/playing)
 	elif (action == "\xff\xff\xff\xfd"):
@@ -124,7 +124,7 @@ def parse(cmd):
 
 
 		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"):
-			if (VERBOSE>2): print "\r" + GRAY + "-!- " + B_GRAY + str(nick) + GRAY +" has quit" + END
+			if (VERBOSE>2): print_line ( GRAY + "-!- " + B_GRAY + str(nick) + GRAY +" has quit" + END +"\n")
 
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x00"):
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x01"):
@@ -140,7 +140,7 @@ def parse(cmd):
 					nick2len = int(cmd[24+nicklen:28+nicklen].encode('hex'),16)
 					nick2 = cmd[28+nicklen:28+nicklen+nick2len]
 					if (nick2 == ""): nick2="null"
-					print "\r" + MAGENTA + "-!- new match " + B_MAGENTA + str(nick) + MAGENTA + " vs " + B_MAGENTA + str(nick2) + END
+					print_line ( MAGENTA + "-!- new match " + B_MAGENTA + str(nick) + MAGENTA + " vs " + B_MAGENTA + str(nick2) + END +"\n" )
 					# remove from challenged set when nick2 accepts our challenge
 					if (nick==USERNAME and nick2 in list(challenged)): challenged.remove(nick2)
 
@@ -163,22 +163,23 @@ def parse(cmd):
 					countrylen = int(cmd[48+nicklen+iplen+citylen+cclen:48+nicklen+iplen+citylen+cclen+4].encode('hex'),16)
 					country = cmd[52+nicklen+iplen+citylen+cclen:52+nicklen+iplen+citylen+cclen+countrylen]
 
-					print "\r" + GRAY + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
-					if (city != "" and cc != ""): print "(" + city + ", " + cc + ")",
-					elif (city == "" and cc != ""): print "(" + cc + ")",
-					if (state == 0): print "is available",
-					if (state == 1): print "is away",
-					print END
+					text = GRAY + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip), 
+					if (city != "" and cc != ""): text+= "(" + city + ", " + cc + ")",
+					elif (city == "" and cc != ""): text+= "(" + cc + ")",
+					if (state == 0): text+= "is available",
+					if (state == 1): text+= "is away",
+					text+=END+"\n",
+					print_line(' '.join(text))
 
 		else:
-			if (DEBUG>0): print "\r" + BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END
+			if (DEBUG>0): print_line ( BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END +"\n")
 
 	# challenge request declined by peer
 	elif (action == "\xff\xff\xff\xfb"):
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
 		if nick in list(challenged): challenged.remove(nick)
-		print "\r" + RED + "-!- " + B_RED + str(nick) + RED + " declined the challenge request"
+		print_line ( RED + "-!- " + B_RED + str(nick) + RED + " declined the challenge request" +"\n")
 
 
 	# challenge
@@ -190,8 +191,8 @@ def parse(cmd):
 		channellen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
 		channel = cmd[16+nicklen:16+nicklen+channellen]
 
-		print "\r" + RED + "-!- INCOMING CHALLENGE REQUEST FROM " + B_RED + str(nick) + RED + " @ " + channel + END
-		print RED + "-!- TYPE '/accept " + B_RED + str(nick) + RED + "' to accept it, or '/decline " + B_RED + str(nick) + RED + "' to wimp out." + END
+		print_line ( RED + "-!- INCOMING CHALLENGE REQUEST FROM " + B_RED + str(nick) + RED + " @ " + channel + END +"\n" )
+		print_line ( RED + "-!- TYPE '/accept " + B_RED + str(nick) + RED + "' to accept it, or '/decline " + B_RED + str(nick) + RED + "' to wimp out." + END +"\n")
 
 		challengers.add(nick)
 
@@ -210,12 +211,12 @@ def parse(cmd):
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
 		if nick in list(challengers): challengers.remove(nick)
-		print "\r" + YELLOW + "-!- CHALLENGE REQUEST CANCELED BY " + B_YELLOW + str(nick) + END
+		print_line ( YELLOW + "-!- CHALLENGE REQUEST CANCELED BY " + B_YELLOW + str(nick) + END + "\n")
 
 
 	# joining a channel
 	elif (action == "\xff\xff\xff\xff"):
-		print "\r" + GRAY + "-!- Connection established" + END
+		print_line ( GRAY + "-!- Connection established" + END + "\n")
 		pdu_motd()
 
 	# password incorrect (reply to request with sequence=2)
@@ -225,8 +226,8 @@ def parse(cmd):
 			s.close()
 			u.close()
 			call(['reset'])
-			print "\r" + RED + "-!- Password incorrect" + END
-			print "\r" + RED + "-!- Check config file at " + CONFIGFILE + END
+			print_line ( RED + "-!- Password incorrect" + END + "\n")
+			print_line ( RED + "-!- Check config file at " + CONFIGFILE + END + "\n")
 			os._exit(0)
 
 	# reply to request with sequence=3
@@ -237,8 +238,8 @@ def parse(cmd):
 			s.close()
 			u.close()
 			call(['reset'])
-			print "\r" + RED + "-!- User incorrect" + END
-			print "\r" + RED + "-!- Check config file at " + CONFIGFILE + END
+			print_line ( RED + "-!- User incorrect" + END + "\n")
+			print_line ( RED + "-!- Check config file at " + CONFIGFILE + END + "\n")
 			os._exit(0)
 
 	# watch
@@ -249,16 +250,16 @@ def parse(cmd):
 		nick2len = int(cmd[12+nick1len:16+nick1len].encode('hex'),16)
 		nick2 = cmd[16+nick1len:16+nick1len+nick2len]
 
-		print "\r" + GREEN + "-!- watch " + B_GREEN + str(nick1) + GREEN + " vs " + B_GREEN + str(nick2) + END
+		print_line ( GREEN + "-!- watch " + B_GREEN + str(nick1) + GREEN + " vs " + B_GREEN + str(nick2) + END + "\n")
 
 		if not os.path.isfile(INSTALLDIR+"/ggpofba.sh"):
-			print "\r" + YELLOW + "-!- WARNING: cannot find ggpofba.sh in " + INSTALLDIR + END
+			print_line ( YELLOW + "-!- WARNING: cannot find ggpofba.sh in " + INSTALLDIR + END + "\n")
 
 		if not os.path.isfile(INSTALLDIR+"/ggpofba.exe"):
-			print "\r" + YELLOW + "-!- WARNING: cannot find ggpofba.exe in " + INSTALLDIR + END
+			print_line ( YELLOW + "-!- WARNING: cannot find ggpofba.exe in " + INSTALLDIR + END + "\n")
 
 		if not os.path.isfile(INSTALLDIR+"/ROMs/" + CHANNEL + ".zip"):
-			print "\r" + YELLOW + "-!- WARNING: cannot find game ROM at " + INSTALLDIR + "/ROMs/" + CHANNEL + ".zip" + END
+			print_line ( YELLOW + "-!- WARNING: cannot find game ROM at " + INSTALLDIR + "/ROMs/" + CHANNEL + ".zip" + END + "\n")
 
 		quark = cmd[20+nick1len+nick2len:pdulen+4]
 		args = [FBA, quark]
@@ -267,12 +268,12 @@ def parse(cmd):
 			call(args, stdout=FNULL, stderr=FNULL)
 			FNULL.close()
 		except OSError:
-			print "\r" + RED + "-!- ERROR: can't execute " + FBA + END
+			print_line ( RED + "-!- ERROR: can't execute " + FBA + END + "\n")
 
 	# unknown action
 	else:
 		if (SPECIAL == "" ):
-			if (DEBUG>0): print "\r" + BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END
+			if (DEBUG>0): print_line ( BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END + "\n")
 			#if (cmd[8:pdulen+4]=="\x00\x00\x00\x00" and int(action.encode('hex'),16)>4): print "ggpo> ",
 		else:
 			parsespecial(cmd)
@@ -303,8 +304,8 @@ def parsespecial(cmd):
 			msglen = int(cmd[20+channellen+topiclen:24+channellen+topiclen].encode('hex'),16)
 			msg = cmd[24+channellen+topiclen:24+channellen+topiclen+msglen]
 
-			print "\r" + B_GREEN + str(channel) + GREEN + " || " + B_GREEN + str(topic) + GREEN
-			print str(msg) + END
+			print_line ( B_GREEN + str(channel) + GREEN + " || " + B_GREEN + str(topic) + GREEN + "\n")
+			print_line ( str(msg) + END + "\n")
 		except ValueError:
 			pass
 		SPECIAL=""
@@ -324,7 +325,7 @@ def parsespecial(cmd):
 		parseusers(cmd)
 
 	else:
-		if (DEBUG>0): print "\r" + BLUE + "SPECIAL=" + SPECIAL + " + DATA: " + repr(cmd[8:pdulen+4]) + END
+		if (DEBUG>0): print_line ( BLUE + "SPECIAL=" + SPECIAL + " + DATA: " + repr(cmd[8:pdulen+4]) + END + "\n")
 
 def check_ping(nick,ip,port):
 	global pinglist
@@ -436,7 +437,7 @@ def parseusers(cmd):
 			user = [nick,ip,city,cc,country,port,status,p2nick,0]
 			userlist.append(user)
 		except:
-			if (DEBUG>0): print "\r" + BLUE + "error parsing user " + str(nick) + END
+			if (DEBUG>0): print_line ( BLUE + "error parsing user " + str(nick) + END + "\n")
 			#pass
 
 	# sleep 1sec to collect ping data
@@ -468,14 +469,14 @@ def parseusers(cmd):
 
 		found = print_user_long(query,"whois")
 		if (found == 1):
-			print "\r" + YELLOW + "-!- " + GRAY + "End of WHOIS" + END
+			print_line ( YELLOW + "-!- " + GRAY + "End of WHOIS" + END + "\n")
 		else:
-			print "\r" + YELLOW + "-!- There is no such nick " + B_YELLOW + query + END
+			print_line ( YELLOW + "-!- There is no such nick " + B_YELLOW + query + END + "\n")
 
 	elif (users_option.startswith("/users ")):
 		subcmd=users_option[7:]
 
-		print "\r" + YELLOW + "-!- user list:" + END
+		print_line ( YELLOW + "-!- user list:" + END + "\n")
 		if (subcmd == "available"):
 			for user in available_users: print_user(user)
 		elif (subcmd=="away"):
@@ -483,16 +484,16 @@ def parseusers(cmd):
 		elif (subcmd=="playing"):
 			for user in playing_users: print_user(user)
 		else:
-			print "\r" + YELLOW + "-!- possible modifiers are: available, away, playing" + END
+			print_line ( YELLOW + "-!- possible modifiers are: available, away, playing" + END + "\n")
 
-		print "\r" + YELLOW + "-!- EOF user list." + END
+		print_line ( YELLOW + "-!- EOF user list." + END + "\n")
 
 	else:
-		print "\r" + YELLOW + "-!- user list:" + END
+		print_line ( YELLOW + "-!- user list:" + END + "\n")
 		for user in available_users: print_user(user)
 		for user in playing_users: print_user(user)
 		for user in away_users: print_user(user)
-		print "\r" + YELLOW + "-!- EOF user list." + END
+		print_line ( YELLOW + "-!- EOF user list." + END + "\n")
 
 def print_user_long(nick,command):
 
@@ -536,23 +537,27 @@ def print_user_long(nick,command):
 	except socket.herror:
 		hostname = (ip,ip,ip)
 
-	print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END
-	if (command == "whois"): print "\r" + YELLOW + "-!- " + GRAY + "  channel  : " + CHANNEL + END
-	print "\r" + YELLOW + "-!- " + GRAY + "  hostname : " + hostname[0] + END
-	if (lastseen != ""): print "\r" + YELLOW + "-!- " + GRAY + "  lastseen : " + datetime.datetime.fromtimestamp(int(lastseen)).strftime('%Y-%m-%d %H:%M:%S') + END
-	print "\r" + YELLOW + "-!- " + GRAY + "  location :",
-	if (city != "" and cc != ""): print city + ", " + cc + ", " + country
-	elif (city == "" and cc != ""): print cc + ", " + country
-	else: print "unknown"
-	print "\r" + YELLOW + "-!- " + GRAY + "  status   :",
-	if (status == 0): print "available"
-	if (status == 1): print "away"
-	if (status == 2): print "playing against " + B_GRAY + p2nick
-	if (ping != 0): print "\r" + YELLOW + "-!- " + GRAY + "  ping     : " + str(int(ping)) + " ms" + END
+	print_line ( YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END + "\n")
+	if (command == "whois"): print_line ( YELLOW + "-!- " + GRAY + "  channel  : " + CHANNEL + END + "\n")
+	print_line ( YELLOW + "-!- " + GRAY + "  hostname : " + hostname[0] + END + "\n")
+	if (lastseen != ""): print_line ( YELLOW + "-!- " + GRAY + "  lastseen : " + datetime.datetime.fromtimestamp(int(lastseen)).strftime('%Y-%m-%d %H:%M:%S') + END + "\n")
+	text = YELLOW + "-!- " + GRAY + "  location :",
+	if (city != "" and cc != ""): text+= city + ", " + cc + ", " + country,
+	elif (city == "" and cc != ""): text+= cc + ", " + country,
+	else: text+= "unknown",
+	text+=END+"\n",
+	print_line (' '.join(text))
+	text = YELLOW + "-!- " + GRAY + "  status   :",
+	if (status == 0): text+= "available",
+	if (status == 1): text+= "away",
+	if (status == 2): text+= "playing against " + B_GRAY + p2nick,
+	text+=END+"\n",
+	print_line (' '.join(text))
+	if (ping != 0): print_line ( YELLOW + "-!- " + GRAY + "  ping     : " + str(int(ping)) + " ms" + END + "\n")
 	if nick in challenged:
-		print "\r" + YELLOW + "-!- " + GRAY + " you have challenged " + B_GRAY + str(nick) + END
+		print_line ( YELLOW + "-!- " + GRAY + " you have challenged " + B_GRAY + str(nick) + END + "\n")
 	if nick in challengers:
-		print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + " has challenged you" + END
+		print_line ( YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + " has challenged you" + END + "\n")
 	return 1
 
 def print_user(user):
@@ -568,19 +573,19 @@ def print_user(user):
 	ping=user[8]
 
 	if (ping==0): ping = get_ping_msec(nick,ip)
-	print "\r" + YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
-	if (city != "" and cc != ""): print "(" + city + ", " + cc + ")",
-	elif (city == "" and cc != ""): print "(" + cc + ")",
-	if (status == 0): print "is available",
-	if (status == 1): print "is away",
-	if (status == 2): print "is playing against " + B_GRAY + p2nick,
-	if (ping != 0): print GRAY + "[" + str(int(ping)) + " ms]",
+	text = YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
+	if (city != "" and cc != ""): text+= "(" + city + ", " + cc + ")",
+	elif (city == "" and cc != ""): text+= "(" + cc + ")",
+	if (status == 0): text+= "is available",
+	if (status == 1): text+= "is away",
+	if (status == 2): text+= "is playing against " + B_GRAY + p2nick,
+	if (ping != 0): text+= GRAY + "[" + str(int(ping)) + " ms]",
 	if nick in challenged:
-		print GREEN + "*challenged",
+		text+= GREEN + "*challenged",
 	if nick in challengers:
-		print RED + "*challenging",
-
-	print END
+		text+= RED + "*challenging",
+	text+=END+"\n",
+	print_line(' '.join(text))
 
 def parselist(cmd):
 
@@ -605,7 +610,7 @@ def parselist(cmd):
 		SPECIAL=""
 	## end of workaround
 
-	print "\r" + YELLOW + "-!- channel list:" + END
+	print_line ( YELLOW + "-!- channel list:" + END + "\n")
 
 	i=12
 	while (i<pdulen):
@@ -625,24 +630,24 @@ def parselist(cmd):
 			name3 = cmd[i:i+len3]
 			i=i+len3
 			if os.path.isfile(INSTALLDIR+"/ROMs/" + name1 + ".zip"):
-				print YELLOW + "-!- " + B_GREEN + str(name1) + GRAY + " (" + GREEN + str(name2) + GRAY + ") -- " + str(name3)
+				print_line( YELLOW + "-!- " + B_GREEN + str(name1) + GRAY + " (" + GREEN + str(name2) + GRAY + ") -- " + str(name3) + "\n")
 			else:
-				print YELLOW + "-!- " + B_GRAY + str(name1) + GRAY + " (" + str(name2) + ") -- " + str(name3)
+				print_line( YELLOW + "-!- " + B_GRAY + str(name1) + GRAY + " (" + str(name2) + ") -- " + str(name3) + "\n")
 		except:
-			if (DEBUG>0): print "\r" + BLUE + "-!- Error parsing channel " + str(name1) + END
+			if (DEBUG>0): print_line ( BLUE + "-!- Error parsing channel " + str(name1) + END + "\n")
 
-	print YELLOW + "-!- EOF channel list." + END
+	print_line ( YELLOW + "-!- EOF channel list." + END + "\n")
 
 def pingcheck():
 	global u, pinglist
 
 	while 1:
 		dgram, addr = u.recvfrom(64)
-		if (DEBUG>0): print "\r" + GRAY + "-!- UDP msg: " + dgram + " from " + str(addr) + END
+		if (DEBUG>0): print_line ( GRAY + "-!- UDP msg: " + dgram + " from " + str(addr) + END + "\n")
 		if (dgram[0:9] == "GGPO PING"):
 			val = dgram[10:]
 			u.sendto("GGPO PONG " + val, addr)
-			if (DEBUG>0): print GRAY + "-!- UDP rpl: GGPO PONG " + val + " to " + str(addr) + END
+			if (DEBUG>0): print_line( GRAY + "-!- UDP rpl: GGPO PONG " + val + " to " + str(addr) + END + "\n")
 		if (dgram[0:9] == "GGPO PONG"):
 			mytime = time.time()
 			val = dgram[10:]
@@ -659,7 +664,7 @@ def pdu_accept(nick):
 	pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x09" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 	sequence=sequence+1
-	print "\r" + GREEN + "-!- accepted challenge request from " + B_GREEN + str(nick) + END
+	print_line ( GREEN + "-!- accepted challenge request from " + B_GREEN + str(nick) + END + "\n")
 	challengers.remove(nick)
 
 def pdu_decline(nick):
@@ -669,7 +674,7 @@ def pdu_decline(nick):
 	pdulen = 4 + 4 + 4 + nicklen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x0a" + pad(chr(nicklen)) + nick )
 	sequence=sequence+1
-	print "\r" + YELLOW + "-!- declined challenge request from " + B_YELLOW + str(nick) + END
+	print_line ( YELLOW + "-!- declined challenge request from " + B_YELLOW + str(nick) + END + "\n")
 	challengers.remove(nick)
 
 def pdu_cancel(nick):
@@ -679,7 +684,7 @@ def pdu_cancel(nick):
 	pdulen = 4 + 4 + 4 + nicklen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
 	sequence=sequence+1
-	print "\r" + YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END
+	print_line ( YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END + "\n")
 	challenged.remove(nick)
 
 def pdu_motd():
@@ -737,8 +742,8 @@ def mainloop():
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 			sequence=sequence+1
 			challenged.add(nick)
-			print "\r" + GREEN + "-!- challenge request sent to " + B_GREEN + str(nick) + END
-			print GREEN + "-!- type '/cancel " + B_GREEN + str(nick) + GREEN + "' to cancel it" + END
+			print_line ( GREEN + "-!- challenge request sent to " + B_GREEN + str(nick) + END + "\n")
+			print_line ( GREEN + "-!- type '/cancel " + B_GREEN + str(nick) + GREEN + "' to cancel it" + END + "\n")
 
 		# accept a challenge request (initiated by peer)
 		if (line != None and line.startswith("/accept ")):
@@ -746,7 +751,7 @@ def mainloop():
 			if nick in list(challengers):
 				pdu_accept(nick)
 			else:
-				print "\r" + YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END
+				print_line ( YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END + "\n")
 
 		# if there's only one incoming challenge request, allow the user to type /accept without parameters (no need to specify nick)
 		if (line == "/accept"):
@@ -755,7 +760,7 @@ def mainloop():
 					pdu_accept(nick)
 					break
 			else:
-				print "\r" + YELLOW + "-!- " + "There's more than one incoming challenge request: you need to specify the nick." + END
+				print_line ( YELLOW + "-!- " + "There's more than one incoming challenge request: you need to specify the nick." + END + "\n")
 
 		# decline a challenge request (initiated by peer)
 		if (line != None and line.startswith("/decline ")):
@@ -763,7 +768,7 @@ def mainloop():
 			if nick in list(challengers):
 				pdu_decline(nick)
 			else:
-				print "\r" + YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END
+				print_line ( YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END + "\n")
 
 		# /decline without parameters declines all incoming challenge requests
 		if (line == "/decline"):
@@ -776,7 +781,7 @@ def mainloop():
 			if nick in list(challenged):
 				pdu_cancel(nick)
 			else:
-				print "\r" + YELLOW + "-!- you aren't challenging " + B_YELLOW + str(nick) + END
+				print_line ( YELLOW + "-!- you aren't challenging " + B_YELLOW + str(nick) + END + "\n")
 
 		# /cancel without parameters: cancel all ongoing challenge requests
 		if (line == "/cancel"):
@@ -790,7 +795,7 @@ def mainloop():
 			pdulen = 4 + 4 + 4 + nicklen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x10" + pad(chr(nicklen)) + nick )
 			sequence=sequence+1
-			#print "\r" + GREEN + "-!- watch challenge from " + B_GREEN + str(nick) + END
+			#print_line ( GREEN + "-!- watch challenge from " + B_GREEN + str(nick) + END + "\n")
 
 		# choose channel
 		if (line != None and line.startswith("/join ")):
@@ -806,7 +811,7 @@ def mainloop():
 			SPECIAL="AWAY"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x01')
 			sequence=sequence+1
-			#print "\r" + GREEN + "-!- you are away now" + END
+			#print_line ( GREEN + "-!- you are away now" + END + "\n")
 
 		# return back from away (can be challenged)
 		if (line == "/back" or line == "/available"):
@@ -814,7 +819,7 @@ def mainloop():
 			SPECIAL="BACK"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x00')
 			sequence=sequence+1
-			#print "\r" + GREEN + "-!- you are available now" + END
+			#print_line ( GREEN + "-!- you are available now" + END + "\n")
 
 		# view channel motd
 		if (line == "/motd"):
@@ -833,7 +838,7 @@ def mainloop():
 			pdu_users()
 
 		if (DEBUG>1 and olddata!=data):
-			print "\r" + BLUE + "HEX: ",repr(data) + END
+			print_line ( BLUE + "HEX: " + repr(data) + END + "\n")
 			olddata=data
 
 
@@ -843,7 +848,7 @@ def datathread():
 	while 1:
 		data = readdata()
 		if (data == None):
-			print "\r" + BLUE + "-!- Connection lost. Reconnecting." + END
+			print_line ( BLUE + "-!- Connection lost. Reconnecting." + END + "\n")
 			connect_sequence()
 		if (data != None and len(data) >= 8):
 			parse(data)
@@ -851,11 +856,13 @@ def datathread():
 		time.sleep(2)
 
 def showverbose():
-	print "\r" + YELLOW + "-!- " + GRAY + "current VERBOSE=" + B_GRAY + str(VERBOSE) + GRAY,
-	if (VERBOSE==0): print "only showing challenge requests/replies" + END
-	if (VERBOSE==1): print "showing challenges + chat" + END
-	elif (VERBOSE==2): print "showing challenges + chat + new matches" + END
-	elif (VERBOSE==3): print "showing challenges + chat + new matches + status changes" + END
+	text = YELLOW + "-!- " + GRAY + "current VERBOSE=" + B_GRAY + str(VERBOSE) + GRAY, 
+	if (VERBOSE==0): text+= "only showing challenge requests/replies" + END,
+	if (VERBOSE==1): text+= "showing challenges + chat" + END,
+	elif (VERBOSE==2): text+= "showing challenges + chat + new matches" + END,
+	elif (VERBOSE==3): text+= "showing challenges + chat + new matches + status changes" + END,
+	text+="\n",
+	print_line(' '.join(text))
 
 def connect_sequence():
 	global s, sequence
@@ -902,14 +909,14 @@ if __name__ == '__main__':
 	VERBOSE=3
 	STARTAWAY=0
 
-	print "\r" + YELLOW + "-!- " + BLUE + "GGPO PYTHON CLIENT " + B_BLUE + "VERSION " + VERSION + END
-	print "\r" + YELLOW + "-!- " + BLUE + "(c) 2014 Pau Oliva Fora (" + B_BLUE + "pof" + BLUE + "). Licensed under GPLv2+." + END
+	print_line ( YELLOW + "-!- " + BLUE + "GGPO PYTHON CLIENT " + B_BLUE + "VERSION " + VERSION + END + "\n")
+	print_line ( YELLOW + "-!- " + BLUE + "(c) 2014 Pau Oliva Fora (" + B_BLUE + "pof" + BLUE + "). Licensed under GPLv2+." + END + "\n")
 
 	# check for updates
 	response = urllib2.urlopen('https://raw.github.com/poliva/ggpo/master/VERSION')
 	version = response.read().strip()
 	if (version != VERSION):
-		print "\r" + YELLOW + "-!- " + B_BLUE + "New version " + B_YELLOW + version + B_BLUE + " available at " + B_YELLOW + "http://poliva.github.io/ggpo/" + END
+		print_line ( YELLOW + "-!- " + B_BLUE + "New version " + B_YELLOW + version + B_BLUE + " available at " + B_YELLOW + "http://poliva.github.io/ggpo/" + END + "\n")
 
 	HOMEDIR = os.path.expanduser("~")
 	CONFIGDIR= HOMEDIR + "/.config/ggpo"
@@ -925,11 +932,11 @@ if __name__ == '__main__':
 		try:
 			configfile = open(CONFIGFILE, "w")
 		except IOError:
-			print "\r" + RED + "-!- ERROR: cannot write to config file at " + CONFIGFILE + END
+			print_line ( RED + "-!- ERROR: cannot write to config file at " + CONFIGFILE + END + "\n")
 			os._exit(1)
 
-		print "\n\r" + BLUE + "-!- It looks like you're running ggpo for the first time, let's configure it!" + END
-		print "\r" + BLUE + "-!- This quick setup will create a config file at:\n\t" + GREEN + CONFIGFILE + END
+		print_line ( "\n" + BLUE + "-!- It looks like you're running ggpo for the first time, let's configure it!" + END + "\n")
+		print_line ( BLUE + "-!- This quick setup will create a config file at:\n\t" + GREEN + CONFIGFILE + END + "\n")
 
 		# try to guess install directory:
 
@@ -940,44 +947,44 @@ if __name__ == '__main__':
 
 		if (os.path.isfile(dirtest1+"/ggpofba.exe")):
 			INSTALLDIR=dirtest1
-			print "\n\r" + BLUE + "-!- Found GGPO install dir at: " + GREEN + INSTALLDIR + END
+			print_line( "\n" + BLUE + "-!- Found GGPO install dir at: " + GREEN + INSTALLDIR + END + "\n")
 		elif (os.path.isfile(dirtest2+"/ggpofba.exe")):
 			INSTALLDIR=dirtest2
-			print "\n\r" + BLUE + "-!- Found GGPO install dir at: " + GREEN + INSTALLDIR + END
+			print_line( "\n" + BLUE + "-!- Found GGPO install dir at: " + GREEN + INSTALLDIR + END + "\n")
 		else:
-			print "\n\r" + BLUE + "-!- Please specify the full path where you have unziped the official GGPO client" + END
+			print_line( "\n" + BLUE + "-!- Please specify the full path where you have unziped the official GGPO client" + END + "\n")
 			try:
 				INSTALLDIR = raw_input("\r" + BLUE + "GGPO INSTALLDIR:" + END + " ")
 			except KeyboardInterrupt:
-				print "\n" + RED + "-!- ^C interrupted." + END
+				print_line( "\n" + RED + "-!- ^C interrupted." + END + "\n")
 				configfile.close()
 				os.unlink(CONFIGFILE)
 				os._exit(1)
 
 		if not os.path.isfile(INSTALLDIR+"/ggpofba.exe"):
-			print "\r" + YELLOW + "-!- WARNING: cannot find ggpofba.exe in " + INSTALLDIR + END
+			print_line ( YELLOW + "-!- WARNING: cannot find ggpofba.exe in " + INSTALLDIR + END + "\n")
 
-		print "\n\r" + BLUE + "-!- Please specify your GGPO credentials" + END
+		print_line( "\n" + BLUE + "-!- Please specify your GGPO credentials" + END + "\n")
 		try:
 			USERNAME = raw_input("\r" + BLUE + "GGPO USERNAME:" + END + " ")
 			PASSWORD = raw_input("\r" + BLUE + "GGPO PASSWORD:" + END + " ")
 		except KeyboardInterrupt:
-			print "\n" + RED + "-!- ^C interrupted." + END
+			print_line( "\n" + RED + "-!- ^C interrupted." + END + "\n")
 			configfile.close()
 			os.unlink(CONFIGFILE)
 			os._exit(1)
 
-		print "\n\r" + BLUE + "-!- Please specify your GGPO game room, if unsure type 'lobby'" + END
+		print_line( "\n" + BLUE + "-!- Please specify your GGPO game room, if unsure type 'lobby'" + END + "\n")
 		try:
 			CHANNEL = raw_input("\r" + BLUE + "GGPO CHANNEL:" + END + " ")
 		except KeyboardInterrupt:
-			print "\n" + RED + "-!- ^C interrupted." + END
+			print_line( "\n" + RED + "-!- ^C interrupted." + END + "\n")
 			configfile.close()
 			os.unlink(CONFIGFILE)
 			os._exit(1)
 
 		if not os.path.isfile(INSTALLDIR+"/ROMs/" + CHANNEL + ".zip") and CHANNEL!="lobby":
-			print "\r" + YELLOW + "-!- WARNING: cannot find " + CHANNEL + ".zip in " + INSTALLDIR + "/ROMs/" + END
+			print_line ( YELLOW + "-!- WARNING: cannot find " + CHANNEL + ".zip in " + INSTALLDIR + "/ROMs/" + END + "\n")
 
 		configfile.write("#GGPO configuration file\n")
 		configfile.write("USERNAME=" + USERNAME + "\n")
@@ -988,11 +995,11 @@ if __name__ == '__main__':
 		configfile.write("STARTAWAY=0\n")
 		configfile.close()
 
-		print "\n\r" + BLUE + "-!- Thank you, configuration is completed!" + END
+		print_line( "\n" + BLUE + "-!- Thank you, configuration is completed!" + END + "\n")
 		try:
 			raw_input("\r" + BLUE + "-!- Press ENTER to connect for the fist time" + END + " ")
 		except KeyboardInterrupt:
-			print "\n" + RED + "-!- ^C interrupted." + END
+			print_line( "\n" + RED + "-!- ^C interrupted." + END + "\n")
 			configfile.close()
 			os.unlink(CONFIGFILE)
 			os._exit(1)
@@ -1000,7 +1007,7 @@ if __name__ == '__main__':
 	try:
 		configfile = open(CONFIGFILE, "r")
 	except IOError:
-		print "\r" + RED + "-!- ERROR: cannot read config file at " + CONFIGFILE + END
+		print_line ( RED + "-!- ERROR: cannot read config file at " + CONFIGFILE + END + "\n")
 		os._exit(1)
 
 	# parse configuration file
@@ -1014,7 +1021,7 @@ if __name__ == '__main__':
 		if (line.startswith("STARTAWAY=")): STARTAWAY=int(line[10:].strip())
 	configfile.close()
 
-	print "\r" + YELLOW + "-!- " + BLUE + "If you are lost type '/help' and press enter." + END
+	print_line ( YELLOW + "-!- " + BLUE + "If you are lost type '/help' and press enter." + END + "\n")
 
 	FBA = INSTALLDIR + "/ggpofba.sh"
 	MP3 = INSTALLDIR + "/assets/challenger-comes.mp3"
@@ -1023,7 +1030,7 @@ if __name__ == '__main__':
 	try:
 		u.bind(('0.0.0.0', 6009))
 	except socket.error:
-		print "\r" + YELLOW + "-!- WARNING: cannot bind to port udp/6009" + END
+		print_line ( YELLOW + "-!- WARNING: cannot bind to port udp/6009" + END + "\n")
 
 	t = Thread(target=pingcheck)
 	t.daemon = True
@@ -1052,33 +1059,33 @@ if __name__ == '__main__':
 		line = line.strip(' \t\n\r')
 
 		if (line == "/help"):
-			print "\r" + YELLOW + "-!- " + BLUE + "available commands:" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/challenge [<nick>]\tsend a challenge request to <nick>" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/accept    [<nick>]\taccept a challenge request initiated by <nick>" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/decline   [<nick>]\tdecline a challenge request initiated by <nick>" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/watch      <nick>\twatch the game that <nick> is currently playing" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/whois      <nick>\tdisplay information about the user <nick>" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/whowas     <nick>\tinfo about <nick> that is no longer connected" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/join    <channel>\tjoin the chat/game room <channel>" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/list \t\tlist all available channels or chat/game rooms" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/users [<modifier>]\tlist all users in the current channel" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "         modifier: 'available', 'away' or 'playing'" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/motd \t\tview the channel welcome text" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/away \t\tset away status (you can't be challenged)" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/back \t\tset available status (you can be challenged)" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/clear \t\tclear the screen" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/verbose [<flag>]\tchange verbosity level" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "           flag:'0' challenges, '1' chat, '2' match, '3' status" + END
-			print "\r" + YELLOW + "-!- " + BLUE + "/quit \t\tdisconnect from ggpo server" + END
+			print_line ( YELLOW + "-!- " + BLUE + "available commands:" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/challenge [<nick>]\tsend a challenge request to <nick>" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/accept    [<nick>]\taccept a challenge request initiated by <nick>" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/decline   [<nick>]\tdecline a challenge request initiated by <nick>" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/watch      <nick>\twatch the game that <nick> is currently playing" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/whois      <nick>\tdisplay information about the user <nick>" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/whowas     <nick>\tinfo about <nick> that is no longer connected" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/join    <channel>\tjoin the chat/game room <channel>" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/list \t\tlist all available channels or chat/game rooms" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/users [<modifier>]\tlist all users in the current channel" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "         modifier: 'available', 'away' or 'playing'" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/motd \t\tview the channel welcome text" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/away \t\tset away status (you can't be challenged)" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/back \t\tset available status (you can be challenged)" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/clear \t\tclear the screen" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/verbose [<flag>]\tchange verbosity level" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "           flag:'0' challenges, '1' chat, '2' match, '3' status" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "/quit \t\tdisconnect from ggpo server" + END + "\n")
 
 		if (line.startswith("/whowas ")):
 			nick = line[8:]
 			found = print_user_long(nick,"whowas")
 			if (found==1):
-				print "\r" + YELLOW + "-!- " + GRAY + "End of WHOWAS" + END
+				print_line ( YELLOW + "-!- " + GRAY + "End of WHOWAS" + END + "\n")
 			else:
-				print "\r" + YELLOW + "-!- There was no such nick " + B_YELLOW + nick + END
+				print_line ( YELLOW + "-!- There was no such nick " + B_YELLOW + nick + END + "\n")
 
 		# hidden command, not present in /help
 		if (line.startswith("/debug ")):
@@ -1086,9 +1093,9 @@ if __name__ == '__main__':
 			if (debug == "0"): DEBUG=0
 			elif (debug == "1"): DEBUG=1
 			elif (debug == "2"): DEBUG=2
-			else: print "\r" + YELLOW + "-!- possible values are /debug [<0|1|2>]" + END
+			else: print_line ( YELLOW + "-!- possible values are /debug [<0|1|2>]" + END + "\n")
 		if (line == "/debug"):
-			print "\r" + YELLOW + "-!- " + GRAY + "DEBUG: " + str(DEBUG) + END
+			print_line ( YELLOW + "-!- " + GRAY + "DEBUG: " + str(DEBUG) + END + "\n")
 
 		if (line.startswith("/verbose ")):
 			verbose = line[9:]
@@ -1096,17 +1103,18 @@ if __name__ == '__main__':
 			elif (verbose == "1"): VERBOSE=1
 			elif (verbose == "2"): VERBOSE=2
 			elif (verbose == "3"): VERBOSE=3
-			else: print "\r" + YELLOW + "-!- possible values are /verbose [<0|1|2|3>]" + END
+			else: print_line ( YELLOW + "-!- possible values are /verbose [<0|1|2|3>]" + END + "\n")
 			showverbose()
 
 		if (line == "/verbose"):
 			showverbose()
 
 		if (line == "/challenge"):
-			print "\r" + YELLOW + "-!- " + GRAY + "challenging:",
+			text= YELLOW + "-!- " + GRAY + "challenging:",
 			for nick in challenged:
-				print "["+ B_GREEN + nick + GRAY + "]",
-			print END
+				text+= "["+ B_GREEN + nick + GRAY + "]",
+			text+=END+"\n",
+			print_line(' '.join(text))
 
 		if (line == "/clear"):
 			call(['clear'])
@@ -1115,5 +1123,5 @@ if __name__ == '__main__':
 			s.close()
 			u.close()
 			#call(['reset'])
-			print "\r" + YELLOW + "-!- " + BLUE + "have a nice day :)" + END
+			print_line ( YELLOW + "-!- " + BLUE + "have a nice day :)" + END + "\n")
 			os._exit(0)
