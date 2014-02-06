@@ -1055,7 +1055,7 @@ if __name__ == '__main__':
 	t3.start()
 
 	while 1:
-		line = raw_input()
+		line = raw_input(PROMPT)
 		line = line.strip(' \t\n\r')
 
 		if (line == "/help"):
