@@ -45,7 +45,7 @@ B_CYAN = '\033[1;36m'
 
 END = '\033[0;m'
 
-PROMPT = "\rggpo" + RED + "> " + END
+PROMPT = "ggpo" + RED + "> " + END
 VERSION = "1.0.2"
 
 def blank_current_readline():
@@ -71,13 +71,6 @@ def print_line(text):
 		sys.stdout.write(linebuffer.strip('\t\n\r'))
 	sys.stdout.flush()
 
-def readdata():
-	try:
-		foo = s.recv(4096)
-		return foo
-	except:
-		return
-
 def pad(value,length=4):
 	l = len(value)
 	while (l<length):
@@ -86,7 +79,7 @@ def pad(value,length=4):
 	return value
 
 def parse(cmd):
-	global SPECIAL,challengers,challenged,sequence
+	global challengers,challenged,sequence
 
 	if (len(cmd) < 8):
 		return
@@ -706,12 +699,10 @@ def pdu_users():
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
 		sequence=sequence+1
 
-
 def mainloop():
 	global line,sequence,SPECIAL,challengers,challenged,CHANNEL
 
 	processed=0
-	olddata=""
 
 	while 1:
 
@@ -837,20 +828,17 @@ def mainloop():
 		if (line != None and ( line.startswith("/users") or line.startswith("/whois ") or line=="/who" )):
 			pdu_users()
 
-		if (DEBUG>1 and olddata!=data):
-			print_line ( BLUE + "HEX: " + repr(data) + END + "\n")
-			olddata=data
-
-
-
 def datathread():
-	global data
 	while 1:
-		data = readdata()
+		try:
+			data = s.recv(4096)
+		except:
+			pass
 		if (data == None):
 			print_line ( BLUE + "-!- Connection lost. Reconnecting." + END + "\n")
 			connect_sequence()
 		if (data != None and len(data) >= 8):
+			if (DEBUG>1): print_line ( BLUE + "HEX: " + repr(data) + END + "\n")
 			parse(data)
 		print_line(PROMPT)
 		time.sleep(2)
