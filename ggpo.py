@@ -657,7 +657,7 @@ def pdu_accept(nick):
 	channellen = len(CHANNEL)
 	pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x09" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
-	sequence=sequence+1
+	sequence+=1
 	print_line ( GREEN + "-!- accepted challenge request from " + B_GREEN + str(nick) + END + "\n")
 	challengers.remove(nick)
 
@@ -667,7 +667,7 @@ def pdu_decline(nick):
 	nicklen = len(nick)
 	pdulen = 4 + 4 + 4 + nicklen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x0a" + pad(chr(nicklen)) + nick )
-	sequence=sequence+1
+	sequence+=1
 	print_line ( YELLOW + "-!- declined challenge request from " + B_YELLOW + str(nick) + END + "\n")
 	challengers.remove(nick)
 
@@ -677,7 +677,7 @@ def pdu_cancel(nick):
 	nicklen = len(nick)
 	pdulen = 4 + 4 + 4 + nicklen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x1c" + pad(chr(nicklen)) + nick )
-	sequence=sequence+1
+	sequence+=1
 	print_line ( YELLOW + "-!- canceled challenge request to " + B_YELLOW + str(nick) + END + "\n")
 	challenged.remove(nick)
 
@@ -688,7 +688,7 @@ def pdu_motd():
 		pdulen = 4+4
 		SPECIAL="MOTD"
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
-		sequence=sequence+1
+		sequence+=1
 
 def pdu_users():
 	global users_option, SPECIAL, sequence
@@ -698,7 +698,7 @@ def pdu_users():
 		pdulen = 4+4
 		SPECIAL="USERS"
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
-		sequence=sequence+1
+		sequence+=1
 
 def mainloop():
 	global sequence,SPECIAL,challengers,challenged,CHANNEL
@@ -708,14 +708,13 @@ def mainloop():
 		command = command_queue.get()
 
 		print_line(PROMPT)
-		time.sleep(1)
 
-		if (command != None and command != "" and not command.startswith("/")):
+		if (command != "" and not command.startswith("/")):
 			msglen = len(command)
 			pdulen = 4 + 4 + 4 + msglen
 			# [ 4-byte pdulen ] [ 4-byte sequence ] [ 4-byte command ] [ 4-byte msglen ] [ msglen-bytes msg ]
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x07" + pad(chr(msglen)) + command)
-			sequence=sequence+1
+			sequence+=1
 
 		# send a challenge request
 		if (command != None and command.startswith("/challenge ")):
@@ -724,7 +723,7 @@ def mainloop():
 			channellen = len(CHANNEL)
 			pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
-			sequence=sequence+1
+			sequence+=1
 			challenged.add(nick)
 			print_line ( GREEN + "-!- challenge request sent to " + B_GREEN + str(nick) + END + "\n")
 			print_line ( GREEN + "-!- type '/cancel " + B_GREEN + str(nick) + GREEN + "' to cancel it" + END + "\n")
@@ -778,7 +777,7 @@ def mainloop():
 			nicklen = len(nick)
 			pdulen = 4 + 4 + 4 + nicklen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x10" + pad(chr(nicklen)) + nick )
-			sequence=sequence+1
+			sequence+=1
 			#print_line ( GREEN + "-!- watch challenge from " + B_GREEN + str(nick) + END + "\n")
 
 		# choose channel
@@ -787,14 +786,14 @@ def mainloop():
 			channellen = len(CHANNEL)
 			pdulen = 4 + 4 + 4 + channellen
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
-			sequence=sequence+1
+			sequence+=1
 
 		# set away status (can't be challenged)
 		if (command == "/away"):
 			pdulen = 4+4+4
 			SPECIAL="AWAY"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x01')
-			sequence=sequence+1
+			sequence+=1
 			#print_line ( GREEN + "-!- you are away now" + END + "\n")
 
 		# return back from away (can be challenged)
@@ -802,7 +801,7 @@ def mainloop():
 			pdulen = 4+4+4
 			SPECIAL="BACK"
 			s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + '\x00\x00\x00\x00')
-			sequence=sequence+1
+			sequence+=1
 			#print_line ( GREEN + "-!- you are available now" + END + "\n")
 
 		# view channel motd
@@ -815,7 +814,7 @@ def mainloop():
 				pdulen = 4+4
 				SPECIAL="LIST"
 				s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
-				sequence=sequence+1
+				sequence+=1
 
 		# list users
 		if (command != None and ( command.startswith("/users") or command.startswith("/whois ") or command=="/who" )):
@@ -854,25 +853,25 @@ def connect_sequence():
 	# welcome packet
 	sequence = 0x1
 	s.send('\x00\x00\x00\x14' + pad(chr(sequence)) + '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1d\x00\x00\x00\x01')
-	sequence=sequence+1
+	sequence+=1
 
 	# authentication
 	# NOTE: this must have sequence=2 as we use the server reply to identify 'incorrect password'
 	pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4
 	s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79")
-	sequence=sequence+1
+	sequence+=1
 
 	# choose channel
 	# NOTE: this must have sequence=3 as we use the server reply to identify 'incorrect user'
 	channellen = len(CHANNEL)
 	pdulen = 4 + 4 + 4 + channellen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
-	sequence=sequence+1
+	sequence+=1
 
 	# should we start away by default?
 	if (STARTAWAY == 1):
 		s.send( pad(chr(12)) + pad(chr(sequence)) + "\x00\x00\x00\x06" + "\x00\x00\x00\x01")
-		sequence=sequence+1
+		sequence+=1
 
 
 if __name__ == '__main__':
