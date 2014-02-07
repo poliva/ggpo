@@ -753,7 +753,7 @@ def pdu_list():
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
 		sequence+=1
 
-def mainloop():
+def process_user_input():
 	global sequence,challengers,challenged
 
 	while 1:
@@ -1052,7 +1052,7 @@ if __name__ == '__main__':
 	t2.daemon = False
 	t2.start()
 
-	t3 = Thread(target=mainloop)
+	t3 = Thread(target=process_user_input)
 	t3.daemon = False
 	t3.start()
 
