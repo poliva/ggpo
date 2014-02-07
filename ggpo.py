@@ -25,6 +25,7 @@ import urllib2
 from Queue import Queue
 from subprocess import call
 from threading import Thread
+from threading import Event
 from random import randint
 from operator import itemgetter
 
@@ -432,7 +433,7 @@ def parseusers(cmd):
 			userlist.append(user)
 		except:
 			if (DEBUG>0): print_line ( BLUE + "error parsing user " + str(nick) + END + "\n")
-			#pass
+			else: pass
 
 	# sleep 1sec to collect ping data
 	time.sleep(1)
@@ -488,6 +489,8 @@ def parseusers(cmd):
 		for user in playing_users: print_user(user)
 		for user in away_users: print_user(user)
 		print_line ( YELLOW + "-!- EOF user list." + END + "\n")
+
+	e.clear()
 
 def print_user_long(nick,command):
 
@@ -629,8 +632,11 @@ def parselist(cmd):
 				print_line( YELLOW + "-!- " + B_GRAY + str(name1) + GRAY + " (" + str(name2) + ") -- " + str(name3) + "\n")
 		except:
 			if (DEBUG>0): print_line ( BLUE + "-!- Error parsing channel " + str(name1) + END + "\n")
+			else: pass
 
 	print_line ( YELLOW + "-!- EOF channel list." + END + "\n")
+
+	e.clear()
 
 def pingcheck():
 	global u, pinglist
@@ -650,6 +656,7 @@ def pingcheck():
 					msec = (mytime-pinglist[i][0])*1000
 					pinglist[i][5]=msec
 					break
+
 def pdu_accept(nick):
 	global sequence,challengers
 
@@ -683,22 +690,18 @@ def pdu_cancel(nick):
 
 def pdu_motd():
 	global SPECIAL, sequence
-
-	if (SPECIAL==""):
-		pdulen = 4+4
-		SPECIAL="MOTD"
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
-		sequence+=1
+	pdulen = 4+4
+	SPECIAL="MOTD"
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
+	sequence+=1
 
 def pdu_users(command):
 	global users_option, SPECIAL, sequence
-
-	if (SPECIAL==""):
-		users_option=command
-		pdulen = 4+4
-		SPECIAL="USERS"
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
-		sequence+=1
+	users_option=command
+	pdulen = 4+4
+	SPECIAL="USERS"
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
+	sequence+=1
 
 def pdu_chat(message):
 	global sequence
@@ -747,16 +750,20 @@ def pdu_status(status):
 
 def pdu_list():
 	global sequence,SPECIAL
-	if (SPECIAL == ""):
-		pdulen = 4+4
-		SPECIAL="LIST"
-		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
-		sequence+=1
+	pdulen = 4+4
+	SPECIAL="LIST"
+	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
+	sequence+=1
 
 def process_user_input():
 	while 1:
 
 		print_line(PROMPT)
+
+		if (e.isSet()):
+			time.sleep(1)
+			continue
+
 		command = command_queue.get()
 
 		if (command != "" and not command.startswith("/")):
@@ -834,16 +841,19 @@ def process_user_input():
 
 		# list channels
 		elif (command == "/list"):
+			e.set()
 			pdu_list()
 
 		# list users
 		elif (command.startswith("/users") or command.startswith("/whois ") or command=="/who" ):
+			e.set()
 			pdu_users(command)
 
 		# unknown command
 		else:
 			print_line ( YELLOW + "-!- unknown command: " + B_YELLOW + str(command) + END + "\n")
 
+		command_queue.task_done()
 		print_line(PROMPT)
 
 def datathread():
@@ -1034,6 +1044,8 @@ if __name__ == '__main__':
 	t.daemon = True
 	t.start()
 
+	command_queue = Queue()
+
 	s=''
 	connect_sequence()
 
@@ -1044,7 +1056,7 @@ if __name__ == '__main__':
 	pinglist=[]
 	userlist=[]
 
-	command_queue = Queue()
+	e = Event()
 
 	t2 = Thread(target=datathread)
 	t2.daemon = False
@@ -1127,3 +1139,5 @@ if __name__ == '__main__':
 			os._exit(0)
 		else:
 			command_queue.put(command)
+
+		command_queue.join()
