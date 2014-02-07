@@ -47,7 +47,7 @@ B_CYAN = '\033[1;36m'
 END = '\033[0;m'
 
 PROMPT = "\rggpo" + RED + "> " + END
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 
 def blank_current_readline():
 	# thanks http://stackoverflow.com/questions/7907827/
