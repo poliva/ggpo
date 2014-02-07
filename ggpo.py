@@ -758,9 +758,8 @@ def mainloop():
 
 	while 1:
 
-		command = command_queue.get()
-
 		print_line(PROMPT)
+		command = command_queue.get()
 
 		if (command != "" and not command.startswith("/")):
 			pdu_chat(command)
@@ -846,6 +845,8 @@ def mainloop():
 		# unknown command
 		else:
 			print_line ( YELLOW + "-!- unknown command: " + B_YELLOW + str(command) + END + "\n")
+
+		print_line(PROMPT)
 
 def datathread():
 	while 1:
