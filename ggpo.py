@@ -690,11 +690,11 @@ def pdu_motd():
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
 		sequence+=1
 
-def pdu_users():
+def pdu_users(command):
 	global users_option, SPECIAL, sequence
 
 	if (SPECIAL==""):
-		users_option=line
+		users_option=command
 		pdulen = 4+4
 		SPECIAL="USERS"
 		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
@@ -754,8 +754,6 @@ def pdu_list():
 		sequence+=1
 
 def process_user_input():
-	global sequence,challengers,challenged
-
 	while 1:
 
 		print_line(PROMPT)
@@ -840,7 +838,7 @@ def process_user_input():
 
 		# list users
 		elif (command.startswith("/users") or command.startswith("/whois ") or command=="/who" ):
-			pdu_users()
+			pdu_users(command)
 
 		# unknown command
 		else:
