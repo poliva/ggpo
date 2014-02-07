@@ -825,8 +825,6 @@ def datathread():
 		try:
 			data = s.recv(4096)
 		except:
-			pass
-		if (data == None):
 			print_line ( BLUE + "-!- Connection lost. Reconnecting." + END + "\n")
 			connect_sequence()
 		if (data != None and len(data) >= 8):
