@@ -736,7 +736,7 @@ def pdu_join(channel):
 	sequence+=1
 
 def pdu_status(status):
-	global sequence
+	global sequence,SPECIAL
 	pdulen = 4+4+4
 	if (status==0):
 		SPECIAL="BACK"
@@ -746,7 +746,7 @@ def pdu_status(status):
 	sequence+=1
 
 def pdu_list():
-	global sequence
+	global sequence,SPECIAL
 	if (SPECIAL == ""):
 		pdulen = 4+4
 		SPECIAL="LIST"
@@ -754,7 +754,7 @@ def pdu_list():
 		sequence+=1
 
 def mainloop():
-	global sequence,SPECIAL,challengers,challenged,CHANNEL
+	global sequence,challengers,challenged
 
 	while 1:
 
@@ -766,12 +766,12 @@ def mainloop():
 			pdu_chat(command)
 
 		# send a challenge request
-		if (command != None and command.startswith("/challenge ")):
+		elif (command.startswith("/challenge ")):
 			nick = command[11:]
 			pdu_challenge(nick)
 
 		# accept a challenge request (initiated by peer)
-		if (command != None and command.startswith("/accept ")):
+		elif (command.startswith("/accept ")):
 			nick = command[8:]
 			if nick in list(challengers):
 				pdu_accept(nick)
@@ -779,7 +779,7 @@ def mainloop():
 				print_line ( YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END + "\n")
 
 		# if there's only one incoming challenge request, allow the user to type /accept without parameters (no need to specify nick)
-		if (command == "/accept"):
+		elif (command == "/accept"):
 			if (len(challengers)==1):
 				for nick in list(challengers):
 					pdu_accept(nick)
@@ -788,7 +788,7 @@ def mainloop():
 				print_line ( YELLOW + "-!- " + "There's more than one incoming challenge request: you need to specify the nick." + END + "\n")
 
 		# decline a challenge request (initiated by peer)
-		if (command != None and command.startswith("/decline ")):
+		elif (command.startswith("/decline ")):
 			nick = command[9:]
 			if nick in list(challengers):
 				pdu_decline(nick)
@@ -796,12 +796,12 @@ def mainloop():
 				print_line ( YELLOW + "-!- " + B_YELLOW + str(nick) + YELLOW + " hasn't challenged you" + END + "\n")
 
 		# /decline without parameters declines all incoming challenge requests
-		if (command == "/decline"):
+		elif (command == "/decline"):
 			for nick in list(challengers):
 				pdu_decline(nick)
 
 		# cancel an ongoing challenge request (initiated by us)
-		if (command != None and command.startswith("/cancel ")):
+		elif (command.startswith("/cancel ")):
 			nick = command[8:]
 			if nick in list(challenged):
 				pdu_cancel(nick)
@@ -809,39 +809,43 @@ def mainloop():
 				print_line ( YELLOW + "-!- you aren't challenging " + B_YELLOW + str(nick) + END + "\n")
 
 		# /cancel without parameters: cancel all ongoing challenge requests
-		if (command == "/cancel"):
+		elif (command == "/cancel"):
 			for nick in list(challenged):
 				pdu_cancel(nick)
 
 		# watch an ongoing match
-		if (command != None and command.startswith("/watch ")):
+		elif (command.startswith("/watch ")):
 			nick = command[7:]
 			pdu_watch(nick)
 
 		# choose channel
-		if (command != None and command.startswith("/join ")):
+		elif (command.startswith("/join ")):
 			channel = command[6:]
 			pdu_join(channel)
 
 		# set away status (can't be challenged)
-		if (command == "/away"):
+		elif (command == "/away"):
 			pdu_status(1)
 
 		# return back from away (can be challenged)
-		if (command == "/back" or command == "/available"):
+		elif (command == "/back" or command == "/available"):
 			pdu_status(0)
 
 		# view channel motd
-		if (command == "/motd"):
+		elif (command == "/motd"):
 			pdu_motd()
 
 		# list channels
-		if (command == "/list"):
+		elif (command == "/list"):
 			pdu_list()
 
 		# list users
-		if (command != None and ( command.startswith("/users") or command.startswith("/whois ") or command=="/who" )):
+		elif (command.startswith("/users") or command.startswith("/whois ") or command=="/who" ):
 			pdu_users()
+
+		# unknown command
+		else:
+			print_line ( YELLOW + "-!- unknown command: " + B_YELLOW + str(command) + END + "\n")
 
 def datathread():
 	while 1:
@@ -884,10 +888,7 @@ def connect_sequence():
 
 	# choose channel
 	# NOTE: this must have sequence=3 as we use the server reply to identify 'incorrect user'
-	channellen = len(CHANNEL)
-	pdulen = 4 + 4 + 4 + channellen
-	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x05" + pad(chr(channellen)) + CHANNEL )
-	sequence+=1
+	pdu_join(CHANNEL)
 
 	# should we start away by default?
 	if (STARTAWAY == 1): pdu_status(1)
