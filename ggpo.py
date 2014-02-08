@@ -29,7 +29,7 @@ from threading import Event
 from random import randint
 from operator import itemgetter
 
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 
 def blank_current_readline():
 	# thanks http://stackoverflow.com/questions/7907827/
