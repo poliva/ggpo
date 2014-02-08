@@ -109,6 +109,7 @@ def parse(cmd):
 
 		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"):
 			if (VERBOSE>2): print_line ( COLOR0 + "-!- " + B_COLOR0 + str(nick) + COLOR0 +" has quit" + END +"\n")
+			if nick in COMMANDS: COMMANDS.remove(nick)
 
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x00"):
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x01"):
@@ -124,9 +125,29 @@ def parse(cmd):
 					nick2len = int(cmd[24+nicklen:28+nicklen].encode('hex'),16)
 					nick2 = cmd[28+nicklen:28+nicklen+nick2len]
 					if (nick2 == ""): nick2="null"
+
+					iplen = int(cmd[28+nicklen+nick2len:32+nicklen+nick2len].encode('hex'),16)
+					ip = cmd[32+nicklen+nick2len:32+nicklen+nick2len+iplen]
+
+					unk6 = cmd[32+nicklen+iplen+nick2len:32+nicklen+iplen+4+nick2len]
+					unk7 = cmd[36+nicklen+iplen+nick2len:36+nicklen+iplen+4+nick2len]
+
+					citylen = int(cmd[40+nicklen+iplen+nick2len:44+nicklen+iplen+nick2len].encode('hex'),16)
+					city = cmd[44+nicklen+iplen+nick2len:44+nicklen+iplen+citylen+nick2len]
+
+					cclen = int(cmd[44+nicklen+iplen+citylen+nick2len:48+nicklen+iplen+citylen+nick2len].encode('hex'),16)
+					cc = cmd[48+nicklen+iplen+citylen+nick2len:48+nicklen+iplen+citylen+cclen+nick2len]
+
+					countrylen = int(cmd[48+nicklen+iplen+citylen+cclen+nick2len:48+nicklen+iplen+citylen+cclen+4+nick2len].encode('hex'),16)
+					country = cmd[52+nicklen+iplen+citylen+cclen+nick2len:52+nicklen+iplen+citylen+cclen+countrylen+nick2len]
+
 					print_line ( COLOR5 + "-!- new match " + B_COLOR5 + str(nick) + COLOR5 + " vs " + B_COLOR5 + str(nick2) + END +"\n" )
+
 					# remove from challenged set when nick2 accepts our challenge
 					if (nick==USERNAME and nick2 in list(challenged)): challenged.remove(nick2)
+
+					# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
+					add_to_userlist(nick,ip,city,cc,country,6009,state,nick2)
 
 			elif (state <2):
 				if (VERBOSE>2):
@@ -154,8 +175,11 @@ def parse(cmd):
 					if (state == 1): text+= "is away",
 					text+=END+"\n",
 					print_line(' '.join(text))
-					# not sure how to retrive the port without requesting the full user list, so we just try on 6009 (default)
-					if (state == 0): check_ping(nick,ip,6009)
+
+					# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
+					add_to_userlist(nick,ip,city,cc,country,6009,state,'')
+					if (state == 0):
+						if nick not in COMMANDS and nick != USERNAME: COMMANDS.append(nick)
 
 		else:
 			if (DEBUG>0): print_line ( COLOR4 + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END +"\n")
@@ -344,6 +368,7 @@ def check_ping(nick,ip,port):
 		pinglist.append(pingquery)
 
 def get_ping_msec(nick):
+	ping = 0
 	for i in range( len( pinglist ) ):
 		if (pinglist[i][1]==nick):
 			ping = pinglist[i][5]
@@ -351,11 +376,62 @@ def get_ping_msec(nick):
 	return ping
 
 def get_user_info(nick):
+	user=[]
 	for i in range( len( userlist ) ):
 		if (userlist[i][0]==nick):
 			user = userlist[i]
 			break
 	return user
+
+def sort_lists():
+	global userlist, available_users, away_users, playing_users
+
+	# create 3 lists
+	available_users=[]
+	away_users=[]
+	playing_users=[]
+
+	for user in userlist:
+		nick=user[0]
+		ip=user[1]
+		user[8]=get_ping_msec(nick)
+		# put the users on each list
+		status=user[6]
+		if (status == 0): available_users.append(user)
+		elif (status == 1): away_users.append(user)
+		elif (status == 2): playing_users.append(user)
+		# trick to have users with no ping sorted at the end
+		if (user[8]==0): user[8]=9999
+
+	# sort userlist by ping value
+	userlist = sorted(userlist, key=itemgetter(8), reverse=False)
+	available_users = sorted(available_users, key=itemgetter(8), reverse=False)
+	away_users = sorted(away_users, key=itemgetter(8), reverse=False)
+	playing_users = sorted(playing_users, key=itemgetter(8), reverse=False)
+
+	# reverse the ping-sorting trick
+	for user in userlist:
+		if (user[8]==9999): user[8]=0
+	for user in available_users:
+		if (user[8]==9999): user[8]=0
+	for user in away_users:
+		if (user[8]==9999): user[8]=0
+	for user in playing_users:
+		if (user[8]==9999): user[8]=0
+
+def add_to_userlist(nick,ip,city,cc,country,port,status,p2nick):
+
+	found=0
+	for i in range(len(userlist)):
+		if (userlist[i][0]==nick):
+			found=1
+			break
+
+	if (found==0):
+		ping = get_ping_msec(nick)
+		user = [nick,ip,city,cc,country,port,status,p2nick,ping]
+		userlist.append(user)
+		sort_lists()
 
 def parseusers(cmd):
 	global userlist
@@ -433,38 +509,7 @@ def parseusers(cmd):
 	# sleep 1sec to collect ping data
 	time.sleep(1)
 
-	# create 3 lists
-	available_users=[]
-	away_users=[]
-	playing_users=[]
-
-	for user in userlist:
-		nick=user[0]
-		ip=user[1]
-		user[8]=get_ping_msec(nick)
-		# put the users on each list
-		status=user[6]
-		if (status == 0): available_users.append(user)
-		elif (status == 1): away_users.append(user)
-		elif (status == 2): playing_users.append(user)
-		# trick to have users with no ping sorted at the end
-		if (user[8]==0): user[8]=9999
-
-	# sort userlist by ping value
-	userlist = sorted(userlist, key=itemgetter(8), reverse=False)
-	available_users = sorted(available_users, key=itemgetter(8), reverse=False)
-	away_users = sorted(away_users, key=itemgetter(8), reverse=False)
-	playing_users = sorted(playing_users, key=itemgetter(8), reverse=False)
-
-	# reverse the ping-sorting trick
-	for user in userlist:
-		if (user[8]==9999): user[8]=0
-	for user in available_users:
-		if (user[8]==9999): user[8]=0
-	for user in away_users:
-		if (user[8]==9999): user[8]=0
-	for user in playing_users:
-		if (user[8]==9999): user[8]=0
+	sort_lists()
 
 	if (users_option.startswith("/whois ")):
 		query=users_option[7:]
@@ -1156,6 +1201,10 @@ if __name__ == '__main__':
 	users_option=""
 	pinglist=[]
 	userlist=[]
+
+	available_users=[]
+	away_users=[]
+	playing_users=[]
 
 	t2 = Thread(target=datathread)
 	t2.daemon = False
