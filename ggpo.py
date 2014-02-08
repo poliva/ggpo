@@ -32,6 +32,16 @@ from operator import itemgetter
 
 VERSION = "1.0.6"
 
+COMMANDS = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/n', '/debug']
+
+def complete(text, state):
+    for cmd in COMMANDS:
+        if cmd.startswith(text):
+            if not state:
+                return cmd
+            else:
+                state -= 1
+
 def blank_current_readline():
 	# thanks http://stackoverflow.com/questions/7907827/
 
@@ -414,6 +424,8 @@ def parseusers(cmd):
 			check_ping(nick,ip,port)
 			user = [nick,ip,city,cc,country,port,status,p2nick,0]
 			userlist.append(user)
+			# add user to autocomplete list
+			COMMANDS.append(user[0])
 		except:
 			if (DEBUG>0): print_line ( COLOR4 + "error parsing user " + str(nick) + END + "\n")
 			else: pass
@@ -1154,6 +1166,12 @@ if __name__ == '__main__':
 	t3.start()
 
 	while 1:
+
+		# we want to treat '/' as part of the word
+		readline.set_completer_delims(' \t')
+		readline.parse_and_bind("tab: complete")
+		readline.set_completer(complete)
+
 		command = raw_input(PROMPT)
 		command = command.strip(' \t\n\r')
 
