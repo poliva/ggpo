@@ -218,14 +218,25 @@ def parse(cmd):
 
 		challengers.add(nick)
 
-		args = ['mplayer', MP3]
+		args = ['afplay', MP3]
 		try:
 			FNULL = open(os.devnull, 'w')
 			call(args, stdout=FNULL, stderr=FNULL)
 			FNULL.close()
 		except OSError:
-			pass
-
+			args = ['ffplay', '-nodisp', '-autoexit', MP3]
+			try:
+				FNULL = open(os.devnull, 'w')
+				call(args, stdout=FNULL, stderr=FNULL)
+				FNULL.close()
+			except OSError:
+				args = ['mplayer', MP3]
+				try:
+					FNULL = open(os.devnull, 'w')
+					call(args, stdout=FNULL, stderr=FNULL)
+					FNULL.close()
+				except OSError:
+					pass
 
 	# cancel challenge
 	elif (action == "\xff\xff\xff\xef"):
