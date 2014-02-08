@@ -264,7 +264,7 @@ def parse(cmd):
 
 	# unknown action
 	else:
-		if (SPECIAL == "" ):
+		if (len(special)==0):
 			if (DEBUG>0): print_line ( BLUE + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END + "\n")
 			#if (cmd[8:pdulen+4]=="\x00\x00\x00\x00" and int(action.encode('hex'),16)>4): print "ggpo> ",
 		else:
@@ -277,47 +277,39 @@ def parse(cmd):
 		
 
 def parsespecial(cmd):
-	global SPECIAL
 
 	try:
 		pdulen = int(cmd[0:4].encode('hex'), 16)
-		#myseqnum = int(cmd[4:8].encode('hex'),16)
 	except:
 		pdulen = 0
 
+	SPECIAL=special.pop()
+
 	if (SPECIAL=="MOTD"):
-		try:
-			channellen = int(cmd[12:12+4].encode('hex'),16)
-			channel = cmd[16:16+channellen]
-
-			topiclen = int(cmd[16+channellen:20+channellen].encode('hex'),16)
-			topic = cmd[20+channellen:20+channellen+topiclen]
-
-			msglen = int(cmd[20+channellen+topiclen:24+channellen+topiclen].encode('hex'),16)
-			msg = cmd[24+channellen+topiclen:24+channellen+topiclen+msglen]
-
-			print_line ( B_GREEN + str(channel) + GREEN + " || " + B_GREEN + str(topic) + GREEN + "\n")
-			print_line ( str(msg) + END + "\n")
-		except ValueError:
-			pass
-		SPECIAL=""
-
-	elif (SPECIAL=="AWAY"):
-		SPECIAL=""
-
-	elif (SPECIAL=="BACK"):
-		SPECIAL=""
+		parsemotd(cmd)
 
 	elif (SPECIAL=="LIST"):
-		SPECIAL=""
 		parselist(cmd)
 
 	elif (SPECIAL=="USERS"):
 		SPECIAL=""
 		parseusers(cmd)
 
-	else:
-		if (DEBUG>0): print_line ( BLUE + "SPECIAL=" + SPECIAL + " + DATA: " + repr(cmd[8:pdulen+4]) + END + "\n")
+def parsemotd(cmd):
+	try:
+		channellen = int(cmd[12:12+4].encode('hex'),16)
+		channel = cmd[16:16+channellen]
+
+		topiclen = int(cmd[16+channellen:20+channellen].encode('hex'),16)
+		topic = cmd[20+channellen:20+channellen+topiclen]
+
+		msglen = int(cmd[20+channellen+topiclen:24+channellen+topiclen].encode('hex'),16)
+		msg = cmd[24+channellen+topiclen:24+channellen+topiclen+msglen]
+
+		print_line ( B_GREEN + str(channel) + GREEN + " || " + B_GREEN + str(topic) + GREEN + "\n")
+		print_line ( str(msg) + END + "\n")
+	except ValueError:
+		pass
 
 def check_ping(nick,ip,port):
 	global pinglist
@@ -347,8 +339,8 @@ def get_ping_msec(nick,ip):
 	return ping
 
 def parseusers(cmd):
+	global userlist
 
-	global SPECIAL, userlist
 	try:
 		pdulen = int(cmd[0:4].encode('hex'), 16)
 	except:
@@ -472,7 +464,6 @@ def parseusers(cmd):
 		for user in away_users: print_user(user)
 		print_line ( YELLOW + "-!- EOF user list." + END + "\n")
 
-	SPECIAL=''
 
 def print_user_long(nick,command):
 
@@ -567,9 +558,6 @@ def print_user(user):
 	print_line(' '.join(text))
 
 def parselist(cmd):
-
-	global SPECIAL
-
 	try:
 		pdulen = int(cmd[0:4].encode('hex'), 16)
 	except:
@@ -603,8 +591,6 @@ def parselist(cmd):
 			else: pass
 
 	print_line ( YELLOW + "-!- EOF channel list." + END + "\n")
-
-	SPECIAL=''
 
 def pingcheck():
 	global pinglist
@@ -657,17 +643,17 @@ def pdu_cancel(nick):
 	challenged.remove(nick)
 
 def pdu_motd():
-	global SPECIAL, sequence
+	global sequence
 	pdulen = 4+4
-	SPECIAL="MOTD"
+	special.append("MOTD")
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x02')
 	sequence+=1
 
 def pdu_users(command):
-	global users_option, SPECIAL, sequence
+	global users_option, sequence
 	users_option=command
 	pdulen = 4+4
-	SPECIAL="USERS"
+	special.append("USERS")
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x04')
 	sequence+=1
 
@@ -707,19 +693,19 @@ def pdu_join(channel):
 	sequence+=1
 
 def pdu_status(status):
-	global sequence,SPECIAL
+	global sequence
 	pdulen = 4+4+4
 	if (status==0):
-		SPECIAL="BACK"
+		special.append("BACK")
 	elif (status==1):
-		SPECIAL="AWAY"
+		special.append("AWAY")
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x06' + pad(chr(status)))
 	sequence+=1
 
 def pdu_list():
-	global sequence,SPECIAL
+	global sequence
 	pdulen = 4+4
-	SPECIAL="LIST"
+	special.append("LIST")
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + '\x00\x00\x00\x03')
 	sequence+=1
 
@@ -905,7 +891,7 @@ if __name__ == '__main__':
 
 	DEBUG=0 # values: 0,1,2,3
 
-	SPECIAL=""
+	special=[]
 
 	# initialize defaults for config
 	USERNAME=""
