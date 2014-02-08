@@ -348,7 +348,7 @@ def get_ping_msec(nick,ip):
 
 def parseusers(cmd):
 
-	global SPECIAL, OLDDATA, userlist
+	global SPECIAL, userlist
 	try:
 		pdulen = int(cmd[0:4].encode('hex'), 16)
 	except:
@@ -568,7 +568,7 @@ def print_user(user):
 
 def parselist(cmd):
 
-	global SPECIAL, OLDDATA
+	global SPECIAL
 
 	try:
 		pdulen = int(cmd[0:4].encode('hex'), 16)
@@ -607,7 +607,7 @@ def parselist(cmd):
 	SPECIAL=''
 
 def pingcheck():
-	global u, pinglist
+	global pinglist
 
 	while 1:
 		dgram, addr = u.recvfrom(64)
@@ -729,9 +729,7 @@ def process_user_input():
 		print_line(PROMPT)
 
 		if (e.isSet()):
-			if (DEBUG>1): print_line (BLUE + "*** Sleeping 1s" + END + "\n")
-			time.sleep(1)
-			print_line(PROMPT)
+			time.sleep(0.1)
 			continue
 
 		command = command_queue.get()
@@ -815,11 +813,11 @@ def process_user_input():
 			pdu_list()
 
 		# list users
-		elif (command.startswith("/users") or command.startswith("/whois ") or command=="/who" ):
+		elif (command.startswith("/users ") or command.startswith("/whois ") or command=="/who" or command=="/users"):
 			pdu_users(command)
 
 		# unknown command
-		else:
+		elif (command != ""):
 			print_line ( YELLOW + "-!- unknown command: " + B_YELLOW + str(command) + END + "\n")
 
 		command_queue.task_done()
@@ -908,7 +906,6 @@ if __name__ == '__main__':
 	DEBUG=0 # values: 0,1,2,3
 
 	SPECIAL=""
-	OLDDATA=""
 
 	# initialize defaults for config
 	USERNAME=""
