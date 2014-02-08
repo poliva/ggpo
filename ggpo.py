@@ -83,9 +83,6 @@ def pad(value,length=4):
 def parse(cmd):
 	global challengers,challenged,sequence
 
-	if (len(cmd) < 8):
-		return
-
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 	action = cmd[4:8]
 
@@ -95,7 +92,7 @@ def parse(cmd):
 			nicklen = int(cmd[8:12].encode('hex'),16)
 			nick = cmd[12:12+nicklen]
 			msglen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
-			msg = cmd[12+nicklen+4:pdulen+4]
+			msg = cmd[12+nicklen+4:pdulen+4].replace('\r','\n')
 			if (USERNAME+" " in msg or " "+USERNAME in msg or msg==USERNAME):
 				args = ['notify-send', '--icon=' + INSTALLDIR + '/assets/icon-128.png', msg]
 				try:
@@ -357,25 +354,10 @@ def parseusers(cmd):
 	except:
 		pdulen = 0
 
-	## ugly workaround for when the user list is splitted in 2 PDUs
-	#print "PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd))
-	if (len(cmd)!=pdulen+4 and OLDDATA==""):
-		SPECIAL="USERS"
-		OLDDATA=cmd
-		return
-
-	if (OLDDATA!=""):
-		cmd = OLDDATA + cmd
-		pdulen = int(cmd[0:4].encode('hex'), 16)
-		OLDDATA=""
-		SPECIAL=""
-	## end of workaround
-
 	userlist=[]
 
 	i=16
 	while (i<pdulen):
-	#while (i<len(cmd)-4):
 
 		try:
 			len1 = int(cmd[i:i+4].encode('hex'),16)
@@ -490,7 +472,7 @@ def parseusers(cmd):
 		for user in away_users: print_user(user)
 		print_line ( YELLOW + "-!- EOF user list." + END + "\n")
 
-	e.clear()
+	SPECIAL=''
 
 def print_user_long(nick,command):
 
@@ -593,20 +575,6 @@ def parselist(cmd):
 	except:
 		pdulen = 0
 
-	## ugly workaround for when the channel list is splitted in 2 PDUs
-	#print "PDULEN: " + str(pdulen) + " CMDLEN: " + str(len(cmd))
-	if (len(cmd)!=pdulen+4 and OLDDATA==""):
-		SPECIAL="LIST"
-		OLDDATA=cmd
-		return
-
-	if (OLDDATA!=""):
-		cmd = OLDDATA + cmd
-		pdulen = int(cmd[0:4].encode('hex'), 16)
-		OLDDATA=""
-		SPECIAL=""
-	## end of workaround
-
 	print_line ( YELLOW + "-!- channel list:" + END + "\n")
 
 	i=12
@@ -636,7 +604,7 @@ def parselist(cmd):
 
 	print_line ( YELLOW + "-!- EOF channel list." + END + "\n")
 
-	e.clear()
+	SPECIAL=''
 
 def pingcheck():
 	global u, pinglist
@@ -761,10 +729,13 @@ def process_user_input():
 		print_line(PROMPT)
 
 		if (e.isSet()):
+			if (DEBUG>1): print_line (BLUE + "*** Sleeping 1s" + END + "\n")
 			time.sleep(1)
+			print_line(PROMPT)
 			continue
 
 		command = command_queue.get()
+		e.set()
 
 		if (command != "" and not command.startswith("/")):
 			pdu_chat(command)
@@ -841,12 +812,10 @@ def process_user_input():
 
 		# list channels
 		elif (command == "/list"):
-			e.set()
 			pdu_list()
 
 		# list users
 		elif (command.startswith("/users") or command.startswith("/whois ") or command=="/who" ):
-			e.set()
 			pdu_users(command)
 
 		# unknown command
@@ -857,17 +826,49 @@ def process_user_input():
 		print_line(PROMPT)
 
 def datathread():
+	BUFFER = ''
 	while 1:
+
+		e.set()
+
 		try:
 			data = s.recv(4096)
 		except:
+			BUFFER=''
 			print_line ( BLUE + "-!- Connection lost. Reconnecting." + END + "\n")
 			connect_sequence()
-		if (data != None and len(data) >= 8):
-			if (DEBUG>1): print_line ( BLUE + "HEX: " + repr(data) + END + "\n")
+
+		if (DEBUG>1): print_line ( BLUE + "    HEX0: " + repr(data) + END + "\n")
+
+		data = BUFFER + data
+		pdulen = int(data[0:4].encode('hex'), 16)
+
+		if (DEBUG>2): print_line ( GREEN + "PDULEN: " + str(pdulen) + " LEN_DATA: " + str(len(data)) + END + "\n")
+		#DATA: [ 4-byte pdulen ][ pdulen-byte pdu ]
+
+		while (len(data) > pdulen+4):
+			if (DEBUG>2): print_line ( RED + "(*) PDULEN: " + str(pdulen) + " LEN_DATA: " + str(len(data)) + END + "\n")
+			pdulen = int(data[0:4].encode('hex'), 16)
+			pdu = data[0:pdulen+4]
+			if (DEBUG>2): print_line ( RED + "(*) PAR0: " + repr(data) + END + "\n")
+			parse(pdu)
+			if (len(data[pdulen+4:]) > 4):
+				data = data[pdulen+4:]
+				pdulen = int(data[0:4].encode('hex'), 16)
+
+		if (len(data) == pdulen+4):
+			if (DEBUG>2): print_line ( MAGENTA + "    PDULEN: " + str(pdulen) + " LEN_DATA: " + str(len(data)) + END + "\n")
+			if (DEBUG>2): print_line ( MAGENTA + "    PAR1: " + repr(data) + END + "\n")
 			parse(data)
+			BUFFER = ''
+			e.clear()
+
+		if (len(data) < pdulen+4):
+			BUFFER = BUFFER + data
+
 		print_line(PROMPT)
 		time.sleep(2)
+		print_line(PROMPT)
 
 def showverbose():
 	text = YELLOW + "-!- " + GRAY + "current VERBOSE=" + B_GRAY + str(VERBOSE) + GRAY, 
@@ -904,7 +905,7 @@ def connect_sequence():
 
 if __name__ == '__main__':
 
-	DEBUG=0 # values: 0,1,2
+	DEBUG=0 # values: 0,1,2,3
 
 	SPECIAL=""
 	OLDDATA=""
@@ -1105,7 +1106,8 @@ if __name__ == '__main__':
 			if (debug == "0"): DEBUG=0
 			elif (debug == "1"): DEBUG=1
 			elif (debug == "2"): DEBUG=2
-			else: print_line ( YELLOW + "-!- possible values are /debug [<0|1|2>]" + END + "\n")
+			elif (debug == "3"): DEBUG=3
+			else: print_line ( YELLOW + "-!- possible values are /debug [<0|1|2|3>]" + END + "\n")
 		elif (command == "/debug"):
 			print_line ( YELLOW + "-!- " + GRAY + "DEBUG: " + str(DEBUG) + END + "\n")
 
