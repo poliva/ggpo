@@ -20,6 +20,7 @@ import datetime
 import os
 import struct
 import readline
+import rlcompleter
 import termios
 import fcntl
 import urllib2
@@ -501,7 +502,7 @@ def parseusers(cmd):
 			user = [nick,ip,city,cc,country,port,status,p2nick,0]
 			userlist.append(user)
 			# add user to autocomplete list
-			COMMANDS.append(user[0])
+			if nick not in COMMANDS and nick != USERNAME: COMMANDS.append(nick)
 		except:
 			if (DEBUG>0): print_line ( COLOR4 + "error parsing user " + str(nick) + END + "\n")
 			else: pass
@@ -981,8 +982,13 @@ def showverbose():
 def connect_sequence():
 	global s, sequence
 
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.connect(('ggpo.net', 7000))
+	try:
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.connect(('ggpo.net', 7000))
+	except socket.gaierror:
+		print_line ( COLOR1 + "-!- Can't connect to GGPO server :(" + END + "\n")
+		os._exit(1)
+
 
 	# welcome packet
 	sequence = 0x1
@@ -1038,10 +1044,13 @@ if __name__ == '__main__':
 	print_line ( COLOR3 + "-!- " + COLOR4 + "(c) 2014 Pau Oliva Fora (" + B_COLOR4 + "pof" + COLOR4 + "). Licensed under GPLv2+." + END + "\n")
 
 	# check for updates
-	response = urllib2.urlopen('https://raw.github.com/poliva/ggpo/master/VERSION')
-	version = response.read().strip()
-	if (version != VERSION):
-		print_line ( COLOR3 + "-!- " + B_COLOR4 + "New version " + B_COLOR3 + version + B_COLOR4 + " available at " + B_COLOR3 + "http://poliva.github.io/ggpo/" + END + "\n")
+	try:
+		response = urllib2.urlopen('https://raw.github.com/poliva/ggpo/master/VERSION')
+		version = response.read().strip()
+		if (version != VERSION):
+			print_line ( COLOR3 + "-!- " + B_COLOR4 + "New version " + B_COLOR3 + version + B_COLOR4 + " available at " + B_COLOR3 + "http://poliva.github.io/ggpo/" + END + "\n")
+	except:
+		pass
 
 	HOMEDIR = os.path.expanduser("~")
 	CONFIGDIR= HOMEDIR + "/.config/ggpo"
@@ -1218,7 +1227,10 @@ if __name__ == '__main__':
 
 		# we want to treat '/' as part of the word
 		readline.set_completer_delims(' \t')
-		readline.parse_and_bind("tab: complete")
+		if 'libedit' in readline.__doc__:
+			readline.parse_and_bind("bind ^I rl_complete")
+		else:
+			readline.parse_and_bind("tab: complete")
 		readline.set_completer(complete)
 
 		command = raw_input(PROMPT)
