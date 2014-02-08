@@ -31,7 +31,7 @@ from threading import Event
 from random import randint
 from operator import itemgetter
 
-VERSION = "1.0.7"
+VERSION = "1.0.8"
 
 COMMANDS = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/n', '/debug']
 
