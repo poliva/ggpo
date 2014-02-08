@@ -714,12 +714,11 @@ def process_user_input():
 
 		print_line(PROMPT)
 
-		if (e.isSet()):
+		if (len(special)>0):
 			time.sleep(0.1)
 			continue
 
 		command = command_queue.get()
-		e.set()
 
 		if (command != "" and not command.startswith("/")):
 			pdu_chat(command)
@@ -813,8 +812,6 @@ def datathread():
 	BUFFER = ''
 	while 1:
 
-		e.set()
-
 		try:
 			data = s.recv(4096)
 		except:
@@ -845,13 +842,12 @@ def datathread():
 			if (DEBUG>2): print_line ( MAGENTA + "    PAR1: " + repr(data) + END + "\n")
 			parse(data)
 			BUFFER = ''
-			e.clear()
 
 		if (len(data) < pdulen+4):
 			BUFFER = BUFFER + data
 
 		print_line(PROMPT)
-		time.sleep(2)
+		time.sleep(1)
 		print_line(PROMPT)
 
 def showverbose():
@@ -1039,8 +1035,6 @@ if __name__ == '__main__':
 	users_option=""
 	pinglist=[]
 	userlist=[]
-
-	e = Event()
 
 	t2 = Thread(target=datathread)
 	t2.daemon = False
