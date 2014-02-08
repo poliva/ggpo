@@ -570,8 +570,7 @@ def parseusers(cmd):
 				if (i%5==0): text+=END+"\n",
 		if (subcmd != "away" and subcmd != "available" and subcmd != "playing" and subcmd != ""):
 			text+= COLOR3 + "-!- possible modifiers are: available, away, playing",
-		if (i<5): text+=END+"\n",
-		else: text+=END,
+		if (i%5!=0): text+=END+"\n",
 
 		print_line(''.join(text))
 
