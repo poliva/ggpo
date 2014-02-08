@@ -193,7 +193,8 @@ def parse(cmd):
 	# joining a channel
 	elif (action == "\xff\xff\xff\xff"):
 		print_line ( COLOR0 + "-!- Connection established" + END + "\n")
-		pdu_motd()
+		command_queue.put("/motd")
+		command_queue.put("/n")
 
 	# password incorrect (reply to request with sequence=2)
 	elif (action == "\x00\x00\x00\x02"):
@@ -230,7 +231,7 @@ def parse(cmd):
 
 		# auto-cancel all outgoing challenge requests when a match becomes active
 		if (nick1 == USERNAME):
-			for nick in list(challenged): pdu_cancel(nick)
+			command_queue.put("/cancel")
 
 		if not os.path.isfile(INSTALLDIR+"/ggpofba.sh"):
 			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba.sh in " + INSTALLDIR + END + "\n")
@@ -294,8 +295,10 @@ def parsemotd(cmd):
 		msglen = int(cmd[20+channellen+topiclen:24+channellen+topiclen].encode('hex'),16)
 		msg = cmd[24+channellen+topiclen:24+channellen+topiclen+msglen]
 
-		print_line ( B_COLOR2 + str(channel) + COLOR2 + " || " + B_COLOR2 + str(topic) + COLOR2 + "\n")
-		print_line ( str(msg) + END + "\n")
+		print_line ( B_COLOR2 + str(channel) + COLOR2 + " || " + B_COLOR2 + str(topic) + END + "\n")
+		print_line ("-------------------------------------------------------------------------------\n")
+		print_line ( COLOR2 + str(msg) + END)
+		print_line ("-------------------------------------------------------------------------------\n")
 	except ValueError:
 		pass
 
@@ -452,27 +455,36 @@ def parseusers(cmd):
 		for user in away_users: print_user(user)
 		print_line ( COLOR3 + "-!- EOF user list." + END + "\n")
 
-	elif (users_option=="/n"):
+	elif (users_option=="/n" or users_option.startswith("/n ")):
+		subcmd=users_option[3:]
 		i=0
-		text= COLOR0,
-		for user in available_users:
-			i+=1
-			nick=user[0]
-			if (len(nick) > 13): nick=''.join(nick[0:12]+"…")
-			text+= COLOR0 + "["+ B_COLOR2 + '{:13s}'.format(nick) + COLOR0 + "]",
-			if (i%5==0): text+=END+"\n",
-		for user in playing_users:
-			i+=1
-			nick=user[0]
-			if (len(nick) > 13): nick=''.join(nick[0:12]+"…")
-			text+= COLOR0 + "["+ B_COLOR5 + '{:13s}'.format(nick) + COLOR0 + "]",
-			if (i%5==0): text+=END+"\n",
-		for user in away_users:
-			i+=1
-			nick=user[0]
-			if (len(nick) > 13): nick=''.join(nick[0:12]+"…")
-			text+= COLOR0 + "["+ B_COLOR4 + '{:13s}'.format(nick) + COLOR0 + "]",
-			if (i%5==0): text+=END+"\n",
+		text=COLOR0,
+		if (subcmd == "available" or subcmd==""):
+			for user in available_users:
+				i+=1
+				nick=user[0]
+				if (len(nick) > 13): nick=''.join(nick[0:12]+"…")
+				text+= COLOR0 + "["+ B_COLOR2 + '{:13s}'.format(nick) + COLOR0 + "]",
+				if (i%5==0): text+=END+"\n",
+		if (subcmd == "playing" or subcmd==""):
+			for user in playing_users:
+				i+=1
+				nick=user[0]
+				if (len(nick) > 13): nick=''.join(nick[0:12]+"…")
+				text+= COLOR0 + "["+ B_COLOR5 + '{:13s}'.format(nick) + COLOR0 + "]",
+				if (i%5==0): text+=END+"\n",
+		if (subcmd == "away" or subcmd==""):
+			for user in away_users:
+				i+=1
+				nick=user[0]
+				if (len(nick) > 13): nick=''.join(nick[0:12]+"…")
+				text+= COLOR0 + "["+ B_COLOR4 + '{:13s}'.format(nick) + COLOR0 + "]",
+				if (i%5==0): text+=END+"\n",
+		if (subcmd != "away" and subcmd != "available" and subcmd != "playing" and subcmd != ""):
+			text+= COLOR3 + "-!- possible modifiers are: available, away, playing",
+		if (i<5): text+=END+"\n",
+		else: text+=END,
+
 		print_line(''.join(text))
 
 def print_user_long(nick,command):
@@ -808,7 +820,7 @@ def process_user_input():
 			pdu_list()
 
 		# list users
-		elif (command.startswith("/users ") or command.startswith("/whois ") or command=="/who" or command=="/users" or command=="/n"):
+		elif (command.startswith("/users ") or command.startswith("/whois ") or command=="/who" or command=="/users" or command=="/n" or command.startswith("/n ")):
 			pdu_users(command)
 
 		# unknown command
@@ -891,7 +903,7 @@ def connect_sequence():
 	pdu_join(CHANNEL)
 
 	# should we start away by default?
-	if (STARTAWAY == 1): pdu_status(1)
+	if (STARTAWAY == 1): command_queue.put("/away")
 
 if __name__ == '__main__':
 
@@ -925,7 +937,7 @@ if __name__ == '__main__':
 	END = '\033[0;m'
 	PROMPT = "\rggpo" + COLOR1 + "> " + END
 
-	print_line ( COLOR3 + "-!- " + COLOR4 + "GGPO PYTHON CLIENT " + B_COLOR4 + "VERSION " + VERSION + END + "\n")
+	print_line ( COLOR3 + "-!- " + COLOR4 + "GGPO.PY CLIENT " + B_COLOR4 + "VERSION " + VERSION + END + "\n")
 	print_line ( COLOR3 + "-!- " + COLOR4 + "(c) 2014 Pau Oliva Fora (" + B_COLOR4 + "pof" + COLOR4 + "). Licensed under GPLv2+." + END + "\n")
 
 	# check for updates
@@ -1117,6 +1129,7 @@ if __name__ == '__main__':
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/join    <channel>\tjoin the chat/game room <channel>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/list \t\tlist all available channels or chat/game rooms" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/users [<modifier>]\tlist all users in the current channel" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/n     [<modifier>]\tsame as /users but only display nickname" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "         modifier: 'available', 'away' or 'playing'" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/motd \t\tview the channel welcome text" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/away \t\tset away status (you can't be challenged)" + END + "\n")
