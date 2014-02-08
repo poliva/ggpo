@@ -225,6 +225,10 @@ def parse(cmd):
 
 		print_line ( COLOR2 + "-!- watch " + B_COLOR2 + str(nick1) + COLOR2 + " vs " + B_COLOR2 + str(nick2) + END + "\n")
 
+		# auto-cancel all outgoing challenge requests when a match becomes active
+		if (nick1 == USERNAME):
+			for nick in list(challenged): pdu_cancel(nick)
+
 		if not os.path.isfile(INSTALLDIR+"/ggpofba.sh"):
 			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba.sh in " + INSTALLDIR + END + "\n")
 
