@@ -29,7 +29,6 @@ from threading import Event
 from random import randint
 from operator import itemgetter
 
-GRAY = '\033[0;30m'
 RED = '\033[0;31m'
 GREEN = '\033[0;32m'
 YELLOW = '\033[0;33m'
@@ -116,7 +115,7 @@ def parse(cmd):
 
 
 		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"):
-			if (VERBOSE>2): print_line ( GRAY + "-!- " + B_GRAY + str(nick) + GRAY +" has quit" + END +"\n")
+			if (VERBOSE>2): print_line ( BLUE + "-!- " + B_BLUE + str(nick) + BLUE +" has quit" + END +"\n")
 
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x00"):
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x01"):
@@ -155,7 +154,7 @@ def parse(cmd):
 					countrylen = int(cmd[48+nicklen+iplen+citylen+cclen:48+nicklen+iplen+citylen+cclen+4].encode('hex'),16)
 					country = cmd[52+nicklen+iplen+citylen+cclen:52+nicklen+iplen+citylen+cclen+countrylen]
 
-					text = GRAY + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip), 
+					text = BLUE + "-!- " + B_BLUE + str(nick) + BLUE + "@" + str(ip), 
 					if (city != "" and cc != ""): text+= "(" + city + ", " + cc + ")",
 					elif (city == "" and cc != ""): text+= "(" + cc + ")",
 					if (state == 0): text+= "is available",
@@ -208,7 +207,7 @@ def parse(cmd):
 
 	# joining a channel
 	elif (action == "\xff\xff\xff\xff"):
-		print_line ( GRAY + "-!- Connection established" + END + "\n")
+		print_line ( BLUE + "-!- Connection established" + END + "\n")
 		pdu_motd()
 
 	# password incorrect (reply to request with sequence=2)
@@ -438,7 +437,7 @@ def parseusers(cmd):
 
 		found = print_user_long(query,"whois")
 		if (found == 1):
-			print_line ( YELLOW + "-!- " + GRAY + "End of WHOIS" + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "End of WHOIS" + END + "\n")
 		else:
 			print_line ( YELLOW + "-!- There is no such nick " + B_YELLOW + query + END + "\n")
 
@@ -507,27 +506,27 @@ def print_user_long(nick,command):
 	except socket.herror:
 		hostname = (ip,ip,ip)
 
-	print_line ( YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip) + ":" + str(port) + END + "\n")
-	if (command == "whois"): print_line ( YELLOW + "-!- " + GRAY + "  channel  : " + CHANNEL + END + "\n")
-	print_line ( YELLOW + "-!- " + GRAY + "  hostname : " + hostname[0] + END + "\n")
-	if (lastseen != ""): print_line ( YELLOW + "-!- " + GRAY + "  lastseen : " + datetime.datetime.fromtimestamp(int(lastseen)).strftime('%Y-%m-%d %H:%M:%S') + END + "\n")
-	text = YELLOW + "-!- " + GRAY + "  location :",
+	print_line ( YELLOW + "-!- " + B_BLUE + str(nick) + BLUE + "@" + str(ip) + ":" + str(port) + END + "\n")
+	if (command == "whois"): print_line ( YELLOW + "-!- " + BLUE + "  channel  : " + CHANNEL + END + "\n")
+	print_line ( YELLOW + "-!- " + BLUE + "  hostname : " + hostname[0] + END + "\n")
+	if (lastseen != ""): print_line ( YELLOW + "-!- " + BLUE + "  lastseen : " + datetime.datetime.fromtimestamp(int(lastseen)).strftime('%Y-%m-%d %H:%M:%S') + END + "\n")
+	text = YELLOW + "-!- " + BLUE + "  location :",
 	if (city != "" and cc != ""): text+= city + ", " + cc + ", " + country,
 	elif (city == "" and cc != ""): text+= cc + ", " + country,
 	else: text+= "unknown",
 	text+=END+"\n",
 	print_line (' '.join(text))
-	text = YELLOW + "-!- " + GRAY + "  status   :",
+	text = YELLOW + "-!- " + BLUE + "  status   :",
 	if (status == 0): text+= "available",
 	if (status == 1): text+= "away",
-	if (status == 2): text+= "playing against " + B_GRAY + p2nick,
+	if (status == 2): text+= "playing against " + B_BLUE + p2nick,
 	text+=END+"\n",
 	print_line (' '.join(text))
-	if (ping != 0): print_line ( YELLOW + "-!- " + GRAY + "  ping     : " + str(int(ping)) + " ms" + END + "\n")
+	if (ping != 0): print_line ( YELLOW + "-!- " + BLUE + "  ping     : " + str(int(ping)) + " ms" + END + "\n")
 	if nick in challenged:
-		print_line ( YELLOW + "-!- " + GRAY + " you have challenged " + B_GRAY + str(nick) + END + "\n")
+		print_line ( YELLOW + "-!- " + BLUE + " you have challenged " + B_BLUE + str(nick) + END + "\n")
 	if nick in challengers:
-		print_line ( YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + " has challenged you" + END + "\n")
+		print_line ( YELLOW + "-!- " + B_BLUE + str(nick) + BLUE + " has challenged you" + END + "\n")
 	return 1
 
 def print_user(user):
@@ -543,13 +542,13 @@ def print_user(user):
 	ping=user[8]
 
 	if (ping==0): ping = get_ping_msec(nick,ip)
-	text = YELLOW + "-!- " + B_GRAY + str(nick) + GRAY + "@" + str(ip),
+	text = YELLOW + "-!- " + B_BLUE + str(nick) + BLUE + "@" + str(ip),
 	if (city != "" and cc != ""): text+= "(" + city + ", " + cc + ")",
 	elif (city == "" and cc != ""): text+= "(" + cc + ")",
 	if (status == 0): text+= "is available",
 	if (status == 1): text+= "is away",
-	if (status == 2): text+= "is playing against " + B_GRAY + p2nick,
-	if (ping != 0): text+= GRAY + "[" + str(int(ping)) + " ms]",
+	if (status == 2): text+= "is playing against " + B_BLUE + p2nick,
+	if (ping != 0): text+= BLUE + "[" + str(int(ping)) + " ms]",
 	if nick in challenged:
 		text+= GREEN + "*challenged",
 	if nick in challengers:
@@ -583,9 +582,9 @@ def parselist(cmd):
 			name3 = cmd[i:i+len3]
 			i=i+len3
 			if os.path.isfile(INSTALLDIR+"/ROMs/" + name1 + ".zip"):
-				print_line( YELLOW + "-!- " + B_GREEN + str(name1) + GRAY + " (" + GREEN + str(name2) + GRAY + ") -- " + str(name3) + "\n")
+				print_line( YELLOW + "-!- " + B_GREEN + str(name1) + BLUE + " (" + GREEN + str(name2) + BLUE + ") -- " + str(name3) + "\n")
 			else:
-				print_line( YELLOW + "-!- " + B_GRAY + str(name1) + GRAY + " (" + str(name2) + ") -- " + str(name3) + "\n")
+				print_line( YELLOW + "-!- " + B_BLUE + str(name1) + BLUE + " (" + str(name2) + ") -- " + str(name3) + "\n")
 		except:
 			if (DEBUG>0): print_line ( BLUE + "-!- Error parsing channel " + str(name1) + END + "\n")
 			else: pass
@@ -597,11 +596,11 @@ def pingcheck():
 
 	while 1:
 		dgram, addr = u.recvfrom(64)
-		if (DEBUG>0): print_line ( GRAY + "-!- UDP msg: " + dgram + " from " + str(addr) + END + "\n")
+		if (DEBUG>0): print_line ( BLUE + "-!- UDP msg: " + dgram + " from " + str(addr) + END + "\n")
 		if (dgram[0:9] == "GGPO PING"):
 			val = dgram[10:]
 			u.sendto("GGPO PONG " + val, addr)
-			if (DEBUG>0): print_line( GRAY + "-!- UDP rpl: GGPO PONG " + val + " to " + str(addr) + END + "\n")
+			if (DEBUG>0): print_line( BLUE + "-!- UDP rpl: GGPO PONG " + val + " to " + str(addr) + END + "\n")
 		if (dgram[0:9] == "GGPO PONG"):
 			mytime = time.time()
 			val = dgram[10:]
@@ -851,7 +850,7 @@ def datathread():
 		print_line(PROMPT)
 
 def showverbose():
-	text = YELLOW + "-!- " + GRAY + "current VERBOSE=" + B_GRAY + str(VERBOSE) + GRAY, 
+	text = YELLOW + "-!- " + BLUE + "current VERBOSE=" + B_BLUE + str(VERBOSE) + BLUE, 
 	if (VERBOSE==0): text+= "only showing challenge requests/replies" + END,
 	if (VERBOSE==1): text+= "showing challenges + chat" + END,
 	elif (VERBOSE==2): text+= "showing challenges + chat + new matches" + END,
@@ -1073,7 +1072,7 @@ if __name__ == '__main__':
 			nick = command[8:]
 			found = print_user_long(nick,"whowas")
 			if (found==1):
-				print_line ( YELLOW + "-!- " + GRAY + "End of WHOWAS" + END + "\n")
+				print_line ( YELLOW + "-!- " + BLUE + "End of WHOWAS" + END + "\n")
 			else:
 				print_line ( YELLOW + "-!- There was no such nick " + B_YELLOW + nick + END + "\n")
 
@@ -1086,7 +1085,7 @@ if __name__ == '__main__':
 			elif (debug == "3"): DEBUG=3
 			else: print_line ( YELLOW + "-!- possible values are /debug [<0|1|2|3>]" + END + "\n")
 		elif (command == "/debug"):
-			print_line ( YELLOW + "-!- " + GRAY + "DEBUG: " + str(DEBUG) + END + "\n")
+			print_line ( YELLOW + "-!- " + BLUE + "DEBUG: " + str(DEBUG) + END + "\n")
 
 		elif (command.startswith("/verbose ")):
 			verbose = command[9:]
@@ -1101,9 +1100,9 @@ if __name__ == '__main__':
 			showverbose()
 
 		elif (command == "/challenge"):
-			text= YELLOW + "-!- " + GRAY + "challenging:",
+			text= YELLOW + "-!- " + BLUE + "challenging:",
 			for nick in challenged:
-				text+= "["+ B_GREEN + nick + GRAY + "]",
+				text+= "["+ B_GREEN + nick + BLUE + "]",
 			text+=END+"\n",
 			print_line(' '.join(text))
 
