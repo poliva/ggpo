@@ -167,8 +167,19 @@ def parse(cmd):
 		channellen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
 		channel = cmd[16+nicklen:16+nicklen+channellen]
 
-		print_line ( COLOR1 + "-!- INCOMING CHALLENGE REQUEST FROM " + B_COLOR1 + str(nick) + COLOR1 + " @ " + channel + END +"\n" )
-		print_line ( COLOR1 + "-!- TYPE '/accept " + B_COLOR1 + str(nick) + COLOR1 + "' to accept it, or '/decline " + B_COLOR1 + str(nick) + COLOR1 + "' to wimp out." + END +"\n")
+		user = get_user_info(nick)
+		ping = user[8]
+		cc = user[3]
+		text = COLOR1 + "-!- INCOMING CHALLENGE REQUEST FROM " + B_COLOR1 + str(nick) + COLOR1,
+		if (cc!=""): text+="(" + cc + ")",
+		if (ping != 0): text+="[" + str(int(ping)) + " ms]",
+		text+="@ " + channel + END +"\n",
+		print_line(' '.join(text))
+
+		if (len(challengers)>0):
+			print_line ( COLOR1 + "-!- TYPE '/accept " + B_COLOR1 + str(nick) + COLOR1 + "' to accept it, or '/decline " + B_COLOR1 + str(nick) + COLOR1 + "' to wimp out." + END +"\n")
+		else:
+			print_line ( COLOR1 + "-!- TYPE '/accept' to accept it, or '/decline' to wimp out." + END +"\n")
 
 		challengers.add(nick)
 
@@ -322,12 +333,19 @@ def check_ping(nick,ip,port):
 		pingquery=[mytime,nick,ip,port,str(num1)+" "+str(num2),0]
 		pinglist.append(pingquery)
 
-def get_ping_msec(nick,ip):
+def get_ping_msec(nick):
 	for i in range( len( pinglist ) ):
-		if (pinglist[i][1]==nick and pinglist[i][2]==ip):
+		if (pinglist[i][1]==nick):
 			ping = pinglist[i][5]
 			break
 	return ping
+
+def get_user_info(nick):
+	for i in range( len( userlist ) ):
+		if (userlist[i][0]==nick):
+			user = userlist[i]
+			break
+	return user
 
 def parseusers(cmd):
 	global userlist
@@ -411,18 +429,30 @@ def parseusers(cmd):
 	for user in userlist:
 		nick=user[0]
 		ip=user[1]
-		user[8]=get_ping_msec(nick,ip)
+		user[8]=get_ping_msec(nick)
 		# put the users on each list
 		status=user[6]
 		if (status == 0): available_users.append(user)
 		elif (status == 1): away_users.append(user)
 		elif (status == 2): playing_users.append(user)
+		# trick to have users with no ping sorted at the end
+		if (user[8]==0): user[8]=9999
 
 	# sort userlist by ping value
 	userlist = sorted(userlist, key=itemgetter(8), reverse=False)
 	available_users = sorted(available_users, key=itemgetter(8), reverse=False)
 	away_users = sorted(away_users, key=itemgetter(8), reverse=False)
 	playing_users = sorted(playing_users, key=itemgetter(8), reverse=False)
+
+	# reverse the ping-sorting trick
+	for user in userlist:
+		if (user[8]==9999): user[8]=0
+	for user in available_users:
+		if (user[8]==9999): user[8]=0
+	for user in away_users:
+		if (user[8]==9999): user[8]=0
+	for user in playing_users:
+		if (user[8]==9999): user[8]=0
 
 	if (users_option.startswith("/whois ")):
 		query=users_option[7:]
@@ -564,7 +594,7 @@ def print_user(user):
 	p2nick=user[7]
 	ping=user[8]
 
-	if (ping==0): ping = get_ping_msec(nick,ip)
+	if (ping==0): ping = get_ping_msec(nick)
 	text = COLOR3 + "-!- " + B_COLOR0 + str(nick) + COLOR0 + "@" + str(ip),
 	if (city != "" and cc != ""): text+= "(" + city + ", " + cc + ")",
 	elif (city == "" and cc != ""): text+= "(" + cc + ")",
@@ -694,9 +724,19 @@ def pdu_challenge(nick):
 	pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 	sequence+=1
+	user = get_user_info(nick)
+	ping = user[8]
+	cc = user[3]
+	text = COLOR2 + "-!- challenge request sent to " + B_COLOR2 + str(nick) + COLOR2,
+	if (cc!=""): text+="(" + cc + ")",
+	if (ping != 0): text+="[" + str(int(ping)) + " ms]",
+	text+=END +"\n",
+	print_line(' '.join(text))
+	if (len(challenged)>0):
+		print_line ( COLOR2 + "-!- type '/cancel " + B_COLOR2 + str(nick) + COLOR2 + "' to cancel it" + END + "\n")
+	else:
+		print_line ( COLOR2 + "-!- type '/cancel' to cancel it" + END + "\n")
 	challenged.add(nick)
-	print_line ( COLOR2 + "-!- challenge request sent to " + B_COLOR2 + str(nick) + END + "\n")
-	print_line ( COLOR2 + "-!- type '/cancel " + B_COLOR2 + str(nick) + COLOR2 + "' to cancel it" + END + "\n")
 
 def pdu_watch(nick):
 	global sequence
