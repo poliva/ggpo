@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
 # command line ggpo client
 # protocol reverse engineered from the official adobe air client
@@ -29,7 +30,7 @@ from threading import Event
 from random import randint
 from operator import itemgetter
 
-VERSION = "1.0.5"
+VERSION = "1.0.6-beta"
 
 def blank_current_readline():
 	# thanks http://stackoverflow.com/questions/7907827/
@@ -143,6 +144,8 @@ def parse(cmd):
 					if (state == 1): text+= "is away",
 					text+=END+"\n",
 					print_line(' '.join(text))
+					# not sure how to retrive the port without requesting the full user list, so we just try on 6009 (default)
+					if (state == 0): check_ping(nick,ip,6009)
 
 		else:
 			if (DEBUG>0): print_line ( COLOR4 + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END +"\n")
@@ -442,13 +445,35 @@ def parseusers(cmd):
 
 		print_line ( COLOR3 + "-!- EOF user list." + END + "\n")
 
-	else:
+	elif (users_option=="/who" or users_option=="/users"):
 		print_line ( COLOR3 + "-!- user list:" + END + "\n")
 		for user in available_users: print_user(user)
 		for user in playing_users: print_user(user)
 		for user in away_users: print_user(user)
 		print_line ( COLOR3 + "-!- EOF user list." + END + "\n")
 
+	elif (users_option=="/n"):
+		i=0
+		text= COLOR0,
+		for user in available_users:
+			i+=1
+			nick=user[0]
+			if (len(nick) > 13): nick=''.join(nick[0:12]+"…")
+			text+= COLOR0 + "["+ B_COLOR2 + '{:13s}'.format(nick) + COLOR0 + "]",
+			if (i%5==0): text+=END+"\n",
+		for user in playing_users:
+			i+=1
+			nick=user[0]
+			if (len(nick) > 13): nick=''.join(nick[0:12]+"…")
+			text+= COLOR0 + "["+ B_COLOR5 + '{:13s}'.format(nick) + COLOR0 + "]",
+			if (i%5==0): text+=END+"\n",
+		for user in away_users:
+			i+=1
+			nick=user[0]
+			if (len(nick) > 13): nick=''.join(nick[0:12]+"…")
+			text+= COLOR0 + "["+ B_COLOR4 + '{:13s}'.format(nick) + COLOR0 + "]",
+			if (i%5==0): text+=END+"\n",
+		print_line(''.join(text))
 
 def print_user_long(nick,command):
 
@@ -783,7 +808,7 @@ def process_user_input():
 			pdu_list()
 
 		# list users
-		elif (command.startswith("/users ") or command.startswith("/whois ") or command=="/who" or command=="/users"):
+		elif (command.startswith("/users ") or command.startswith("/whois ") or command=="/who" or command=="/users" or command=="/n"):
 			pdu_users(command)
 
 		# unknown command
@@ -882,13 +907,13 @@ if __name__ == '__main__':
 	VERBOSE=3
 	STARTAWAY=0
 
-	COLOR0 = '\033[0;38m'
-	COLOR1 = '\033[0;31m'
-	COLOR2 = '\033[0;32m'
-	COLOR3 = '\033[0;33m'
-	COLOR4 = '\033[0;34m'
-	COLOR5 = '\033[0;35m'
-	COLOR6 = '\033[0;36m'
+	COLOR0 = '\033[0;38m' # GRAY
+	COLOR1 = '\033[0;31m' # RED
+	COLOR2 = '\033[0;32m' # GREEN
+	COLOR3 = '\033[0;33m' # YELLOW
+	COLOR4 = '\033[0;34m' # BLUE
+	COLOR5 = '\033[0;35m' # MAGENTA
+	COLOR6 = '\033[0;36m' # CYAN
 	B_COLOR0 = '\033[1;30m'
 	B_COLOR1 = '\033[1;31m'
 	B_COLOR2 = '\033[1;32m'
