@@ -48,7 +48,7 @@ def print_line(text):
 	blank_current_readline()
 	linebuffer = readline.get_line_buffer()
 	print text,
-	if "\n" in linebuffer:
+	if (text == PROMPT and "\n" in linebuffer):
 		sys.stdout.write(text)
 	else:
 		sys.stdout.write(linebuffer.strip('\t\n\r'))
