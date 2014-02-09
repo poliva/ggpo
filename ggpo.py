@@ -33,7 +33,7 @@ from operator import itemgetter
 
 VERSION = "1.0.8"
 
-COMMANDS = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/n', '/debug']
+COMMANDS = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug']
 
 def complete(text, state):
     for cmd in COMMANDS:
@@ -251,7 +251,7 @@ def parse(cmd):
 	elif (action == "\xff\xff\xff\xff"):
 		print_line ( COLOR0 + "-!- Connection established" + END + "\n")
 		command_queue.put("/motd")
-		command_queue.put("/n")
+		command_queue.put("/names")
 
 	# password incorrect (reply to request with sequence=2)
 	elif (action == "\x00\x00\x00\x02"):
@@ -554,8 +554,8 @@ def parseusers(cmd):
 		for user in away_users: print_user(user)
 		print_line ( COLOR3 + "-!- EOF user list." + END + "\n")
 
-	elif (users_option=="/n" or users_option.startswith("/n ")):
-		subcmd=users_option[3:]
+	elif (users_option=="/names" or users_option.startswith("/names ")):
+		subcmd=users_option[7:]
 		i=0
 		text=COLOR0,
 		if (subcmd == "available" or subcmd==""):
@@ -928,7 +928,7 @@ def process_user_input():
 			pdu_list()
 
 		# list users
-		elif (command.startswith("/users ") or command.startswith("/whois ") or command=="/who" or command=="/users" or command=="/n" or command.startswith("/n ")):
+		elif (command.startswith("/users ") or command.startswith("/whois ") or command=="/who" or command=="/users" or command=="/names" or command.startswith("/names ")):
 			pdu_users(command)
 
 		# unknown command
@@ -1258,7 +1258,7 @@ if __name__ == '__main__':
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/join    <channel>\tjoin the chat/game room <channel>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/list \t\tlist all available channels or chat/game rooms" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/users [<modifier>]\tlist all users in the current channel" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/n     [<modifier>]\tsame as /users but only display nickname" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/names [<modifier>]\tsame as /users but only display nickname" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "         modifier: 'available', 'away' or 'playing'" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/motd \t\tview the channel welcome text" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/away \t\tset away status (you can't be challenged)" + END + "\n")
