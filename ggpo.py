@@ -35,7 +35,7 @@ VERSION = "1.0.9"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
-	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping']
+	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge']
 
 def complete(text, state):
     for cmd in AUTOCOMPLETE:
