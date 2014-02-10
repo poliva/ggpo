@@ -33,10 +33,11 @@ from operator import itemgetter
 
 VERSION = "1.0.8"
 
-COMMANDS = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug']
+def reset_autocomplete():
+	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug']
 
 def complete(text, state):
-    for cmd in COMMANDS:
+    for cmd in AUTOCOMPLETE:
         if cmd.startswith(text):
             if not state:
                 return cmd
@@ -110,7 +111,7 @@ def parse(cmd):
 
 		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"):
 			if (VERBOSE>2): print_line ( COLOR0 + "-!- " + B_COLOR0 + str(nick) + COLOR0 +" has quit" + END +"\n")
-			if nick in COMMANDS: COMMANDS.remove(nick)
+			if nick in AUTOCOMPLETE: AUTOCOMPLETE.remove(nick)
 
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x00"):
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x01"):
@@ -172,9 +173,9 @@ def parse(cmd):
 					text = COLOR0 + "-!- " + B_COLOR0 + str(nick) + COLOR0 + "@" + str(ip), 
 					if (city != "" and cc != ""): text+= "(" + city + ", " + cc + ")",
 					elif (city == "" and cc != ""): text+= "(" + cc + ")",
-					if nick not in COMMANDS and nick != USERNAME:
+					if nick not in AUTOCOMPLETE and nick != USERNAME:
 						text+="has joined and",
-						COMMANDS.append(nick)
+						AUTOCOMPLETE.append(nick)
 					if (state == 0): text+= "is available",
 					if (state == 1): text+= "is away",
 					text+=END+"\n",
@@ -514,7 +515,7 @@ def parseusers(cmd):
 			user = [nick,ip,city,cc,country,port,status,p2nick,0]
 			userlist.append(user)
 			# add user to autocomplete list
-			if nick not in COMMANDS and nick != USERNAME: COMMANDS.append(nick)
+			if nick not in AUTOCOMPLETE and nick != USERNAME: AUTOCOMPLETE.append(nick)
 		except:
 			if (DEBUG>0): print_line ( COLOR4 + "error parsing user " + str(nick) + END + "\n")
 			else: pass
@@ -948,6 +949,7 @@ def datathread():
 		except:
 			BUFFER=''
 			print_line ( COLOR4 + "-!- Connection lost. Reconnecting." + END + "\n")
+			reset_autocomplete()
 			connect_sequence()
 
 		if (DEBUG>1): print_line ( COLOR4 + "    HEX0: " + repr(data) + END + "\n")
@@ -1213,6 +1215,7 @@ if __name__ == '__main__':
 	command_queue = Queue()
 
 	s=''
+	reset_autocomplete()
 	connect_sequence()
 
 	command=""
