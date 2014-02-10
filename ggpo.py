@@ -185,6 +185,16 @@ def parse(cmd):
 					# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
 					add_to_userlist(nick,ip,city,cc,country,6009,state,'')
 
+					# autochallenge
+					if (autochallenge > 0 and nick!=USERNAME and nick!=playing_against and state==0):
+						check_ping(nick,ip,6009)
+						# sleep 1sec to collect ping data
+						time.sleep(1)
+						user = get_user_info(nick)
+						ping = user[8]
+						if (ping>0 and ping<autochallenge):
+							command_queue.put("/challenge " + user[0])
+
 					# auto-kill ggpofba when p2 quits the game
 					if (nick == USERNAME): playing_against=''
 					if (nick == playing_against):
@@ -1274,6 +1284,8 @@ if __name__ == '__main__':
 	away_users=[]
 	playing_users=[]
 
+	autochallenge=0
+
 	t2 = Thread(target=datathread)
 	t2.daemon = False
 	t2.start()
@@ -1371,6 +1383,24 @@ if __name__ == '__main__':
 			else:
 				print_line ( COLOR3 + "-!- PING timeout from " + B_COLOR3 + nick + END + "\n")
 
+		elif (command.startswith("/autochallenge ")):
+			value = command[15:]
+			try:
+				autochallenge=int(value)
+			except ValueError:
+				if (value == "off"):
+					print_line ( COLOR2 + "-!- autochallenge is " B_COLOR2 + "off" + END + "\n")
+				else:
+					print_line ( COLOR3 + "-!- usage: /autochallenge <max-ping-msec|off>" + END + "\n")
+				autochallenge=0
+				continue
+
+			for user in available_users:
+				ping = int(user[8])
+				if (ping < autochallenge):
+					command_queue.put("/challenge " + user[0])
+
+
 		# hidden abreviation, not present in autocomplete
 		elif (command == "/n"): command_queue.put("/names")
 
@@ -1379,6 +1409,9 @@ if __name__ == '__main__':
 
 		elif (command == "/join"):
 			print_line ( COLOR3 + "-!- usage: /join <channel>" + END + "\n")
+
+		elif (command == "/autochallenge"):
+			print_line ( COLOR3 + "-!- usage: /autochallenge <max-ping-msec|off>" + END + "\n")
 
 		elif (command == "/clear"):
 			call(['clear'])
