@@ -9,7 +9,7 @@
 
 
 CONFIGFILE=~/.config/ggpo/ggpo.config
-source ${CONFIGFILE}
+source ${CONFIGFILE} 2>/dev/null
 
 if [ -z "${INSTALLDIR}" ]; then
 	echo "-!- Please launch ggpo.py to create your config file"
