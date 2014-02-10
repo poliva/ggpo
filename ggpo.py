@@ -1240,6 +1240,8 @@ if __name__ == '__main__':
 		configfile.write("INSTALLDIR=" + INSTALLDIR + "\n")
 		configfile.write("VERBOSE=3\n")
 		configfile.write("STARTAWAY=0\n")
+		configfile.write("\n# comma separated list of friends\n")
+		configfile.write("NOTIFY=\n")
 		configfile.write("\n#color profile\n")
 		configfile.write("COLOR0=[0;38m\n")
 		configfile.write("COLOR1=[0;31m\n")
