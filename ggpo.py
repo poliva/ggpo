@@ -938,6 +938,8 @@ def process_user_input():
 		elif (command == "/cancel"):
 			for nick in list(challenged):
 				pdu_cancel(nick)
+			if (len(challenged)==0):
+				print_line ( COLOR3 + "-!- " + "You have not sent any challenge request" + END + "\n")
 
 		# watch an ongoing match
 		elif (command.startswith("/watch ")):
