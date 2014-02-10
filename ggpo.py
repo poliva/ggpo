@@ -204,7 +204,7 @@ def parse(cmd):
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
 		if nick in list(challenged): challenged.remove(nick)
-		print_line ( COLOR1 + "-!- " + B_COLOR1 + str(nick) + COLOR1 + " declined the challenge request" +"\n")
+		print_line ( COLOR1 + "-!- " + B_COLOR1 + str(nick) + COLOR1 + " declined the challenge request" + END +"\n")
 
 
 	# challenge
@@ -403,7 +403,7 @@ def get_ping_msec(nick):
 	return ping
 
 def get_user_info(nick):
-	user=[]
+	user = ['','','','','','','','','']
 	for i in range( len( userlist ) ):
 		if (userlist[i][0]==nick):
 			user = userlist[i]
@@ -448,17 +448,27 @@ def sort_lists():
 
 def add_to_userlist(nick,ip,city,cc,country,port,status,p2nick):
 
-	found=0
+	found=False
 	for i in range(len(userlist)):
 		if (userlist[i][0]==nick):
-			found=1
+			found=True
 			break
 
-	if (found==0):
-		ping = get_ping_msec(nick)
+	ping = get_ping_msec(nick)
+	if (found==False):
 		user = [nick,ip,city,cc,country,port,status,p2nick,ping]
 		userlist.append(user)
 		sort_lists()
+	else:
+		# update info
+		userlist[i][1]=ip
+		userlist[i][2]=city
+		userlist[i][3]=cc
+		userlist[i][4]=country
+		# skip port number (could be hardcoded, so better leave the one we have)
+		userlist[i][6]=status
+		userlist[i][7]=p2nick
+		userlist[i][8]=ping
 
 def parseusers(cmd):
 	global userlist
@@ -802,24 +812,33 @@ def pdu_chat(message):
 
 def pdu_challenge(nick):
 	global sequence,challenged
-	nicklen = len(nick)
-	channellen = len(CHANNEL)
-	pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
-	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
-	sequence+=1
 	user = get_user_info(nick)
-	ping = user[8]
-	cc = user[3]
-	text = COLOR2 + "-!- challenge request sent to " + B_COLOR2 + str(nick) + COLOR2,
-	if (cc!=""): text+="(" + cc + ")",
-	if (ping != 0): text+="[" + str(int(ping)) + " ms]",
-	text+=END +"\n",
-	print_line(' '.join(text))
-	if (len(challenged)>0):
-		print_line ( COLOR2 + "-!- type '/cancel " + B_COLOR2 + str(nick) + COLOR2 + "' to cancel it" + END + "\n")
-	else:
-		print_line ( COLOR2 + "-!- type '/cancel' to cancel it" + END + "\n")
-	challenged.add(nick)
+	state = user[6]
+	if (state == 0):
+		nicklen = len(nick)
+		channellen = len(CHANNEL)
+		pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
+		s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x08" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
+		sequence+=1
+		ping = user[8]
+		cc = user[3]
+		text = COLOR2 + "-!- challenge request sent to " + B_COLOR2 + str(nick) + COLOR2,
+		if (cc!=""): text+="(" + cc + ")",
+		if (ping != 0): text+="[" + str(int(ping)) + " ms]",
+		text+=END +"\n",
+		print_line(' '.join(text))
+		if (len(challenged)>0):
+			print_line ( COLOR2 + "-!- type '/cancel " + B_COLOR2 + str(nick) + COLOR2 + "' to cancel it" + END + "\n")
+		else:
+			print_line ( COLOR2 + "-!- type '/cancel' to cancel it" + END + "\n")
+		challenged.add(nick)
+	elif (state==1):
+		print_line ( COLOR3 + "-!- " + B_COLOR3 + str(nick) + COLOR3 + " is away. Can't challenge." + END + "\n")
+	elif (state==2):
+		p2nick = user[7]
+		print_line ( COLOR3 + "-!- " + B_COLOR3 + str(nick) + COLOR3 + " is playing against " + B_COLOR3 + str(p2nick) + COLOR3 +". Can't challenge." + END + "\n")
+	elif (state==''):
+		print_line ( COLOR3 + "-!- unknown user " + B_COLOR3 + str(nick) + END + "\n")
 
 def pdu_watch(nick):
 	global sequence
