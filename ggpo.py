@@ -1486,14 +1486,14 @@ if __name__ == '__main__':
 				autochallenge=int(value)
 			except valueerror:
 				if (value == "off"):
-					print_line ( COLOR2 + "-!- autochallenge is " + b_COLOR2 + "off" + end + "\n")
+					print_line ( COLOR2 + "-!- autochallenge is " + B_COLOR2 + "off" + end + "\n")
 					command_queue.put("/cancel")
 				else:
 					print_line ( COLOR3 + "-!- usage: /autochallenge <max-ping-msec|off>" + end + "\n")
 				autochallenge=0
 				continue
 
-			print_line ( COLOR2 + "-!- autochallenge is set to [" + b_COLOR2 + str(autochallenge) + COLOR2 +" ms]. type '/autochallenge off' to disable it" + end + "\n")
+			print_line ( COLOR2 + "-!- autochallenge is set to [" + B_COLOR2 + str(autochallenge) + COLOR2 +" ms]. type '/autochallenge off' to disable it" + end + "\n")
 			for user in available_users:
 				ping = int(user[8])
 				if (ping > 0 and ping < autochallenge):
