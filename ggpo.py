@@ -1283,7 +1283,10 @@ if __name__ == '__main__':
 		if (line.startswith("INSTALLDIR=")): INSTALLDIR=line[11:].strip()
 		if (line.startswith("VERBOSE=")): VERBOSE=int(line[8:].strip())
 		if (line.startswith("STARTAWAY=")): STARTAWAY=int(line[10:].strip())
-		if (line.startswith("NOTIFY=")): NOTIFY=set(line[7:].strip().split(","))
+		if (line.startswith("NOTIFY=")):
+			notifycfg = line[7:].strip()
+			if (len(notifycfg)>0):
+				NOTIFY=set(notifycfg.split(","))
 		if (line.startswith("COLOR0=")): COLOR0='\033'+line[7:].strip()
 		if (line.startswith("COLOR1=")): COLOR1='\033'+line[7:].strip()
 		if (line.startswith("COLOR2=")): COLOR2='\033'+line[7:].strip()
