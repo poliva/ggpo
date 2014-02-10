@@ -179,8 +179,7 @@ def parse(cmd):
 
 					# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
 					add_to_userlist(nick,ip,city,cc,country,6009,state,'')
-					if (state == 0):
-						if nick not in COMMANDS and nick != USERNAME: COMMANDS.append(nick)
+					if nick not in COMMANDS and nick != USERNAME: COMMANDS.append(nick)
 
 		else:
 			if (DEBUG>0): print_line ( COLOR4 + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END +"\n")
