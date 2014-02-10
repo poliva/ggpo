@@ -172,6 +172,9 @@ def parse(cmd):
 					text = COLOR0 + "-!- " + B_COLOR0 + str(nick) + COLOR0 + "@" + str(ip), 
 					if (city != "" and cc != ""): text+= "(" + city + ", " + cc + ")",
 					elif (city == "" and cc != ""): text+= "(" + cc + ")",
+					if nick not in COMMANDS and nick != USERNAME:
+						text+="has joined and",
+						COMMANDS.append(nick)
 					if (state == 0): text+= "is available",
 					if (state == 1): text+= "is away",
 					text+=END+"\n",
@@ -179,7 +182,6 @@ def parse(cmd):
 
 					# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
 					add_to_userlist(nick,ip,city,cc,country,6009,state,'')
-					if nick not in COMMANDS and nick != USERNAME: COMMANDS.append(nick)
 
 		else:
 			if (DEBUG>0): print_line ( COLOR4 + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END +"\n")
