@@ -908,8 +908,10 @@ def process_user_input():
 				for nick in list(challengers):
 					pdu_accept(nick)
 					break
-			else:
+			elif(len(challengers)>1):
 				print_line ( COLOR3 + "-!- " + "There's more than one incoming challenge request: you need to specify the nick." + END + "\n")
+			else:
+				print_line ( COLOR3 + "-!- " + "You have not received any challenge request" + END + "\n")
 
 		# decline a challenge request (initiated by peer)
 		elif (command.startswith("/decline ")):
