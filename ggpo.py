@@ -1008,7 +1008,13 @@ def datathread():
 		if (DEBUG>1): print_line ( COLOR4 + "    HEX0: " + repr(data) + END + "\n")
 
 		data = BUFFER + data
-		pdulen = int(data[0:4].encode('hex'), 16)
+		try:
+			pdulen = int(data[0:4].encode('hex'), 16)
+		except ValueError:
+			pdulen = 0
+			BUFFER=''
+			data = ''
+			if (DEBUG>0): print_line (COLOR1 + "*** Unparseable PDU:" + END + "\n")
 
 		if (DEBUG>2): print_line ( COLOR2 + "PDULEN: " + str(pdulen) + " LEN_DATA: " + str(len(data)) + END + "\n")
 		#DATA: [ 4-byte pdulen ][ pdulen-byte pdu ]
@@ -1389,7 +1395,8 @@ if __name__ == '__main__':
 				autochallenge=int(value)
 			except ValueError:
 				if (value == "off"):
-					print_line ( COLOR2 + "-!- autochallenge is " B_COLOR2 + "off" + END + "\n")
+					print_line ( COLOR2 + "-!- autochallenge is " + B_COLOR2 + "off" + END + "\n")
+					command_queue.put("/cancel")
 				else:
 					print_line ( COLOR3 + "-!- usage: /autochallenge <max-ping-msec|off>" + END + "\n")
 				autochallenge=0
@@ -1397,7 +1404,7 @@ if __name__ == '__main__':
 
 			for user in available_users:
 				ping = int(user[8])
-				if (ping < autochallenge):
+				if (ping > 0 and ping < autochallenge):
 					command_queue.put("/challenge " + user[0])
 
 
