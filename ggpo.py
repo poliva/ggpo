@@ -34,6 +34,7 @@ from operator import itemgetter
 VERSION = "1.0.8"
 
 def reset_autocomplete():
+	global AUTOCOMPLETE
 	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug']
 
 def complete(text, state):
@@ -75,7 +76,7 @@ def pad(value,length=4):
 	return value
 
 def parse(cmd):
-	global challengers,challenged,sequence
+	global challengers,challenged,sequence,playing_against
 
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 	action = cmd[4:8]
@@ -1226,8 +1227,9 @@ if __name__ == '__main__':
 
 	command_queue = Queue()
 
-	s=''
+	AUTOCOMPLETE=[]
 	reset_autocomplete()
+	s=''
 	connect_sequence()
 
 	command=""
