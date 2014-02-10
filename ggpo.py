@@ -377,6 +377,8 @@ def parsemotd(cmd):
 def check_ping(nick,ip,port):
 	global pinglist
 
+	if (ip==''): ip="0.0.0.0"
+	if (port==''): port=6009
 	num1 = randint(500000,30000000)
 	num2 = randint(4000000,900000000)
 	message = "GGPO PING " + str(num1) + " " + str(num2)
@@ -1343,6 +1345,21 @@ if __name__ == '__main__':
 				text+= "["+ B_COLOR2 + nick + COLOR0 + "]",
 			text+=END+"\n",
 			print_line(' '.join(text))
+
+		elif (command.startswith("/ping ")):
+			nick = command[6:]
+			user = get_user_info(nick)
+			ip = user[1]
+			port = user[5]
+			check_ping(nick,ip,port)
+			# sleep 1sec to collect ping data
+			time.sleep(1)
+			user = get_user_info(nick)
+			ping = user[8]
+			if (ping != 0):
+				print_line ( COLOR2 + "-!- PING reply from " + B_COLOR2 + nick + COLOR2 + ": [" + B_COLOR2 + str(int(ping)) + COLOR2 + " ms]" + END + "\n")
+			else:
+				print_line ( COLOR3 + "-!- PING timeout from " + B_COLOR3 + nick + END + "\n")
 
 		elif (command == "/clear"):
 			call(['clear'])
