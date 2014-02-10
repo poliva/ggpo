@@ -89,6 +89,13 @@ def send_notification(msg):
 	except OSError:
 		pass
 
+def disable_autochallenge():
+	global autochallenge
+	if (autochallenge > 0):
+		autochallenge=0
+		print_line ( COLOR2 + "-!- setting autochallenge to " + B_COLOR2 + "off" + END + "\n")
+		command_queue.put("/cancel")
+
 def parse(cmd):
 	global challengers,challenged,sequence,playing_against,autochallenge
 
@@ -328,16 +335,11 @@ def parse(cmd):
 		nick2len = int(cmd[12+nick1len:16+nick1len].encode('hex'),16)
 		nick2 = cmd[16+nick1len:16+nick1len+nick2len]
 
-		# only launch ggpofba for challenges we have accepted
-		if (nick1 == USERNAME and playing_against!=nick2): return
-
 		# auto-cancel all outgoing challenge requests when a match becomes active
 		if (nick1 == USERNAME):
 			command_queue.put("/cancel")
 			playing_against=nick2
-			if (autochallenge > 0):
-				autochallenge=0
-				print_line ( COLOR2 + "-!- disabling autochallenge" + END + "\n")
+			disable_autochallenge()
 		else:
 			print_line ( COLOR2 + "-!- watch " + B_COLOR2 + str(nick1) + COLOR2 + " vs " + B_COLOR2 + str(nick2) + END + "\n")
 
@@ -809,6 +811,7 @@ def pdu_accept(nick):
 	nicklen = len(nick)
 	channellen = len(CHANNEL)
 	playing_against=nick
+	disable_autochallenge()
 	pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x09" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 	sequence+=1
@@ -1484,10 +1487,9 @@ if __name__ == '__main__':
 			value = command[15:]
 			try:
 				autochallenge=int(value)
-			except valueerror:
+			except ValueError:
 				if (value == "off"):
-					print_line ( COLOR2 + "-!- autochallenge is " + B_COLOR2 + "off" + END + "\n")
-					command_queue.put("/cancel")
+					disable_autochallenge()
 				else:
 					print_line ( COLOR3 + "-!- usage: /autochallenge <max-ping-msec|off>" + END + "\n")
 				autochallenge=0
