@@ -76,7 +76,7 @@ def pad(value,length=4):
 	return value
 
 def parse(cmd):
-	global challengers,challenged,sequence,playing_against
+	global challengers,challenged,sequence,playing_against,autochallenge
 
 	pdulen = int(cmd[0:4].encode('hex'), 16)
 	action = cmd[4:8]
@@ -308,12 +308,16 @@ def parse(cmd):
 		nick2len = int(cmd[12+nick1len:16+nick1len].encode('hex'),16)
 		nick2 = cmd[16+nick1len:16+nick1len+nick2len]
 
-		print_line ( COLOR2 + "-!- watch " + B_COLOR2 + str(nick1) + COLOR2 + " vs " + B_COLOR2 + str(nick2) + END + "\n")
 
 		# auto-cancel all outgoing challenge requests when a match becomes active
 		if (nick1 == USERNAME):
 			command_queue.put("/cancel")
 			playing_against=nick2
+			if (autochallenge > 0):
+				autochallenge=0
+				print_line ( COLOR2 + "-!- disabling autochallenge" + END + "\n")
+		else:
+			print_line ( COLOR2 + "-!- watch " + B_COLOR2 + str(nick1) + COLOR2 + " vs " + B_COLOR2 + str(nick2) + END + "\n")
 
 		if not os.path.isfile(INSTALLDIR+"/ggpofba.sh"):
 			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba.sh in " + INSTALLDIR + END + "\n")
@@ -834,15 +838,22 @@ def pdu_challenge(nick):
 		sequence+=1
 		ping = user[8]
 		cc = user[3]
-		text = COLOR2 + "-!- challenge request sent to " + B_COLOR2 + str(nick) + COLOR2,
+		text = COLOR2 + "-!-",
+		if (autochallenge>0): text+="autochallenge",
+		else: text+="challenge",
+		text +="request sent to " + B_COLOR2 + str(nick) + COLOR2,
 		if (cc!=""): text+="(" + cc + ")",
 		if (ping != 0): text+="[" + str(int(ping)) + " ms]",
 		text+=END +"\n",
 		print_line(' '.join(text))
 		if (len(challenged)>0):
-			print_line ( COLOR2 + "-!- type '/cancel " + B_COLOR2 + str(nick) + COLOR2 + "' to cancel it" + END + "\n")
+			text = COLOR2 + "-!- type '/cancel " + B_COLOR2 + str(nick) + COLOR2 + "' to cancel it",
 		else:
-			print_line ( COLOR2 + "-!- type '/cancel' to cancel it" + END + "\n")
+			text = COLOR2 + "-!- type '/cancel' to cancel it",
+		if (autochallenge>0):
+			text+="or '/autochallenge off' to disable autochallenge",
+		text+=END +"\n",
+		print_line(' '.join(text))
 		challenged.add(nick)
 	elif (state==1):
 		print_line ( COLOR3 + "-!- " + B_COLOR3 + str(nick) + COLOR3 + " is away. Can't challenge." + END + "\n")
@@ -951,8 +962,8 @@ def process_user_input():
 
 		# /cancel without parameters: cancel all ongoing challenge requests
 		elif (command == "/cancel"):
-			if (len(challenged)==0):
-				print_line ( COLOR3 + "-!- " + "You have not sent any challenge request" + END + "\n")
+			if (len(challenged)==0 and autochallenge==0):
+				print_line ( COLOR3 + "-!- " + "No outgoing challenge requests" + END + "\n")
 			for nick in list(challenged):
 				pdu_cancel(nick)
 
@@ -1316,6 +1327,7 @@ if __name__ == '__main__':
 		if (command == "/help"):
 			print_line ( COLOR3 + "-!- " + COLOR4 + "available commands:" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/challenge [<nick>]\tsend a challenge request to <nick>" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/autochallenge [<ms|off>]\tauto-challenge anyone with ping < <ms>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/accept    [<nick>]\taccept a challenge request initiated by <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/decline   [<nick>]\tdecline a challenge request initiated by <nick>" + END + "\n")
@@ -1402,11 +1414,17 @@ if __name__ == '__main__':
 				autochallenge=0
 				continue
 
+			print_line ( COLOR2 + "-!- autochallenge is set to [" + B_COLOR2 + str(autochallenge) + COLOR2 +" ms]. Type '/autochallenge off' to disable it" + END + "\n")
 			for user in available_users:
 				ping = int(user[8])
 				if (ping > 0 and ping < autochallenge):
 					command_queue.put("/challenge " + user[0])
 
+		elif (command == "/autochallenge"):
+			if (autochallenge==0):
+				print_line ( COLOR3 + "-!- autochallenge is off. Usage: /autochallenge <max-ping-msec|off>" + END + "\n")
+			else:
+				print_line ( COLOR2 + "-!- autochallenge is set to [" + B_COLOR2 + str(autochallenge) + COLOR2 +" ms]. Type '/autochallenge off' to disable it" + END + "\n")
 
 		# hidden abreviation, not present in autocomplete
 		elif (command == "/n"): command_queue.put("/names")
@@ -1416,9 +1434,6 @@ if __name__ == '__main__':
 
 		elif (command == "/join"):
 			print_line ( COLOR3 + "-!- usage: /join <channel>" + END + "\n")
-
-		elif (command == "/autochallenge"):
-			print_line ( COLOR3 + "-!- usage: /autochallenge <max-ping-msec|off>" + END + "\n")
 
 		elif (command == "/clear"):
 			call(['clear'])
