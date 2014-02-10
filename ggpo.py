@@ -35,7 +35,7 @@ VERSION = "1.0.9"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
-	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa']
+	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify']
 
 def complete(text, state):
     for cmd in AUTOCOMPLETE:
@@ -75,6 +75,15 @@ def pad(value,length=4):
 		l = len(value)
 	return value
 
+def send_notification(msg):
+	args = ['notify-send', '--icon=' + INSTALLDIR + '/assets/icon-128.png', msg ]
+	try:
+		FNULL = open(os.devnull, 'w')
+		call(args, stdout=FNULL, stderr=FNULL)
+		FNULL.close()
+	except OSError:
+		pass
+
 def parse(cmd):
 	global challengers,challenged,sequence,playing_against,autochallenge
 
@@ -89,13 +98,7 @@ def parse(cmd):
 			msglen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
 			msg = cmd[12+nicklen+4:pdulen+4].replace('\r','\n')
 			if (USERNAME+" " in msg or " "+USERNAME in msg or msg==USERNAME):
-				args = ['notify-send', '--icon=' + INSTALLDIR + '/assets/icon-128.png', msg]
-				try:
-					FNULL = open(os.devnull, 'w')
-					call(args, stdout=FNULL, stderr=FNULL)
-					FNULL.close()
-				except OSError:
-					pass
+				send_notification(msg)
 				msg = msg.replace(USERNAME, B_COLOR3 + USERNAME + END)
 
 			print_line ( COLOR6 + "<" + str(nick) + "> " + END + str(msg) + "\n")
@@ -184,6 +187,11 @@ def parse(cmd):
 
 					# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
 					add_to_userlist(nick,ip,city,cc,country,6009,state,'')
+
+					# NOTIFY
+					if (nick in NOTIFY and state==0):
+						print_line ( COLOR2 + "-!- NOTIFY: " + B_COLOR2 + nick + COLOR2 + " IS NOW AVAILABLE" + END + "\n")
+						send_notification("NOTIFY: " + nick + " is now available")
 
 					# autochallenge
 					if (autochallenge > 0 and nick!=USERNAME and nick!=playing_against and state==0):
@@ -282,6 +290,7 @@ def parse(cmd):
 		print_line ( COLOR0 + "-!- Connection established" + END + "\n")
 		command_queue.put("/motd")
 		command_queue.put("/names")
+		notifyjoin=1
 
 	# password incorrect (reply to request with sequence=2)
 	elif (action == "\x00\x00\x00\x02"):
@@ -495,7 +504,7 @@ def add_to_userlist(nick,ip,city,cc,country,port,status,p2nick):
 	sort_lists()
 
 def parseusers(cmd):
-	global userlist
+	global userlist,notifyjoin
 
 	try:
 		pdulen = int(cmd[0:4].encode('hex'), 16)
@@ -571,6 +580,15 @@ def parseusers(cmd):
 	time.sleep(1)
 
 	sort_lists()
+
+	if (notifyjoin==1):
+		notifyjoin=0
+		found=False
+		for a_user in available_users:
+			for nick in NOTIFY:
+				if (a_user[0]==nick):
+					print_line ( COLOR2 + "-!- NOTIFY: " + B_COLOR2 + nick + COLOR2 + " IS NOW AVAILABLE" + END + "\n")
+					send_notification("NOTIFY: " + nick + " is now available")
 
 	if (users_option.startswith("/whois ")):
 		query=users_option[7:]
@@ -1129,6 +1147,9 @@ if __name__ == '__main__':
 	B_COLOR5 = '\033[1;35m'
 	B_COLOR6 = '\033[1;36m'
 
+	notifyjoin=1
+	NOTIFY=set()
+
 	END = '\033[0;m'
 	PROMPT = "\rggpo" + COLOR1 + "> " + END
 
@@ -1260,6 +1281,7 @@ if __name__ == '__main__':
 		if (line.startswith("INSTALLDIR=")): INSTALLDIR=line[11:].strip()
 		if (line.startswith("VERBOSE=")): VERBOSE=int(line[8:].strip())
 		if (line.startswith("STARTAWAY=")): STARTAWAY=int(line[10:].strip())
+		if (line.startswith("NOTIFY=")): NOTIFY=set(line[7:].strip().split(","))
 		if (line.startswith("COLOR0=")): COLOR0='\033'+line[7:].strip()
 		if (line.startswith("COLOR1=")): COLOR1='\033'+line[7:].strip()
 		if (line.startswith("COLOR2=")): COLOR2='\033'+line[7:].strip()
@@ -1346,6 +1368,7 @@ if __name__ == '__main__':
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/whois      <nick>\tdisplay information about the user <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/whowas     <nick>\tinfo about <nick> that is no longer connected" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/ping       <nick>\tsends a PING to <nick> and displays lag in ms" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/notify     <nick>\tget a notification when <nick> is available" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/join    <channel>\tjoin the chat/game room <channel>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/list \t\tlist all available channels or chat/game rooms" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/users [<modifier>]\tlist all users in the current channel" + END + "\n")
@@ -1448,16 +1471,16 @@ if __name__ == '__main__':
 			value = command[15:]
 			try:
 				autochallenge=int(value)
-			except ValueError:
+			except valueerror:
 				if (value == "off"):
-					print_line ( COLOR2 + "-!- autochallenge is " + B_COLOR2 + "off" + END + "\n")
+					print_line ( color2 + "-!- autochallenge is " + b_color2 + "off" + end + "\n")
 					command_queue.put("/cancel")
 				else:
-					print_line ( COLOR3 + "-!- usage: /autochallenge <max-ping-msec|off>" + END + "\n")
+					print_line ( color3 + "-!- usage: /autochallenge <max-ping-msec|off>" + end + "\n")
 				autochallenge=0
 				continue
 
-			print_line ( COLOR2 + "-!- autochallenge is set to [" + B_COLOR2 + str(autochallenge) + COLOR2 +" ms]. Type '/autochallenge off' to disable it" + END + "\n")
+			print_line ( color2 + "-!- autochallenge is set to [" + b_color2 + str(autochallenge) + color2 +" ms]. type '/autochallenge off' to disable it" + end + "\n")
 			for user in available_users:
 				ping = int(user[8])
 				if (ping > 0 and ping < autochallenge):
@@ -1468,6 +1491,26 @@ if __name__ == '__main__':
 				print_line ( COLOR3 + "-!- autochallenge is off. Usage: /autochallenge <max-ping-msec|off>" + END + "\n")
 			else:
 				print_line ( COLOR2 + "-!- autochallenge is set to [" + B_COLOR2 + str(autochallenge) + COLOR2 +" ms]. Type '/autochallenge off' to disable it" + END + "\n")
+
+		elif (command.startswith("/notify ")):
+			nick = command[8:]
+			if (nick == "off"):
+				NOTIFY=set()
+				print_line ( COLOR2 + "-!- notify list cleared" + END + "\n")
+			elif (nick!=USERNAME):
+				NOTIFY.add(nick)
+			elif (nick==USERNAME):
+				print_line ( COLOR3 + "-!- " + "Guru meditation: you can't be notified of yourself" + END + "\n")
+
+		elif (command == "/notify"):
+			if(len(NOTIFY)==0):
+				print_line ( COLOR3 + "-!- No users in notify list. Usage: /notify <nick>" + END + "\n")
+			else:
+				text= COLOR3 + "-!- " + COLOR0 + "notify:",
+				for nick in NOTIFY:
+					text+= "["+ B_COLOR2 + nick + COLOR0 + "]",
+				text+=END+"\n",
+				print_line(' '.join(text))
 
 		# hidden abreviation, not present in autocomplete
 		elif (command == "/n"): command_queue.put("/names")
