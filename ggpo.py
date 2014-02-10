@@ -405,7 +405,7 @@ def get_ping_msec(nick):
 	return ping
 
 def get_user_info(nick):
-	user = ['','','','','','','','','']
+	user = ['','','','','','','','',0]
 	for i in range( len( userlist ) ):
 		if (userlist[i][0]==nick):
 			user = userlist[i]
