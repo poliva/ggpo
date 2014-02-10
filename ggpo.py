@@ -35,7 +35,7 @@ VERSION = "1.0.8"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
-	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug']
+	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping']
 
 def complete(text, state):
     for cmd in AUTOCOMPLETE:
@@ -1295,6 +1295,7 @@ if __name__ == '__main__':
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/watch      <nick>\twatch the game that <nick> is currently playing" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/whois      <nick>\tdisplay information about the user <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/whowas     <nick>\tinfo about <nick> that is no longer connected" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/ping       <nick>\tsends a PING to <nick> and displays lag in ms" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/join    <channel>\tjoin the chat/game room <channel>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/list \t\tlist all available channels or chat/game rooms" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/users [<modifier>]\tlist all users in the current channel" + END + "\n")
