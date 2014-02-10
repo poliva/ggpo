@@ -308,6 +308,8 @@ def parse(cmd):
 		nick2len = int(cmd[12+nick1len:16+nick1len].encode('hex'),16)
 		nick2 = cmd[16+nick1len:16+nick1len+nick2len]
 
+		# only launch ggpofba for challenges we have accepted
+		if (nick1 == USERNAME and playing_against!=nick2): return
 
 		# auto-cancel all outgoing challenge requests when a match becomes active
 		if (nick1 == USERNAME):
@@ -773,10 +775,11 @@ def pingcheck():
 					break
 
 def pdu_accept(nick):
-	global sequence,challengers
+	global sequence,challengers,playing_against
 
 	nicklen = len(nick)
 	channellen = len(CHANNEL)
+	playing_against=nick
 	pdulen = 4 + 4 + 4 + nicklen + 4 + channellen
 	s.send( pad(chr(pdulen)) + pad(chr(sequence)) + "\x00\x00\x00\x09" + pad(chr(nicklen)) + nick + pad(chr(channellen)) + CHANNEL)
 	sequence+=1
