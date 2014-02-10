@@ -61,7 +61,12 @@ def blank_current_readline():
 def print_line(text):
 	blank_current_readline()
 	linebuffer = readline.get_line_buffer()
-	print text,
+	if (TIMESTAMP == 1):
+		date = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M')
+		if (text!=PROMPT): print "["+date+"]", text,
+		else: print text,
+	else:
+		print text,
 	if (text == PROMPT and "\n" in linebuffer):
 		sys.stdout.write(text)
 	else:
@@ -624,7 +629,7 @@ def parseusers(cmd):
 	elif (users_option=="/names" or users_option.startswith("/names ")):
 		subcmd=users_option[7:]
 		i=0
-		text=COLOR0,
+		text="\r" + COLOR0,
 		if (subcmd == "available" or subcmd==""):
 			for user in available_users:
 				i+=1
@@ -1131,6 +1136,7 @@ if __name__ == '__main__':
 	INSTALLDIR=""
 	VERBOSE=3
 	STARTAWAY=0
+	TIMESTAMP=0
 
 	COLOR0 = '\033[0;38m' # GRAY
 	COLOR1 = '\033[0;31m' # RED
@@ -1240,6 +1246,7 @@ if __name__ == '__main__':
 		configfile.write("INSTALLDIR=" + INSTALLDIR + "\n")
 		configfile.write("VERBOSE=3\n")
 		configfile.write("STARTAWAY=0\n")
+		configfile.write("TIMESTAMP=0\n")
 		configfile.write("\n# comma separated list of friends\n")
 		configfile.write("NOTIFY=\n")
 		configfile.write("\n#color profile\n")
@@ -1283,6 +1290,7 @@ if __name__ == '__main__':
 		if (line.startswith("INSTALLDIR=")): INSTALLDIR=line[11:].strip()
 		if (line.startswith("VERBOSE=")): VERBOSE=int(line[8:].strip())
 		if (line.startswith("STARTAWAY=")): STARTAWAY=int(line[10:].strip())
+		if (line.startswith("TIMESTAMP=")): TIMESTAMP=int(line[10:].strip())
 		if (line.startswith("NOTIFY=")):
 			notifycfg = line[7:].strip()
 			if (len(notifycfg)>0):
