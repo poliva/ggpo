@@ -184,6 +184,17 @@ def parse(cmd):
 					# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
 					add_to_userlist(nick,ip,city,cc,country,6009,state,'')
 
+					# auto-kill ggpofba when p2 quits the game
+					if (nick == USERNAME): playing_against=''
+					if (nick == playing_against):
+						args = ['pkill', 'ggpofba.exe']
+						try:
+							FNULL = open(os.devnull, 'w')
+							call(args, stdout=FNULL, stderr=FNULL)
+							FNULL.close()
+						except OSError:
+							pass
+
 		else:
 			if (DEBUG>0): print_line ( COLOR4 + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END +"\n")
 
@@ -291,6 +302,7 @@ def parse(cmd):
 		# auto-cancel all outgoing challenge requests when a match becomes active
 		if (nick1 == USERNAME):
 			command_queue.put("/cancel")
+			playing_against=nick2
 
 		if not os.path.isfile(INSTALLDIR+"/ggpofba.sh"):
 			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba.sh in " + INSTALLDIR + END + "\n")
@@ -1222,6 +1234,7 @@ if __name__ == '__main__':
 	challengers=set()
 	challenged=set()
 	users_option=""
+	playing_against=''
 	pinglist=[]
 	userlist=[]
 
