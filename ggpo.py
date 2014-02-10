@@ -892,7 +892,10 @@ def process_user_input():
 		# send a challenge request
 		elif (command.startswith("/challenge ")):
 			nick = command[11:]
-			pdu_challenge(nick)
+			if (nick == USERNAME):
+				print_line ( COLOR3 + "-!- " + "Guru meditation: you can't challenge yourself" + END + "\n")
+			else:
+				pdu_challenge(nick)
 
 		# accept a challenge request (initiated by peer)
 		elif (command.startswith("/accept ")):
