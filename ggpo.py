@@ -926,6 +926,8 @@ def process_user_input():
 
 		# /decline without parameters declines all incoming challenge requests
 		elif (command == "/decline"):
+			if (len(challengers)==0):
+				print_line ( COLOR3 + "-!- " + "You have not received any challenge request" + END + "\n")
 			for nick in list(challengers):
 				pdu_decline(nick)
 
@@ -939,10 +941,10 @@ def process_user_input():
 
 		# /cancel without parameters: cancel all ongoing challenge requests
 		elif (command == "/cancel"):
-			for nick in list(challenged):
-				pdu_cancel(nick)
 			if (len(challenged)==0):
 				print_line ( COLOR3 + "-!- " + "You have not sent any challenge request" + END + "\n")
+			for nick in list(challenged):
+				pdu_cancel(nick)
 
 		# watch an ongoing match
 		elif (command.startswith("/watch ")):
