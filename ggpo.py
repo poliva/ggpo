@@ -35,7 +35,7 @@ VERSION = "1.0.9"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
-	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge']
+	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa']
 
 def complete(text, state):
     for cmd in AUTOCOMPLETE:
@@ -193,7 +193,13 @@ def parse(cmd):
 						user = get_user_info(nick)
 						ping = user[8]
 						if (ping>0 and ping<autochallenge):
-							command_queue.put("/challenge " + user[0])
+							command_queue.put("/challenge " + nick)
+
+					# challengewa
+					for p2 in list(challengewa):
+						if (nick==p2 and state==0):
+							command_queue.put("/challenge " + nick)
+							challengewa.remove(nick)
 
 					# auto-kill ggpofba when p2 quits the game
 					if (nick == USERNAME): playing_against=''
@@ -476,7 +482,6 @@ def add_to_userlist(nick,ip,city,cc,country,port,status,p2nick):
 	if (found==False):
 		user = [nick,ip,city,cc,country,port,status,p2nick,ping]
 		userlist.append(user)
-		sort_lists()
 	else:
 		# update info
 		userlist[i][1]=ip
@@ -487,6 +492,7 @@ def add_to_userlist(nick,ip,city,cc,country,port,status,p2nick):
 		userlist[i][6]=status
 		userlist[i][7]=p2nick
 		userlist[i][8]=ping
+	sort_lists()
 
 def parseusers(cmd):
 	global userlist
@@ -1305,6 +1311,7 @@ if __name__ == '__main__':
 	playing_users=[]
 
 	autochallenge=0
+	challengewa=set()
 
 	t2 = Thread(target=datathread)
 	t2.daemon = False
@@ -1331,6 +1338,7 @@ if __name__ == '__main__':
 			print_line ( COLOR3 + "-!- " + COLOR4 + "available commands:" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/challenge [<nick>]\tsend a challenge request to <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/autochallenge [<ms|off>]\tauto-challenge anyone with ping < <ms>" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/challengewa [<nick>] auto-challenge when <nick> becomes available" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/accept    [<nick>]\taccept a challenge request initiated by <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/decline   [<nick>]\tdecline a challenge request initiated by <nick>" + END + "\n")
@@ -1383,11 +1391,14 @@ if __name__ == '__main__':
 			showverbose()
 
 		elif (command == "/challenge"):
-			text= COLOR3 + "-!- " + COLOR0 + "challenging:",
-			for nick in challenged:
-				text+= "["+ B_COLOR2 + nick + COLOR0 + "]",
-			text+=END+"\n",
-			print_line(' '.join(text))
+			if (len(challenged)==0):
+				print_line ( COLOR3 + "-!- Not challenging anyone. Usage: /challenge <nick>" + END + "\n")
+			else:
+				text= COLOR3 + "-!- " + COLOR0 + "challenging:",
+				for nick in challenged:
+					text+= "["+ B_COLOR2 + nick + COLOR0 + "]",
+				text+=END+"\n",
+				print_line(' '.join(text))
 
 		elif (command.startswith("/ping ")):
 			nick = command[6:]
@@ -1403,6 +1414,35 @@ if __name__ == '__main__':
 				print_line ( COLOR2 + "-!- PING reply from " + B_COLOR2 + nick + COLOR2 + ": [" + B_COLOR2 + str(int(ping)) + COLOR2 + " ms]" + END + "\n")
 			else:
 				print_line ( COLOR3 + "-!- PING timeout from " + B_COLOR3 + nick + END + "\n")
+
+		elif (command.startswith("/challengewa ")):
+			nick = command[13:]
+			if (nick == "off"):
+				challengewa=set()
+				print_line ( COLOR2 + "-!- challengewa list cleared" + END + "\n")
+			elif (nick!=USERNAME):
+				found=False
+				for user in available_users:
+					if (nick==user[0]):
+						command_queue.put("/challenge " + nick)
+						found=True
+						break
+				if (found==False):
+					challengewa.add(nick)
+					print_line ( COLOR2 + "-!- " + B_COLOR2 + nick + COLOR2 + " will be automatically challenged when available" + END + "\n")
+					print_line ( COLOR2 + "-!- type '/challengewa off' to disable it" + END + "\n")
+			elif (nick==USERNAME):
+				print_line ( COLOR3 + "-!- " + "Guru meditation: you can't challenge yourself" + END + "\n")
+
+		elif (command=="/challengewa"):
+			if (len(challengewa)==0):
+				print_line ( COLOR3 + "-!- Usage: /challengewa <nick>" + END + "\n")
+			else:
+				text= COLOR3 + "-!- " + COLOR0 + "challenging when available:",
+				for nick in challengewa:
+					text+= "["+ B_COLOR2 + nick + COLOR0 + "]",
+				text+=END+"\n",
+				print_line(' '.join(text))
 
 		elif (command.startswith("/autochallenge ")):
 			value = command[15:]
