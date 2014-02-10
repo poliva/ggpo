@@ -1362,6 +1362,9 @@ if __name__ == '__main__':
 			else:
 				print_line ( COLOR3 + "-!- PING timeout from " + B_COLOR3 + nick + END + "\n")
 
+		# hidden abreviation, not present in autocomplete
+		elif (command == "/n"): command_queue.put("/names")
+
 		elif (command == "/clear"):
 			call(['clear'])
 
