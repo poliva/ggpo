@@ -1374,8 +1374,11 @@ if __name__ == '__main__':
 		# hidden abreviation, not present in autocomplete
 		elif (command == "/n"): command_queue.put("/names")
 
-		elif (command == "/watch" or command=="/whois"):
+		elif (command == "/watch" or command=="/whois" or command=="/whowas" or command=="/ping"):
 			print_line ( COLOR3 + "-!- usage: "+ command +" <nick>" + END + "\n")
+
+		elif (command == "/join"):
+			print_line ( COLOR3 + "-!- usage: /join <channel>" + END + "\n")
 
 		elif (command == "/clear"):
 			call(['clear'])
