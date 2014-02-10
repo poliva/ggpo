@@ -377,7 +377,7 @@ def parsemotd(cmd):
 def check_ping(nick,ip,port):
 	global pinglist
 
-	if (ip==''): ip="0.0.0.0"
+	if (ip==''): return
 	if (port==''): port=6009
 	num1 = randint(500000,30000000)
 	num2 = randint(4000000,900000000)
