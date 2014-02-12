@@ -1060,7 +1060,10 @@ def datathread():
 			pdulen = 0
 			BUFFER=''
 			data = ''
-			if (DEBUG>0): print_line (COLOR1 + "*** Unparseable PDU:" + END + "\n")
+			if (DEBUG>0): print_line (COLOR1 + "*** Unparseable PDU: " + repr(data) + END + "\n")
+			print_line ( COLOR4 + "-!- Connection lost. Reconnecting." + END + "\n")
+			reset_autocomplete()
+			connect_sequence()
 
 		if (DEBUG>2): print_line ( COLOR2 + "PDULEN: " + str(pdulen) + " LEN_DATA: " + str(len(data)) + END + "\n")
 		#DATA: [ 4-byte pdulen ][ pdulen-byte pdu ]
