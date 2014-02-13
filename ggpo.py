@@ -1049,7 +1049,7 @@ def datathread():
 			BUFFER=''
 			print_line ( COLOR4 + "-!- Connection lost. Reconnecting." + END + "\n")
 			reset_autocomplete()
-			connect_sequence()
+			connect_sequence(3)
 
 		if (DEBUG>1): print_line ( COLOR4 + "    HEX0: " + repr(data) + END + "\n")
 
@@ -1063,7 +1063,7 @@ def datathread():
 			if (DEBUG>0): print_line (COLOR1 + "*** Unparseable PDU: " + repr(data) + END + "\n")
 			print_line ( COLOR4 + "-!- Connection lost. Reconnecting." + END + "\n")
 			reset_autocomplete()
-			connect_sequence()
+			connect_sequence(2)
 
 		if (DEBUG>2): print_line ( COLOR2 + "PDULEN: " + str(pdulen) + " LEN_DATA: " + str(len(data)) + END + "\n")
 		#DATA: [ 4-byte pdulen ][ pdulen-byte pdu ]
@@ -1100,14 +1100,29 @@ def showverbose():
 	text+="\n",
 	print_line(' '.join(text))
 
-def connect_sequence():
+def connect_sequence(retries):
 	global s, sequence
 
+	connected=False
+	count=0
+
 	try:
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		s.connect(('ggpo.net', 7000))
-	except Exception, e:
-		print_line ( COLOR1 + "-!- Can't connect to GGPO server: " + str(e) + END + "\n")
+		s.close()
+	except:
+		pass
+
+	while (connected!=True and count < retries):
+		count+=1
+		try:
+			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			s.connect(('ggpo.net', 7000))
+			connected=True
+		except Exception, e:
+			print_line ( COLOR1 + "-!- [" + str(count) + "/" + str(retries) + "] Can't connect to GGPO server: " + str(e) + END + "\n")
+			time.sleep(5)
+			connected=False
+
+	if (connected==False):
 		os._exit(1)
 
 	# welcome packet
@@ -1336,7 +1351,7 @@ if __name__ == '__main__':
 	AUTOCOMPLETE=[]
 	reset_autocomplete()
 	s=''
-	connect_sequence()
+	connect_sequence(1)
 
 	command=""
 	challengers=set()
