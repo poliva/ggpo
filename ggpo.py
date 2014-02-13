@@ -299,7 +299,7 @@ def parse(cmd):
 
 	# joining a channel
 	elif (action == "\xff\xff\xff\xff"):
-		print_line ( COLOR0 + "-!- Connection established" + END + "\n")
+		print_line ( COLOR0 + "-!- connection established" + END + "\n")
 		command_queue.put("/motd")
 		command_queue.put("/names")
 		notifyjoin=1
@@ -311,8 +311,8 @@ def parse(cmd):
 			s.close()
 			u.close()
 			call(['reset'])
-			print_line ( COLOR1 + "-!- Password incorrect" + END + "\n")
-			print_line ( COLOR1 + "-!- Check config file at " + CONFIGFILE + END + "\n")
+			print_line ( COLOR1 + "-!- password incorrect" + END + "\n")
+			print_line ( COLOR1 + "-!- check config file at " + CONFIGFILE + END + "\n")
 			os._exit(0)
 
 	# reply to request with sequence=3
@@ -323,8 +323,8 @@ def parse(cmd):
 			s.close()
 			u.close()
 			call(['reset'])
-			print_line ( COLOR1 + "-!- User incorrect" + END + "\n")
-			print_line ( COLOR1 + "-!- Check config file at " + CONFIGFILE + END + "\n")
+			print_line ( COLOR1 + "-!- user incorrect" + END + "\n")
+			print_line ( COLOR1 + "-!- check config file at " + CONFIGFILE + END + "\n")
 			os._exit(0)
 
 	# watch
@@ -602,9 +602,9 @@ def parseusers(cmd):
 
 		found = print_user_long(query,"whois")
 		if (found == 1):
-			print_line ( COLOR3 + "-!- " + COLOR0 + "End of WHOIS" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR0 + "end of WHOIS" + END + "\n")
 		else:
-			print_line ( COLOR3 + "-!- There is no such nick " + B_COLOR3 + query + END + "\n")
+			print_line ( COLOR3 + "-!- there is no such nick " + B_COLOR3 + query + END + "\n")
 
 	elif (users_option.startswith("/users ")):
 		subcmd=users_option[7:]
@@ -781,7 +781,7 @@ def parselist(cmd):
 			else:
 				print_line( COLOR3 + "-!- " + B_COLOR0 + str(name1) + COLOR0 + " (" + str(name2) + ") -- " + str(name3) + "\n")
 		except:
-			if (DEBUG>0): print_line ( COLOR4 + "-!- Error parsing channel " + str(name1) + END + "\n")
+			if (DEBUG>0): print_line ( COLOR4 + "-!- error parsing channel " + str(name1) + END + "\n")
 			else: pass
 
 	print_line ( COLOR3 + "-!- EOF channel list." + END + "\n")
@@ -949,7 +949,7 @@ def process_user_input():
 		elif (command.startswith("/challenge ")):
 			nick = command[11:]
 			if (nick == USERNAME):
-				print_line ( COLOR3 + "-!- " + "Guru meditation: you can't challenge yourself" + END + "\n")
+				print_line ( COLOR3 + "-!- guru meditation: you can't challenge yourself" + END + "\n")
 			else:
 				pdu_challenge(nick)
 
@@ -968,9 +968,9 @@ def process_user_input():
 					pdu_accept(nick)
 					break
 			elif(len(challengers)>1):
-				print_line ( COLOR3 + "-!- " + "There's more than one incoming challenge request: you need to specify the nick." + END + "\n")
+				print_line ( COLOR3 + "-!- there's more than one incoming challenge request: you need to specify the nick." + END + "\n")
 			else:
-				print_line ( COLOR3 + "-!- " + "You have not received any challenge request" + END + "\n")
+				print_line ( COLOR3 + "-!- you have not received any challenge request" + END + "\n")
 
 		# decline a challenge request (initiated by peer)
 		elif (command.startswith("/decline ")):
@@ -983,7 +983,7 @@ def process_user_input():
 		# /decline without parameters declines all incoming challenge requests
 		elif (command == "/decline"):
 			if (len(challengers)==0):
-				print_line ( COLOR3 + "-!- " + "You have not received any challenge request" + END + "\n")
+				print_line ( COLOR3 + "-!- you have not received any challenge request" + END + "\n")
 			for nick in list(challengers):
 				pdu_decline(nick)
 
@@ -998,7 +998,7 @@ def process_user_input():
 		# /cancel without parameters: cancel all ongoing challenge requests
 		elif (command == "/cancel"):
 			if (len(challenged)==0 and autochallenge==0):
-				print_line ( COLOR3 + "-!- " + "No outgoing challenge requests" + END + "\n")
+				print_line ( COLOR3 + "-!- all outgoing challenge requests cleared" + END + "\n")
 			for nick in list(challenged):
 				pdu_cancel(nick)
 
@@ -1047,7 +1047,7 @@ def datathread():
 			data = s.recv(4096)
 		except:
 			BUFFER=''
-			print_line ( COLOR4 + "-!- Connection lost. Reconnecting." + END + "\n")
+			print_line ( COLOR4 + "-!- connection lost. Reconnecting." + END + "\n")
 			reset_autocomplete()
 			connect_sequence(3)
 
@@ -1061,7 +1061,7 @@ def datathread():
 			BUFFER=''
 			data = ''
 			if (DEBUG>0): print_line (COLOR1 + "*** Unparseable PDU: " + repr(data) + END + "\n")
-			print_line ( COLOR4 + "-!- Connection lost. Reconnecting." + END + "\n")
+			print_line ( COLOR4 + "-!- connection lost. Reconnecting." + END + "\n")
 			reset_autocomplete()
 			connect_sequence(2)
 
@@ -1187,7 +1187,7 @@ if __name__ == '__main__':
 		response = urllib2.urlopen('https://raw.github.com/poliva/ggpo/master/VERSION')
 		version = response.read().strip()
 		if (version != VERSION):
-			print_line ( COLOR3 + "-!- " + B_COLOR4 + "New version " + B_COLOR3 + version + B_COLOR4 + " available at " + B_COLOR3 + "http://poliva.github.io/ggpo/" + END + "\n")
+			print_line ( COLOR3 + "-!- " + B_COLOR4 + "new version " + B_COLOR3 + version + B_COLOR4 + " available at " + B_COLOR3 + "http://poliva.github.io/ggpo/" + END + "\n")
 	except:
 		pass
 
@@ -1208,8 +1208,8 @@ if __name__ == '__main__':
 			print_line ( COLOR1 + "-!- ERROR: cannot write to config file at " + CONFIGFILE + END + "\n")
 			os._exit(1)
 
-		print_line ( "\n" + COLOR4 + "-!- It looks like you're running ggpo for the first time, let's configure it!" + END + "\n")
-		print_line ( COLOR4 + "-!- This quick setup will create a config file at:\n\t" + COLOR2 + CONFIGFILE + END + "\n")
+		print_line ( "\n" + COLOR4 + "-!- it looks like you're running ggpo for the first time, let's configure it!" + END + "\n")
+		print_line ( COLOR4 + "-!- this quick setup will create a config file at:\n\t" + COLOR2 + CONFIGFILE + END + "\n")
 
 		# try to guess install directory:
 
@@ -1220,12 +1220,12 @@ if __name__ == '__main__':
 
 		if (os.path.isfile(dirtest1+"/ggpofba.exe")):
 			INSTALLDIR=dirtest1
-			print_line( "\n" + COLOR4 + "-!- Found GGPO install dir at: " + COLOR2 + INSTALLDIR + END + "\n")
+			print_line( "\n" + COLOR4 + "-!- found GGPO install dir at: " + COLOR2 + INSTALLDIR + END + "\n")
 		elif (os.path.isfile(dirtest2+"/ggpofba.exe")):
 			INSTALLDIR=dirtest2
-			print_line( "\n" + COLOR4 + "-!- Found GGPO install dir at: " + COLOR2 + INSTALLDIR + END + "\n")
+			print_line( "\n" + COLOR4 + "-!- found GGPO install dir at: " + COLOR2 + INSTALLDIR + END + "\n")
 		else:
-			print_line( "\n" + COLOR4 + "-!- Please specify the full path where you have unziped the official GGPO client" + END + "\n")
+			print_line( "\n" + COLOR4 + "-!- please specify the full path where you have unziped the official GGPO client" + END + "\n")
 			try:
 				INSTALLDIR = raw_input("\r" + COLOR4 + "GGPO INSTALLDIR:" + END + " ")
 			except KeyboardInterrupt:
@@ -1237,7 +1237,7 @@ if __name__ == '__main__':
 		if not os.path.isfile(INSTALLDIR+"/ggpofba.exe"):
 			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba.exe in " + INSTALLDIR + END + "\n")
 
-		print_line( "\n" + COLOR4 + "-!- Please specify your GGPO credentials" + END + "\n")
+		print_line( "\n" + COLOR4 + "-!- please specify your GGPO credentials" + END + "\n")
 		try:
 			USERNAME = raw_input("\r" + COLOR4 + "GGPO USERNAME:" + END + " ")
 			PASSWORD = raw_input("\r" + COLOR4 + "GGPO PASSWORD:" + END + " ")
@@ -1247,7 +1247,7 @@ if __name__ == '__main__':
 			os.unlink(CONFIGFILE)
 			os._exit(1)
 
-		print_line( "\n" + COLOR4 + "-!- Please specify your GGPO game room, if unsure type 'lobby'" + END + "\n")
+		print_line( "\n" + COLOR4 + "-!- please specify your GGPO game room, if unsure type 'lobby'" + END + "\n")
 		try:
 			CHANNEL = raw_input("\r" + COLOR4 + "GGPO CHANNEL:" + END + " ")
 		except KeyboardInterrupt:
@@ -1286,9 +1286,9 @@ if __name__ == '__main__':
 		configfile.write("B_COLOR6=[1;36m\n")
 		configfile.close()
 
-		print_line( "\n" + COLOR4 + "-!- Thank you, configuration is completed!" + END + "\n")
+		print_line( "\n" + COLOR4 + "-!- thank you, configuration is completed!" + END + "\n")
 		try:
-			raw_input("\r" + COLOR4 + "-!- Press ENTER to connect for the fist time" + END + " ")
+			raw_input("\r" + COLOR4 + "-!- press ENTER to connect for the fist time" + END + " ")
 		except KeyboardInterrupt:
 			print_line( "\n" + COLOR1 + "-!- ^C interrupted." + END + "\n")
 			configfile.close()
@@ -1331,7 +1331,7 @@ if __name__ == '__main__':
 		if (line.startswith("B_COLOR6=")): B_COLOR6='\033'+line[9:].strip()
 	configfile.close()
 
-	print_line ( COLOR3 + "-!- " + COLOR4 + "If you are lost type '/help' and press enter." + END + "\n")
+	print_line ( COLOR3 + "-!- " + COLOR4 + "if you are lost type '/help' and press enter." + END + "\n")
 
 	FBA = INSTALLDIR + "/ggpofba.sh"
 	MP3 = INSTALLDIR + "/assets/challenger-comes.mp3"
@@ -1419,9 +1419,9 @@ if __name__ == '__main__':
 			nick = command[8:]
 			found = print_user_long(nick,"whowas")
 			if (found==1):
-				print_line ( COLOR3 + "-!- " + COLOR0 + "End of WHOWAS" + END + "\n")
+				print_line ( COLOR3 + "-!- " + COLOR0 + "end of WHOWAS" + END + "\n")
 			else:
-				print_line ( COLOR3 + "-!- There was no such nick " + B_COLOR3 + nick + END + "\n")
+				print_line ( COLOR3 + "-!- there was no such nick " + B_COLOR3 + nick + END + "\n")
 
 		# hidden command, not present in /help
 		elif (command.startswith("/debug ")):
@@ -1448,7 +1448,7 @@ if __name__ == '__main__':
 
 		elif (command == "/challenge"):
 			if (len(challenged)==0):
-				print_line ( COLOR3 + "-!- Not challenging anyone. Usage: /challenge <nick>" + END + "\n")
+				print_line ( COLOR3 + "-!- not challenging anyone. Usage: /challenge <nick>" + END + "\n")
 			else:
 				text= COLOR3 + "-!- " + COLOR0 + "challenging:",
 				for nick in challenged:
@@ -1488,11 +1488,11 @@ if __name__ == '__main__':
 					print_line ( COLOR2 + "-!- " + B_COLOR2 + nick + COLOR2 + " will be automatically challenged when available" + END + "\n")
 					print_line ( COLOR2 + "-!- type '/challengewa off' to disable it" + END + "\n")
 			elif (nick==USERNAME):
-				print_line ( COLOR3 + "-!- " + "Guru meditation: you can't challenge yourself" + END + "\n")
+				print_line ( COLOR3 + "-!- guru meditation: you can't challenge yourself" + END + "\n")
 
 		elif (command=="/challengewa"):
 			if (len(challengewa)==0):
-				print_line ( COLOR3 + "-!- Usage: /challengewa <nick>" + END + "\n")
+				print_line ( COLOR3 + "-!- usage: /challengewa <nick>" + END + "\n")
 			else:
 				text= COLOR3 + "-!- " + COLOR0 + "challenging when available:",
 				for nick in challengewa:
@@ -1532,11 +1532,11 @@ if __name__ == '__main__':
 			elif (nick!=USERNAME):
 				NOTIFY.add(nick)
 			elif (nick==USERNAME):
-				print_line ( COLOR3 + "-!- " + "Guru meditation: you can't be notified of yourself" + END + "\n")
+				print_line ( COLOR3 + "-!- guru meditation: you can't be notified of yourself" + END + "\n")
 
 		elif (command == "/notify"):
 			if(len(NOTIFY)==0):
-				print_line ( COLOR3 + "-!- No users in notify list. Usage: /notify <nick>" + END + "\n")
+				print_line ( COLOR3 + "-!- no users in notify list. Usage: /notify <nick>" + END + "\n")
 			else:
 				text= COLOR3 + "-!- " + COLOR0 + "notify:",
 				for nick in NOTIFY:
