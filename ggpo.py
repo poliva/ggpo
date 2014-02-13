@@ -1106,10 +1106,9 @@ def connect_sequence():
 	try:
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.connect(('ggpo.net', 7000))
-	except socket.gaierror:
-		print_line ( COLOR1 + "-!- Can't connect to GGPO server :(" + END + "\n")
+	except Exception, e:
+		print_line ( COLOR1 + "-!- Can't connect to GGPO server: " + str(e) + END + "\n")
 		os._exit(1)
-
 
 	# welcome packet
 	sequence = 0x1
