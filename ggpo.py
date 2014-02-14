@@ -128,6 +128,12 @@ def parse(cmd):
 		if (unk1 == "\x00\x00\x00\x01" and unk2 == "\x00\x00\x00\x00"):
 			if (VERBOSE>2): print_line ( COLOR0 + "-!- " + B_COLOR0 + str(nick) + COLOR0 +" has quit" + END +"\n")
 			if nick in AUTOCOMPLETE: AUTOCOMPLETE.remove(nick)
+			for user in available_users:
+				if (nick==user[0]): available_users.remove(user)
+			for user in away_users:
+				if (nick==user[0]): away_users.remove(user)
+			for user in playing_users:
+				if (nick==user[0]): playing_users.remove(user)
 
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x00"):
 		#if (unk1 == "\x00\x00\x00\x03" and unk2 == "\x00\x00\x00\x01"):
