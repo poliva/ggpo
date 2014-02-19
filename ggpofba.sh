@@ -22,11 +22,43 @@ if [ ! -e ${FBA} ]; then
 	exit 1
 fi
 
+function show_usage() {
+	echo "USAGE: $0 <ROM> [<P1|P2> <IP>]"
+	exit 1
+}
+
+IP=""
+echo ${1+"$@"} |grep "quark:" >/dev/null
+if [ $? -eq 1 ]; then
+
+	ROM=$1
+	if [ $# -ne 1 ]; then
+		PLAYER=$2
+		IP=$3
+		if [ -z "${IP}" ]; then show_usage ; fi
+		echo "${PLAYER}" |egrep "^[P|p](1|2)$" >/dev/null
+		if [ $? -ne 0 ]; then show_usage ; fi
+		p=$(echo ${PLAYER} |cut -c 2)
+		p=$(( $p - 1 ))
+		if [ $p -eq 0 ]; then port1=7000 ; port2=7001 ; fi
+		if [ $p -eq 1 ]; then port1=7001 ; port2=7000 ; fi
+	fi
+
+	if [ ! -f "${INSTALLDIR}/ROMs/${ROM}.zip" ]; then
+		echo "ERROR: Can't find ${INSTALLDIR}/ROMs/${ROM}.zip"
+		show_usage
+	fi
+fi
+
 OS=$(uname -s)
 case "${OS}" in
 	"Darwin")
 		echo "-!- starting the real ggpofba"
-		/Applications/Wine.app/Contents/Resources/bin/wine ${FBA} ${1+"$@"} &
+		if [ -z "${IP}" ]; then
+			/Applications/Wine.app/Contents/Resources/bin/wine ${FBA} ${1+"$@"} &
+		else
+			/Applications/Wine.app/Contents/Resources/bin/wine ${FBA} quark:direct,${ROM},${port1},${IP},${port2},${p} &
+		fi
 	;;
 
 	"Linux")
@@ -42,7 +74,11 @@ case "${OS}" in
 		fi
 
 		echo "-!- starting the real ggpofba"
-		/usr/bin/wine ${FBA} ${1+"$@"} &
+		if [ -z "${IP}" ]; then
+			/usr/bin/wine ${FBA} ${1+"$@"} &
+		else
+			/usr/bin/wine ${FBA} quark:direct,${ROM},${port1},${IP},${port2},${p} &
+		fi
 
 		if [ $tot -eq 0 ]; then
 			sleep 1s
