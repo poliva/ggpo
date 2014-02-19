@@ -24,6 +24,7 @@ import rlcompleter
 import termios
 import fcntl
 import urllib2
+import re
 from Queue import Queue
 from subprocess import call
 from threading import Thread
@@ -35,7 +36,7 @@ VERSION = "1.1"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
-	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify']
+	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify', '/play']
 
 def complete(text, state):
     for cmd in AUTOCOMPLETE:
@@ -1417,6 +1418,7 @@ if __name__ == '__main__':
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/away \t\tset away status (you can't be challenged)" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/back \t\tset available status (you can be challenged)" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/clear \t\tclear the screen" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/play [<P1|P2> <ip address>] play against cpu or p2p-netplay" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/verbose [<flag>]\tchange verbosity level" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "           flag:'0' challenges, '1' chat, '2' match, '3' status" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/quit \t\tdisconnect from ggpo server" + END + "\n")
@@ -1549,6 +1551,36 @@ if __name__ == '__main__':
 					text+= "["+ B_COLOR2 + nick + COLOR0 + "]",
 				text+=END+"\n",
 				print_line(' '.join(text))
+
+		elif (command == "/play"):
+			args = [FBA, CHANNEL]
+			try:
+				FNULL = open(os.devnull, 'w')
+				call(args, stdout=FNULL, stderr=FNULL)
+				FNULL.close()
+				print_line ( COLOR2 + "-!- launching ggpofba to play against the CPU" + END + "\n")
+			except OSError:
+				print_line ( COLOR1 + "-!- ERROR: can't execute " + FBA + END + "\n")
+
+		elif (command.startswith("/play ")):
+			params = command[6:].split(' ')
+			if (len(params)!=2):
+				print_line ( COLOR3 + "-!- usage: /play [<P1|P2> <ip address>]" + END + "\n")
+				continue
+			player=params[0]
+			ipaddr=params[1]
+			px = re.compile("^[p|P](1|2)$")
+			if (not px.match(player)):
+				print_line ( COLOR3 + "-!- usage: /play [<P1|P2> <ip address>]" + END + "\n")
+				continue
+			args = [FBA, CHANNEL, player, ipaddr]
+			try:
+				FNULL = open(os.devnull, 'w')
+				call(args, stdout=FNULL, stderr=FNULL)
+				FNULL.close()
+				print_line ( COLOR2 + "-!- launching ggpofba for p2p-netplay as " + player.upper() + " against " + ipaddr + END + "\n")
+			except OSError:
+				print_line ( COLOR1 + "-!- ERROR: can't execute " + FBA + END + "\n")
 
 		# hidden abreviation, not present in autocomplete
 		elif (command == "/n"): command_queue.put("/names")
