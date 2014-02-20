@@ -11,6 +11,11 @@
 CONFIGFILE=~/.config/ggpo/ggpo.config
 source ${CONFIGFILE} 2>/dev/null
 
+MYDIR=`pwd`
+if [ -f "${MYDIR}/ggpofba.exe" ]; then
+	INSTALLDIR=${MYDIR}
+fi
+
 if [ -z "${INSTALLDIR}" ]; then
 	echo "-!- Please launch ggpo.py to create your config file"
 	exit 1
