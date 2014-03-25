@@ -32,7 +32,7 @@ from threading import Event
 from random import randint
 from operator import itemgetter
 
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
@@ -360,6 +360,8 @@ def parse(cmd):
 			print_line ( COLOR3 + "-!- WARNING: cannot find game ROM at " + INSTALLDIR + "/ROMs/" + CHANNEL + ".zip" + END + "\n")
 
 		quark = cmd[20+nick1len+nick2len:pdulen+4]
+		if quark.startswith('quark:served'):
+			quark = quark + "," + str(SMOOTHING)
 		args = [FBA, quark]
 		try:
 			FNULL = open(os.devnull, 'w')
@@ -1164,6 +1166,7 @@ if __name__ == '__main__':
 	VERBOSE=3
 	STARTAWAY=0
 	TIMESTAMP=0
+	SMOOTHING=1  # from 0 to 10, 0: jerky, 1: default, 10: laggy
 
 	COLOR0 = '\033[0;38m' # GRAY
 	COLOR1 = '\033[0;31m' # RED
@@ -1274,6 +1277,7 @@ if __name__ == '__main__':
 		configfile.write("VERBOSE=3\n")
 		configfile.write("STARTAWAY=0\n")
 		configfile.write("TIMESTAMP=0\n")
+		configfile.write("SMOOTHING=1\n")
 		configfile.write("\n# comma separated list of friends\n")
 		configfile.write("NOTIFY=\n")
 		configfile.write("\n#color profile\n")
@@ -1318,6 +1322,7 @@ if __name__ == '__main__':
 		if (line.startswith("VERBOSE=")): VERBOSE=int(line[8:].strip())
 		if (line.startswith("STARTAWAY=")): STARTAWAY=int(line[10:].strip())
 		if (line.startswith("TIMESTAMP=")): TIMESTAMP=int(line[10:].strip())
+		if (line.startswith("SMOOTHING=")): SMOOTHING=int(line[10:].strip())
 		if (line.startswith("NOTIFY=")):
 			notifycfg = line[7:].strip()
 			if (len(notifycfg)>0):
