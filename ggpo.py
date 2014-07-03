@@ -32,11 +32,11 @@ from threading import Event
 from random import randint
 from operator import itemgetter
 
-VERSION = "1.1.2"
+VERSION = "1.1.3"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
-	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify', '/play']
+	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify', '/play', '/ignore']
 
 def complete(text, state):
     for cmd in AUTOCOMPLETE:
@@ -110,11 +110,12 @@ def parse(cmd):
 			nick = cmd[12:12+nicklen]
 			msglen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
 			msg = cmd[12+nicklen+4:pdulen+4].replace('\r','\n')
-			if (USERNAME+" " in msg or " "+USERNAME in msg or msg==USERNAME):
-				send_notification(msg)
-				msg = msg.replace(USERNAME, B_COLOR3 + USERNAME + END)
+			if nick not in IGNORE:
+				if (USERNAME+" " in msg or " "+USERNAME in msg or msg==USERNAME):
+					send_notification(msg)
+					msg = msg.replace(USERNAME, B_COLOR3 + USERNAME + END)
 
-			print_line ( COLOR6 + "<" + str(nick) + "> " + END + str(msg) + "\n")
+				print_line ( COLOR6 + "<" + str(nick) + "> " + END + str(msg) + "\n")
 
 	# state changes (away/available/playing)
 	elif (action == "\xff\xff\xff\xfd"):
@@ -1185,6 +1186,7 @@ if __name__ == '__main__':
 
 	notifyjoin=1
 	NOTIFY=set()
+	IGNORE=set()
 
 	END = '\033[0;m'
 	PROMPT = "\rggpo" + COLOR1 + "> " + END
@@ -1280,6 +1282,8 @@ if __name__ == '__main__':
 		configfile.write("SMOOTHING=1\n")
 		configfile.write("\n# comma separated list of friends\n")
 		configfile.write("NOTIFY=\n")
+		configfile.write("\n# comma separated list of enemies\n")
+		configfile.write("IGNORE=\n")
 		configfile.write("\n#color profile\n")
 		configfile.write("COLOR0=[0;38m\n")
 		configfile.write("COLOR1=[0;31m\n")
@@ -1327,6 +1331,10 @@ if __name__ == '__main__':
 			notifycfg = line[7:].strip()
 			if (len(notifycfg)>0):
 				NOTIFY=set(notifycfg.split(","))
+		if (line.startswith("IGNORE=")):
+			ignorecfg = line[7:].strip()
+			if (len(ignorecfg)>0):
+				IGNORE=set(ignorecfg.split(","))
 		if (line.startswith("COLOR0=")): COLOR0='\033'+line[7:].strip()
 		if (line.startswith("COLOR1=")): COLOR1='\033'+line[7:].strip()
 		if (line.startswith("COLOR2=")): COLOR2='\033'+line[7:].strip()
@@ -1553,6 +1561,26 @@ if __name__ == '__main__':
 			else:
 				text= COLOR3 + "-!- " + COLOR0 + "notify:",
 				for nick in NOTIFY:
+					text+= "["+ B_COLOR2 + nick + COLOR0 + "]",
+				text+=END+"\n",
+				print_line(' '.join(text))
+
+		elif (command.startswith("/ignore ")):
+			nick = command[8:]
+			if (nick == "off"):
+				IGNORE=set()
+				print_line ( COLOR2 + "-!- ignore list cleared" + END + "\n")
+			elif (nick!=USERNAME):
+				IGNORE.add(nick)
+			elif (nick==USERNAME):
+				print_line ( COLOR3 + "-!- guru meditation: you can't ignore yourself" + END + "\n")
+
+		elif (command == "/ignore"):
+			if(len(IGNORE)==0):
+				print_line ( COLOR3 + "-!- no users in ignore list. Usage: /ignore <nick>" + END + "\n")
+			else:
+				text= COLOR3 + "-!- " + COLOR0 + "ignore:",
+				for nick in IGNORE:
 					text+= "["+ B_COLOR2 + nick + COLOR0 + "]",
 				text+=END+"\n",
 				print_line(' '.join(text))
