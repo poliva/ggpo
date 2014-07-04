@@ -257,44 +257,46 @@ def parse(cmd):
 		nicklen = int(cmd[8:12].encode('hex'),16)
 		nick = cmd[12:12+nicklen]
 
-		channellen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
-		channel = cmd[16+nicklen:16+nicklen+channellen]
+		if nick not in IGNORE:
 
-		user = get_user_info(nick)
-		ping = user[8]
-		cc = user[3]
-		text = COLOR1 + "-!- INCOMING CHALLENGE REQUEST FROM " + B_COLOR1 + str(nick) + COLOR1,
-		if (cc!=""): text+="(" + cc + ")",
-		if (ping != 0): text+="[" + str(int(ping)) + " ms]",
-		text+="@ " + channel + END +"\n",
-		print_line(' '.join(text))
+			channellen = int(cmd[12+nicklen:12+nicklen+4].encode('hex'),16)
+			channel = cmd[16+nicklen:16+nicklen+channellen]
 
-		if (len(challengers)>0):
-			print_line ( COLOR1 + "-!- TYPE '/accept " + B_COLOR1 + str(nick) + COLOR1 + "' to accept it, or '/decline " + B_COLOR1 + str(nick) + COLOR1 + "' to wimp out." + END +"\n")
-		else:
-			print_line ( COLOR1 + "-!- TYPE '/accept' to accept it, or '/decline' to wimp out." + END +"\n")
+			user = get_user_info(nick)
+			ping = user[8]
+			cc = user[3]
+			text = COLOR1 + "-!- INCOMING CHALLENGE REQUEST FROM " + B_COLOR1 + str(nick) + COLOR1,
+			if (cc!=""): text+="(" + cc + ")",
+			if (ping != 0): text+="[" + str(int(ping)) + " ms]",
+			text+="@ " + channel + END +"\n",
+			print_line(' '.join(text))
 
-		challengers.add(nick)
+			if (len(challengers)>0):
+				print_line ( COLOR1 + "-!- TYPE '/accept " + B_COLOR1 + str(nick) + COLOR1 + "' to accept it, or '/decline " + B_COLOR1 + str(nick) + COLOR1 + "' to wimp out." + END +"\n")
+			else:
+				print_line ( COLOR1 + "-!- TYPE '/accept' to accept it, or '/decline' to wimp out." + END +"\n")
 
-		args = ['afplay', MP3]
-		try:
-			FNULL = open(os.devnull, 'w')
-			call(args, stdout=FNULL, stderr=FNULL)
-			FNULL.close()
-		except OSError:
-			args = ['ffplay', '-nodisp', '-autoexit', MP3]
+			challengers.add(nick)
+
+			args = ['afplay', MP3]
 			try:
 				FNULL = open(os.devnull, 'w')
 				call(args, stdout=FNULL, stderr=FNULL)
 				FNULL.close()
 			except OSError:
-				args = ['mplayer', MP3]
+				args = ['ffplay', '-nodisp', '-autoexit', MP3]
 				try:
 					FNULL = open(os.devnull, 'w')
 					call(args, stdout=FNULL, stderr=FNULL)
 					FNULL.close()
 				except OSError:
-					pass
+					args = ['mplayer', MP3]
+					try:
+						FNULL = open(os.devnull, 'w')
+						call(args, stdout=FNULL, stderr=FNULL)
+						FNULL.close()
+					except OSError:
+						pass
 
 	# cancel challenge
 	elif (action == "\xff\xff\xff\xef"):
@@ -1422,6 +1424,7 @@ if __name__ == '__main__':
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/whowas     <nick>\tinfo about <nick> that is no longer connected" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/ping       <nick>\tsends a PING to <nick> and displays lag in ms" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/notify     <nick>\tget a notification when <nick> is available" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/ignore     <nick>\tignore chat messages & challenges from <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/join    <channel>\tjoin the chat/game room <channel>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/list \t\tlist all available channels or chat/game rooms" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/users [<modifier>]\tlist all users in the current channel" + END + "\n")
