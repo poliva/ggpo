@@ -176,23 +176,24 @@ def parse(cmd):
 					add_to_userlist(nick,ip,city,cc,country,6009,state,nick2)
 
 			elif (state <2):
+				unk4 = cmd[20+nicklen+4:20+nicklen+8]
+
+				iplen = int(cmd[20+nicklen+8:20+nicklen+12].encode('hex'),16)
+				ip = cmd[32+nicklen:32+nicklen+iplen]
+
+				unk6 = cmd[32+nicklen+iplen:32+nicklen+iplen+4]
+				unk7 = cmd[36+nicklen+iplen:36+nicklen+iplen+4]
+
+				citylen = int(cmd[40+nicklen+iplen:44+nicklen+iplen].encode('hex'),16)
+				city = cmd[44+nicklen+iplen:44+nicklen+iplen+citylen]
+
+				cclen = int(cmd[44+nicklen+iplen+citylen:48+nicklen+iplen+citylen].encode('hex'),16)
+				cc = cmd[48+nicklen+iplen+citylen:48+nicklen+iplen+citylen+cclen]
+
+				countrylen = int(cmd[48+nicklen+iplen+citylen+cclen:48+nicklen+iplen+citylen+cclen+4].encode('hex'),16)
+				country = cmd[52+nicklen+iplen+citylen+cclen:52+nicklen+iplen+citylen+cclen+countrylen]
+
 				if (VERBOSE>2):
-					unk4 = cmd[20+nicklen+4:20+nicklen+8]
-
-					iplen = int(cmd[20+nicklen+8:20+nicklen+12].encode('hex'),16)
-					ip = cmd[32+nicklen:32+nicklen+iplen]
-
-					unk6 = cmd[32+nicklen+iplen:32+nicklen+iplen+4]
-					unk7 = cmd[36+nicklen+iplen:36+nicklen+iplen+4]
-
-					citylen = int(cmd[40+nicklen+iplen:44+nicklen+iplen].encode('hex'),16)
-					city = cmd[44+nicklen+iplen:44+nicklen+iplen+citylen]
-
-					cclen = int(cmd[44+nicklen+iplen+citylen:48+nicklen+iplen+citylen].encode('hex'),16)
-					cc = cmd[48+nicklen+iplen+citylen:48+nicklen+iplen+citylen+cclen]
-
-					countrylen = int(cmd[48+nicklen+iplen+citylen+cclen:48+nicklen+iplen+citylen+cclen+4].encode('hex'),16)
-					country = cmd[52+nicklen+iplen+citylen+cclen:52+nicklen+iplen+citylen+cclen+countrylen]
 
 					text = COLOR0 + "-!- " + B_COLOR0 + str(nick) + COLOR0 + "@" + str(ip), 
 					if (city != "" and cc != ""): text+= "(" + city + ", " + cc + ")",
@@ -205,40 +206,40 @@ def parse(cmd):
 					text+=END+"\n",
 					print_line(' '.join(text))
 
-					# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
-					add_to_userlist(nick,ip,city,cc,country,6009,state,'')
+				# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
+				add_to_userlist(nick,ip,city,cc,country,6009,state,'')
 
-					# NOTIFY
-					if (nick in NOTIFY and state==0):
-						print_line ( COLOR2 + "-!- NOTIFY: " + B_COLOR2 + nick + COLOR2 + " IS NOW AVAILABLE" + END + "\n")
-						send_notification("NOTIFY: " + nick + " is now available")
+				# NOTIFY
+				if (nick in NOTIFY and state==0):
+					print_line ( COLOR2 + "-!- NOTIFY: " + B_COLOR2 + nick + COLOR2 + " IS NOW AVAILABLE" + END + "\n")
+					send_notification("NOTIFY: " + nick + " is now available")
 
-					# autochallenge
-					if (autochallenge > 0 and nick!=USERNAME and nick!=playing_against and state==0):
-						check_ping(nick,ip,6009)
-						# sleep 1sec to collect ping data
-						time.sleep(1)
-						user = get_user_info(nick)
-						ping = user[8]
-						if (ping>0 and ping<autochallenge):
-							command_queue.put("/challenge " + nick)
+				# autochallenge
+				if (autochallenge > 0 and nick!=USERNAME and nick!=playing_against and state==0):
+					check_ping(nick,ip,6009)
+					# sleep 1sec to collect ping data
+					time.sleep(1)
+					user = get_user_info(nick)
+					ping = user[8]
+					if (ping>0 and ping<autochallenge):
+						command_queue.put("/challenge " + nick)
 
-					# challengewa
-					for p2 in list(challengewa):
-						if (nick==p2 and state==0):
-							command_queue.put("/challenge " + nick)
-							challengewa.remove(nick)
+				# challengewa
+				for p2 in list(challengewa):
+					if (nick==p2 and state==0):
+						command_queue.put("/challenge " + nick)
+						challengewa.remove(nick)
 
-					# auto-kill ggpofba when p2 quits the game
-					if (nick == USERNAME): playing_against=''
-					if (nick == playing_against):
-						args = ['pkill', '-f', 'ggpofba.exe']
-						try:
-							FNULL = open(os.devnull, 'w')
-							call(args, stdout=FNULL, stderr=FNULL)
-							FNULL.close()
-						except OSError:
-							pass
+				# auto-kill ggpofba when p2 quits the game
+				if (nick == USERNAME): playing_against=''
+				if (nick == playing_against):
+					args = ['pkill', '-f', 'ggpofba.exe']
+					try:
+						FNULL = open(os.devnull, 'w')
+						call(args, stdout=FNULL, stderr=FNULL)
+						FNULL.close()
+					except OSError:
+						pass
 
 		else:
 			if (DEBUG>0): print_line ( COLOR4 + "ACTION: " + repr(action) + " + DATA: " + repr(cmd[8:pdulen+4]) + END +"\n")
