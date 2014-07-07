@@ -62,8 +62,15 @@ def blank_current_readline():
 def print_line(text):
 	blank_current_readline()
 	linebuffer = readline.get_line_buffer()
-	if (TIMESTAMP == 1):
+	if (LOGFILE != "" or TIMESTAMP==1):
 		date = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M')
+	if (LOGFILE != "" and text!=PROMPT):
+		try:
+			logfile.write("[" + date + "] " + text)
+		except:
+			pass
+
+	if (TIMESTAMP == 1):
 		if (text!=PROMPT): print "["+date+"]", text,
 		else: print text,
 	else:
@@ -324,6 +331,7 @@ def parse(cmd):
 			call(['reset'])
 			print_line ( COLOR1 + "-!- password incorrect" + END + "\n")
 			print_line ( COLOR1 + "-!- check config file at " + CONFIGFILE + END + "\n")
+			if (LOGFILE!=""): logfile.close()
 			os._exit(0)
 
 	# reply to request with sequence=3
@@ -336,6 +344,7 @@ def parse(cmd):
 			call(['reset'])
 			print_line ( COLOR1 + "-!- user incorrect" + END + "\n")
 			print_line ( COLOR1 + "-!- check config file at " + CONFIGFILE + END + "\n")
+			if (LOGFILE!=""): logfile.close()
 			os._exit(0)
 
 	# watch
@@ -1136,6 +1145,7 @@ def connect_sequence(retries):
 			connected=False
 
 	if (connected==False):
+		if (LOGFILE!=""): logfile.close()
 		os._exit(1)
 
 	# welcome packet
@@ -1171,6 +1181,7 @@ if __name__ == '__main__':
 	STARTAWAY=0
 	TIMESTAMP=0
 	SMOOTHING=1  # from 0 to 10, 0: jerky, 1: default, 10: laggy
+	LOGFILE=""
 
 	COLOR0 = '\033[0;38m' # GRAY
 	COLOR1 = '\033[0;31m' # RED
@@ -1274,6 +1285,11 @@ if __name__ == '__main__':
 		if not os.path.isfile(INSTALLDIR+"/ROMs/" + CHANNEL + ".zip") and CHANNEL!="lobby":
 			print_line ( COLOR3 + "-!- WARNING: cannot find " + CHANNEL + ".zip in " + INSTALLDIR + "/ROMs/" + END + "\n")
 
+		LOGDIR = INSTALLDIR + "/log"
+		if not os.path.exists(LOGDIR):
+			os.makedirs(LOGDIR)
+		LOGFILE = LOGDIR + "/ggpo.log"
+
 		configfile.write("#GGPO configuration file\n")
 		configfile.write("USERNAME=" + USERNAME + "\n")
 		configfile.write("PASSWORD=" + PASSWORD + "\n")
@@ -1283,6 +1299,7 @@ if __name__ == '__main__':
 		configfile.write("STARTAWAY=0\n")
 		configfile.write("TIMESTAMP=0\n")
 		configfile.write("SMOOTHING=1\n")
+		configfile.write("#LOGFILE=" + LOGFILE + "\n")
 		configfile.write("\n# comma separated list of friends\n")
 		configfile.write("NOTIFY=\n")
 		configfile.write("\n# comma separated list of enemies\n")
@@ -1303,6 +1320,7 @@ if __name__ == '__main__':
 		configfile.write("B_COLOR5=[1;35m\n")
 		configfile.write("B_COLOR6=[1;36m\n")
 		configfile.close()
+		LOGFILE=""
 
 		print_line( "\n" + COLOR4 + "-!- thank you, configuration is completed!" + END + "\n")
 		try:
@@ -1330,6 +1348,7 @@ if __name__ == '__main__':
 		if (line.startswith("STARTAWAY=")): STARTAWAY=int(line[10:].strip())
 		if (line.startswith("TIMESTAMP=")): TIMESTAMP=int(line[10:].strip())
 		if (line.startswith("SMOOTHING=")): SMOOTHING=int(line[10:].strip())
+		if (line.startswith("LOGFILE=")): LOGFILE=line[8:].strip()
 		if (line.startswith("NOTIFY=")):
 			notifycfg = line[7:].strip()
 			if (len(notifycfg)>0):
@@ -1398,6 +1417,9 @@ if __name__ == '__main__':
 	t3 = Thread(target=process_user_input)
 	t3.daemon = False
 	t3.start()
+
+	if (LOGFILE != ""):
+		logfile = open(LOGFILE, "a")
 
 	while 1:
 
@@ -1636,6 +1658,7 @@ if __name__ == '__main__':
 			u.close()
 			#call(['reset'])
 			print_line ( COLOR3 + "-!- " + COLOR4 + "have a nice day :)" + END + "\n")
+			if (LOGFILE!=""): logfile.close()
 			os._exit(0)
 		else:
 			command_queue.put(command)
