@@ -26,7 +26,7 @@ import fcntl
 import urllib2
 import re
 from Queue import Queue
-from subprocess import call
+from subprocess import call, Popen, PIPE
 from threading import Thread
 from threading import Event
 from random import randint
@@ -434,6 +434,19 @@ def parsemotd(cmd):
 	except ValueError:
 		pass
 
+def check_latency(ip):
+	global CHECKLATENCY
+	# we use this as a fallback mehtod to display ping value for users that do not have the UDP port open
+	command = 'traceroute -n -q 1 -w 0.3 -N 1 -m 20 ' + ip + ' 2>&1 |grep " ms$" |rev |cut -f 2 -d " " |rev |cut -f 1 -d "." |sort -nr |head -n 1'
+	latency = Popen(command, stdout=PIPE, shell=True).stdout.read().strip()
+	try:
+		ping = int(latency)
+	except ValueError:
+		ping = 0
+		print_line ( COLOR3 + "-!- WARNING: Latency check not supported in this system. Disabling it." + END + "\n")
+		CHECKLATENCY=0
+	return ping
+
 def check_ping(nick,ip,port):
 	global pinglist
 
@@ -461,6 +474,15 @@ def get_ping_msec(nick):
 	for i in range( len( pinglist ) ):
 		if (pinglist[i][1]==nick):
 			ping = pinglist[i][5]
+
+			if (ping == 0 and CHECKLATENCY==1):
+				user = get_user_info(nick)
+				ip = user[1]
+				if (ip != ""):
+					ping = check_latency(ip)
+					print_line ( COLOR3 + "-!- latency for user " + str(nick) + ": " + str(ping) + END + "\n")
+					pinglist[i][5] = ping
+
 			break
 	return ping
 
@@ -1181,6 +1203,7 @@ if __name__ == '__main__':
 	STARTAWAY=0
 	TIMESTAMP=0
 	SMOOTHING=1  # from 0 to 10, 0: jerky, 1: default, 10: laggy
+	CHECKLATENCY=0
 	LOGFILE=""
 
 	COLOR0 = '\033[0;38m' # GRAY
@@ -1299,6 +1322,7 @@ if __name__ == '__main__':
 		configfile.write("STARTAWAY=0\n")
 		configfile.write("TIMESTAMP=0\n")
 		configfile.write("SMOOTHING=1\n")
+		configfile.write("CHECKLATENCY=0\n")
 		configfile.write("#LOGFILE=" + LOGFILE + "\n")
 		configfile.write("\n# comma separated list of friends\n")
 		configfile.write("NOTIFY=\n")
@@ -1348,6 +1372,7 @@ if __name__ == '__main__':
 		if (line.startswith("STARTAWAY=")): STARTAWAY=int(line[10:].strip())
 		if (line.startswith("TIMESTAMP=")): TIMESTAMP=int(line[10:].strip())
 		if (line.startswith("SMOOTHING=")): SMOOTHING=int(line[10:].strip())
+		if (line.startswith("CHECKLATENCY=")): CHECKLATENCY=int(line[13:].strip())
 		if (line.startswith("LOGFILE=")): LOGFILE=line[8:].strip()
 		if (line.startswith("NOTIFY=")):
 			notifycfg = line[7:].strip()
