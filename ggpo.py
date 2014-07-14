@@ -1167,7 +1167,11 @@ def connect_sequence(retries):
 			connected=False
 
 	if (connected==False):
-		if (LOGFILE!=""): logfile.close()
+		if (LOGFILE!=""):
+			try:
+				logfile.close()
+			except:
+				pass
 		os._exit(1)
 
 	# welcome packet
