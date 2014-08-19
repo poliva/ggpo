@@ -32,7 +32,7 @@ from threading import Event
 from random import randint
 from operator import itemgetter
 
-VERSION = "1.1.5"
+VERSION = "1.1.6"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
@@ -479,7 +479,7 @@ def get_ping_msec(nick):
 				ip = user[1]
 				if (ip != ""):
 					ping = check_latency(ip)
-					print_line ( COLOR3 + "-!- latency for user " + str(nick) + ": " + str(ping) + END + "\n")
+					#print_line ( COLOR3 + "-!- latency for user " + str(nick) + ": " + str(ping) + END + "\n")
 					pinglist[i][5] = ping
 
 			break
