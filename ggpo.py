@@ -214,6 +214,8 @@ def parse(cmd):
 					print_line(' '.join(text))
 
 				# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
+				check_ping(nick,ip,6009)
+				time.sleep(1) # sleep 1sec to collect ping data
 				add_to_userlist(nick,ip,city,cc,country,6009,state,'')
 
 				# NOTIFY
@@ -223,9 +225,6 @@ def parse(cmd):
 
 				# autochallenge
 				if (autochallenge > 0 and nick!=USERNAME and nick!=playing_against and state==0):
-					check_ping(nick,ip,6009)
-					# sleep 1sec to collect ping data
-					time.sleep(1)
 					user = get_user_info(nick)
 					ping = user[8]
 					if (ping>0 and ping<autochallenge):
