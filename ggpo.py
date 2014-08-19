@@ -32,7 +32,7 @@ from threading import Event
 from random import randint
 from operator import itemgetter
 
-VERSION = "1.1.6"
+VERSION = "1.1.7"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
@@ -200,6 +200,11 @@ def parse(cmd):
 				countrylen = int(cmd[48+nicklen+iplen+citylen+cclen:48+nicklen+iplen+citylen+cclen+4].encode('hex'),16)
 				country = cmd[52+nicklen+iplen+citylen+cclen:52+nicklen+iplen+citylen+cclen+countrylen]
 
+				# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
+				check_ping(nick,ip,6009)
+				time.sleep(1) # sleep 1sec to collect ping data
+				add_to_userlist(nick,ip,city,cc,country,6009,state,'')
+
 				if (VERBOSE>2):
 
 					text = COLOR0 + "-!- " + B_COLOR0 + str(nick) + COLOR0 + "@" + str(ip), 
@@ -208,15 +213,13 @@ def parse(cmd):
 					if nick not in AUTOCOMPLETE and nick != USERNAME:
 						text+="has joined and",
 						AUTOCOMPLETE.append(nick)
-					if (state == 0): text+= "is available",
+					if (state == 0):
+						text+= "is available",
+						ping = get_ping_msec(nick)
+						if (ping != 0): text+="[" + str(int(ping)) + " ms]",
 					if (state == 1): text+= "is away",
 					text+=END+"\n",
 					print_line(' '.join(text))
-
-				# port is hardcoded because i don't know how to retrieve it without requesting the full user list to the server
-				check_ping(nick,ip,6009)
-				time.sleep(1) # sleep 1sec to collect ping data
-				add_to_userlist(nick,ip,city,cc,country,6009,state,'')
 
 				# NOTIFY
 				if (nick in NOTIFY and state==0):
