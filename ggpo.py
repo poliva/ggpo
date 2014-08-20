@@ -783,7 +783,12 @@ def print_user(user):
 	ping=user[8]
 
 	if (ping==0): ping = get_ping_msec(nick)
-	text = COLOR3 + "-!- " + B_COLOR0 + str(nick) + COLOR0 + "@" + str(ip),
+	text = COLOR3 + "-!-" + B_COLOR0,
+	if nick in NOTIFY:
+		if (status==0): text= COLOR3 + "-!-" + B_COLOR2,
+		if (status==1): text= COLOR3 + "-!-" + B_COLOR4,
+		if (status==2): text= COLOR3 + "-!-" + B_COLOR5,
+	text+= str(nick) + COLOR0 + "@" + str(ip),
 	if (city != "" and cc != ""): text+= "(" + city + ", " + cc + ")",
 	elif (city == "" and cc != ""): text+= "(" + cc + ")",
 	if (status == 0): text+= "is available",
