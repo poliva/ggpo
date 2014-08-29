@@ -439,8 +439,15 @@ def parsemotd(cmd):
 def check_latency(ip):
 	global CHECKLATENCY
 	# we use this as a fallback mehtod to display ping value for users that do not have the UDP port open
-	command = 'traceroute -n -q 1 -w 0.3 -N 1 -m 20 ' + ip + ' 2>&1 |grep " ms$" |rev |cut -f 2 -d " " |rev |cut -f 1 -d "." |sort -nr |head -n 1'
-	latency = Popen(command, stdout=PIPE, shell=True).stdout.read().strip()
+	p1 = Popen(['traceroute', '-n', '-q', '1', '-w', '0.3', '-N', '1', '-m', '20', ip, '2>&1'],stdout=PIPE)
+	p2 = Popen(['grep', ' ms$'], stdin=p1.stdout, stdout=PIPE)
+	p3 = Popen(['rev'], stdin=p2.stdout, stdout=PIPE)
+	p4 = Popen(['cut', '-f2', '-d', ' '], stdin=p3.stdout, stdout=PIPE)
+	p5 = Popen(['rev'], stdin=p4.stdout, stdout=PIPE)
+	p6 = Popen(['cut', '-f1', '-d', '.'], stdin=p5.stdout, stdout=PIPE)
+	p7 = Popen(['sort', '-nr'], stdin=p6.stdout, stdout=PIPE)
+	p8 = Popen(['head', '-n1'], stdin=p7.stdout, stdout=PIPE)
+	latency = p8.communicate()[0].strip()
 	try:
 		ping = int(latency)
 	except ValueError:
