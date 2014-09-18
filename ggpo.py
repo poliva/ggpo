@@ -1007,7 +1007,8 @@ def process_user_input():
 		elif (command.startswith("/challenge ")):
 			nick = command[11:]
 			if (nick == USERNAME):
-				print_line ( COLOR3 + "-!- guru meditation: you can't challenge yourself" + END + "\n")
+				if (autochallenge==0):
+					print_line ( COLOR3 + "-!- guru meditation: you can't challenge yourself" + END + "\n")
 			else:
 				pdu_challenge(nick)
 
