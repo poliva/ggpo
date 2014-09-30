@@ -36,7 +36,7 @@ VERSION = "1.1.9"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
-	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify', '/play', '/ignore']
+	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify', '/play', '/ignore', '/xchallenge']
 
 def complete(text, state):
     for cmd in AUTOCOMPLETE:
@@ -1483,6 +1483,7 @@ if __name__ == '__main__':
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/challenge [<nick>]\tsend a challenge request to <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/autochallenge [<ms|off>]\tauto-challenge anyone with ping < <ms>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/challengewa [<nick>] auto-challenge when <nick> becomes available" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/xchallenge [<nick>] cross challenge <nick> to fix assetion errors" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/accept    [<nick>]\taccept a challenge request initiated by <nick>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/decline   [<nick>]\tdecline a challenge request initiated by <nick>" + END + "\n")
@@ -1614,6 +1615,11 @@ if __name__ == '__main__':
 			else:
 				print_line ( COLOR2 + "-!- autochallenge is set to [" + B_COLOR2 + str(autochallenge) + COLOR2 +" ms]. Type '/autochallenge off' to disable it" + END + "\n")
 
+		elif (command.startswith("/xchallenge ")):
+			nick = command[12:]
+			command_queue.put("/challenge " + nick)
+			command_queue.put("/accept " + nick)
+
 		elif (command.startswith("/notify ")):
 			nick = command[8:]
 			if (nick == "off"):
@@ -1687,7 +1693,7 @@ if __name__ == '__main__':
 		# hidden abreviation, not present in autocomplete
 		elif (command == "/n"): command_queue.put("/names")
 
-		elif (command == "/watch" or command=="/whois" or command=="/whowas" or command=="/ping"):
+		elif (command == "/watch" or command=="/whois" or command=="/whowas" or command=="/ping" or command=="/xchallenge"):
 			print_line ( COLOR3 + "-!- usage: "+ command +" <nick>" + END + "\n")
 
 		elif (command == "/join"):
