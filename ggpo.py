@@ -36,7 +36,7 @@ VERSION = "1.1.9"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
-	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify', '/play', '/ignore', '/xchallenge']
+	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify', '/play', '/ignore', '/xchallenge', '/help']
 
 def complete(text, state):
     for cmd in AUTOCOMPLETE:
@@ -1481,31 +1481,31 @@ if __name__ == '__main__':
 		if (command == "/help"):
 			print_line ( COLOR3 + "-!- " + COLOR4 + "available commands:" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/challenge [<nick>]\tsend a challenge request to <nick>" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/autochallenge [<ms|off>]\tauto-challenge anyone with ping < <ms>" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/challengewa [<nick>] auto-challenge when <nick> becomes available" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/xchallenge [<nick>] cross challenge <nick> to fix assetion errors" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/cancel    [<nick>]\tcancel an ongoing challenge request to <nick>" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/accept    [<nick>]\taccept a challenge request initiated by <nick>" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/decline   [<nick>]\tdecline a challenge request initiated by <nick>" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/watch      <nick>\twatch the game that <nick> is currently playing" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/whois      <nick>\tdisplay information about the user <nick>" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/whowas     <nick>\tinfo about <nick> that is no longer connected" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/ping       <nick>\tsends a PING to <nick> and displays lag in ms" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/notify     <nick>\tget a notification when <nick> is available" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/ignore     <nick>\tignore chat messages & challenges from <nick>" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/join    <channel>\tjoin the chat/game room <channel>" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/list \t\tlist all available channels or chat/game rooms" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/autochallenge <ms|off>\tauto-challenge anyone with ping < <ms>" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/challengewa <nick>\tauto-challenge when <nick> becomes available" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/xchallenge <nick>\tcross challenge <nick> to fix assetion errors" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/cancel [<nick>]\t\tcancel an ongoing challenge request to <nick>" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/accept [<nick>]\t\taccept a challenge request initiated by <nick>" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/decline [<nick>]\tdecline a challenge request initiated by <nick>" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/watch <nick>\t\twatch the game that <nick> is currently playing" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/whois <nick>\t\tdisplay information about the user <nick>" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/whowas <nick>\t\tinfo about <nick> that is no longer connected" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/ping <nick>\t\tsends a PING to <nick> and displays lag in ms" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/notify [<nick>]\t\tget a notification when <nick> is available" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/ignore [<nick>]\t\tignore chat messages & challenges from <nick>" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/join <channel>\t\tjoin the chat/game room <channel>" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/users [<modifier>]\tlist all users in the current channel" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/names [<modifier>]\tsame as /users but only display nickname" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "         modifier: 'available', 'away' or 'playing'" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/motd \t\tview the channel welcome text" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/away \t\tset away status (you can't be challenged)" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/back \t\tset available status (you can be challenged)" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/clear \t\tclear the screen" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/list \t\t\tlist all available channels or chat/game rooms" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/motd \t\t\tview the channel welcome text" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/away \t\t\tset away status (you can't be challenged)" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/back \t\t\tset available status (you can be challenged)" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/clear \t\t\tclear the screen" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/play [<P1|P2> <ip address>] play against cpu or p2p-netplay" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/verbose [<flag>]\tchange verbosity level" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "           flag:'0' challenges, '1' chat, '2' match, '3' status" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/quit \t\tdisconnect from ggpo server" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/quit \t\t\tdisconnect from ggpo server" + END + "\n")
 
 		elif (command.startswith("/whowas ")):
 			nick = command[8:]
