@@ -1555,8 +1555,7 @@ if __name__ == '__main__':
 			check_ping(nick,ip,port)
 			# sleep 1sec to collect ping data
 			time.sleep(1)
-			user = get_user_info(nick)
-			ping = user[8]
+			ping = get_ping_msec(nick)
 			if (ping != 0):
 				print_line ( COLOR2 + "-!- PING reply from " + B_COLOR2 + nick + COLOR2 + ": [" + B_COLOR2 + str(int(ping)) + COLOR2 + " ms]" + END + "\n")
 			else:
