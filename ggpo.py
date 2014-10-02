@@ -32,7 +32,7 @@ from threading import Event
 from random import randint
 from operator import itemgetter
 
-VERSION = "1.2"
+VERSION = "1.2.1"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
