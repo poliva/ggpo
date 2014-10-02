@@ -1108,7 +1108,7 @@ def datathread():
 			BUFFER=''
 			print_line ( COLOR4 + "-!- connection lost. Reconnecting." + END + "\n")
 			reset_autocomplete()
-			connect_sequence(3)
+			connect_sequence(6)
 
 		if (DEBUG>1): print_line ( COLOR4 + "    HEX0: " + repr(data) + END + "\n")
 
@@ -1122,7 +1122,7 @@ def datathread():
 			if (DEBUG>0): print_line (COLOR1 + "*** Unparseable PDU: " + repr(data) + END + "\n")
 			print_line ( COLOR4 + "-!- connection lost. Reconnecting." + END + "\n")
 			reset_autocomplete()
-			connect_sequence(2)
+			connect_sequence(5)
 
 		if (DEBUG>2): print_line ( COLOR2 + "PDULEN: " + str(pdulen) + " LEN_DATA: " + str(len(data)) + END + "\n")
 		#DATA: [ 4-byte pdulen ][ pdulen-byte pdu ]
@@ -1162,6 +1162,8 @@ def showverbose():
 def connect_sequence(retries):
 	global s, sequence
 
+	servers=('ggpo.net','69.10.128.134','69.10.128.133','69.10.128.132','ggpo.net','69.10.128.134')
+
 	connected=False
 	count=0
 
@@ -1171,10 +1173,11 @@ def connect_sequence(retries):
 		pass
 
 	while (connected!=True and count < retries):
+		server=servers[count]
 		count+=1
 		try:
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			s.connect(('ggpo.net', 7000))
+			s.connect((server, 7000))
 			connected=True
 		except Exception, e:
 			print_line ( COLOR1 + "-!- [" + str(count) + "/" + str(retries) + "] Can't connect to GGPO server: " + str(e) + END + "\n")
@@ -1437,7 +1440,7 @@ if __name__ == '__main__':
 	AUTOCOMPLETE=[]
 	reset_autocomplete()
 	s=''
-	connect_sequence(1)
+	connect_sequence(4)
 
 	command=""
 	challengers=set()
