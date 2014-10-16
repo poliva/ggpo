@@ -36,7 +36,7 @@ VERSION = "1.2.1"
 
 def reset_autocomplete():
 	global AUTOCOMPLETE
-	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify', '/play', '/ignore', '/xchallenge', '/help']
+	AUTOCOMPLETE = ['/challenge', '/cancel', '/accept', '/decline', '/watch', '/whois', '/whowas', '/join', '/list', '/users', '/motd', '/away', '/back', '/clear', '/verbose', '/quit', '/who', '/names', '/debug', '/ping', '/autochallenge', '/challengewa', '/notify', '/play', '/ignore', '/xchallenge', '/help', '/server']
 
 def complete(text, state):
     for cmd in AUTOCOMPLETE:
@@ -1108,7 +1108,7 @@ def datathread():
 			BUFFER=''
 			print_line ( COLOR4 + "-!- connection lost. Reconnecting." + END + "\n")
 			reset_autocomplete()
-			connect_sequence(6)
+			connect_sequence(3)
 
 		if (DEBUG>1): print_line ( COLOR4 + "    HEX0: " + repr(data) + END + "\n")
 
@@ -1122,7 +1122,7 @@ def datathread():
 			if (DEBUG>0): print_line (COLOR1 + "*** Unparseable PDU: " + repr(data) + END + "\n")
 			print_line ( COLOR4 + "-!- connection lost. Reconnecting." + END + "\n")
 			reset_autocomplete()
-			connect_sequence(5)
+			connect_sequence(2)
 
 		if (DEBUG>2): print_line ( COLOR2 + "PDULEN: " + str(pdulen) + " LEN_DATA: " + str(len(data)) + END + "\n")
 		#DATA: [ 4-byte pdulen ][ pdulen-byte pdu ]
@@ -1162,8 +1162,6 @@ def showverbose():
 def connect_sequence(retries):
 	global s, sequence
 
-	servers=('ggpo.net','69.10.128.134','69.10.128.133','69.10.128.132','ggpo.net','69.10.128.134')
-
 	connected=False
 	count=0
 
@@ -1173,11 +1171,17 @@ def connect_sequence(retries):
 		pass
 
 	while (connected!=True and count < retries):
-		server=servers[count]
+
+		ggpo_server=SERVER.split(":")[0].strip()
+		try:
+			ggpo_port=SERVER.split(":")[1].strip()
+		except:
+			ggpo_port=7000
+
 		count+=1
 		try:
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			s.connect((server, 7000))
+			s.connect((ggpo_server, int(ggpo_port)))
 			connected=True
 		except Exception, e:
 			print_line ( COLOR1 + "-!- [" + str(count) + "/" + str(retries) + "] Can't connect to GGPO server: " + str(e) + END + "\n")
@@ -1220,6 +1224,7 @@ if __name__ == '__main__':
 	USERNAME=""
 	PASSWORD=""
 	CHANNEL="lobby"
+	SERVER="ggpo.net:7000"
 	INSTALLDIR=""
 	VERBOSE=3
 	STARTAWAY=0
@@ -1339,6 +1344,7 @@ if __name__ == '__main__':
 		configfile.write("USERNAME=" + USERNAME + "\n")
 		configfile.write("PASSWORD=" + PASSWORD + "\n")
 		configfile.write("CHANNEL=" + CHANNEL + "\n")
+		configfile.write("SERVER=ggpo.net:7000\n")
 		configfile.write("INSTALLDIR=" + INSTALLDIR + "\n")
 		configfile.write("VERBOSE=3\n")
 		configfile.write("STARTAWAY=0\n")
@@ -1389,6 +1395,7 @@ if __name__ == '__main__':
 		if (line.startswith("USERNAME=")): USERNAME=line[9:].strip()
 		if (line.startswith("PASSWORD=")): PASSWORD=line[9:].strip()
 		if (line.startswith("CHANNEL=")): CHANNEL=line[8:].strip()
+		if (line.startswith("SERVER=")): SERVER=line[7:].strip()
 		if (line.startswith("INSTALLDIR=")): INSTALLDIR=line[11:].strip()
 		if (line.startswith("VERBOSE=")): VERBOSE=int(line[8:].strip())
 		if (line.startswith("STARTAWAY=")): STARTAWAY=int(line[10:].strip())
@@ -1440,7 +1447,7 @@ if __name__ == '__main__':
 	AUTOCOMPLETE=[]
 	reset_autocomplete()
 	s=''
-	connect_sequence(4)
+	connect_sequence(1)
 
 	command=""
 	challengers=set()
@@ -1528,6 +1535,14 @@ if __name__ == '__main__':
 			else: print_line ( COLOR3 + "-!- possible values are /debug [<0|1|2|3>]" + END + "\n")
 		elif (command == "/debug"):
 			print_line ( COLOR3 + "-!- " + COLOR0 + "DEBUG: " + str(DEBUG) + END + "\n")
+
+		elif (command.startswith("/server ")):
+			SERVER = command[8:]
+			print_line ( COLOR3 + "-!- " + COLOR4 + "changing server: " + SERVER + END + "\n")
+			reset_autocomplete()
+			s.shutdown(socket.SHUT_RDWR)
+		elif (command == "/server"):
+			print_line ( COLOR3 + "-!- usage: /server <servername>[:port]" + END + "\n")
 
 		elif (command.startswith("/verbose ")):
 			verbose = command[9:]
