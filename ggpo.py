@@ -835,9 +835,9 @@ def parselist(cmd):
 			name3 = cmd[i:i+len3]
 			i=i+len3
 			if os.path.isfile(INSTALLDIR+"/ROMs/" + name1 + ".zip"):
-				print_line( COLOR3 + "-!- " + B_COLOR2 + str(name1) + COLOR0 + " (" + COLOR2 + str(name2) + COLOR0 + ") -- " + str(name3) + "\n")
+				print_line( COLOR3 + "-!- " + B_COLOR2 + str(name1) + COLOR0 + " (" + COLOR2 + str(name2) + COLOR0 + ") -- " + str(name3) + END + "\n")
 			else:
-				print_line( COLOR3 + "-!- " + B_COLOR0 + str(name1) + COLOR0 + " (" + str(name2) + ") -- " + str(name3) + "\n")
+				print_line( COLOR3 + "-!- " + B_COLOR0 + str(name1) + COLOR0 + " (" + str(name2) + ") -- " + str(name3) + END + "\n")
 		except:
 			if (DEBUG>0): print_line ( COLOR4 + "-!- error parsing channel " + str(name1) + END + "\n")
 			else: pass
