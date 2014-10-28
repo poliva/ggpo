@@ -1104,7 +1104,7 @@ def datathread():
 	while 1:
 
 		try:
-			data = s.recv(4096)
+			data = s.recv(32768)
 		except:
 			BUFFER=''
 			print_line ( COLOR4 + "-!- connection lost. Reconnecting." + END + "\n")
