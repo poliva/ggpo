@@ -1100,6 +1100,7 @@ def process_user_input():
 
 def datathread():
 	BUFFER = ''
+	data=''
 	while 1:
 
 		try:
