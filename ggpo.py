@@ -242,7 +242,7 @@ def parse(cmd):
 				# auto-kill ggpofba when p2 quits the game
 				if (nick == USERNAME): playing_against=''
 				if (nick == playing_against):
-					args = ['pkill', '-f', 'ggpofba.exe']
+					args = ['pkill', '-f', 'ggpofba']
 					try:
 						FNULL = open(os.devnull, 'w')
 						call(args, stdout=FNULL, stderr=FNULL)
@@ -368,8 +368,8 @@ def parse(cmd):
 		if not os.path.isfile(INSTALLDIR+"/ggpofba.sh"):
 			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba.sh in " + INSTALLDIR + END + "\n")
 
-		if not os.path.isfile(INSTALLDIR+"/ggpofba.exe"):
-			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba.exe in " + INSTALLDIR + END + "\n")
+		if not os.path.isfile(INSTALLDIR+"/ggpofba-ng.exe"):
+			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba-ng.exe in " + INSTALLDIR + END + "\n")
 
 		if not os.path.isfile(INSTALLDIR+"/ROMs/" + CHANNEL + ".zip"):
 			print_line ( COLOR3 + "-!- WARNING: cannot find game ROM at " + INSTALLDIR + "/ROMs/" + CHANNEL + ".zip" + END + "\n")
@@ -1225,7 +1225,7 @@ if __name__ == '__main__':
 	USERNAME=""
 	PASSWORD=""
 	CHANNEL="lobby"
-	SERVER="ggpo.net:7000"
+	SERVER="ggpo-ng.com:7000"
 	INSTALLDIR=""
 	VERBOSE=3
 	STARTAWAY=0
@@ -1254,7 +1254,7 @@ if __name__ == '__main__':
 	IGNORE=set()
 
 	END = '\033[0;m'
-	PROMPT = "\rggpo" + COLOR1 + "> " + END
+	PROMPT = "\rggpo-ng" + COLOR1 + "> " + END
 
 	print_line ( COLOR3 + "-!- " + COLOR4 + "GGPO.PY CLIENT " + B_COLOR4 + "VERSION " + VERSION + END + "\n")
 	print_line ( COLOR3 + "-!- " + COLOR4 + "(c) 2014 Pau Oliva Fora (" + B_COLOR4 + "pof" + COLOR4 + "). Licensed under GPLv2+." + END + "\n")
@@ -1270,7 +1270,7 @@ if __name__ == '__main__':
 
 	HOMEDIR = os.path.expanduser("~")
 	CONFIGDIR= HOMEDIR + "/.config/ggpo"
-	CONFIGFILE = CONFIGDIR + "/ggpo.config"
+	CONFIGFILE = CONFIGDIR + "/ggpo-ng.config"
 
 	if not os.path.exists(CONFIGDIR):
 		os.makedirs(CONFIGDIR)
@@ -1295,10 +1295,10 @@ if __name__ == '__main__':
 		# current working directory
 		dirtest2 = os.getcwd()
 
-		if (os.path.isfile(dirtest1+"/ggpofba.exe")):
+		if (os.path.isfile(dirtest1+"/ggpofba-ng.exe")):
 			INSTALLDIR=dirtest1
 			print_line( "\n" + COLOR4 + "-!- found GGPO install dir at: " + COLOR2 + INSTALLDIR + END + "\n")
-		elif (os.path.isfile(dirtest2+"/ggpofba.exe")):
+		elif (os.path.isfile(dirtest2+"/ggpofba-ng.exe")):
 			INSTALLDIR=dirtest2
 			print_line( "\n" + COLOR4 + "-!- found GGPO install dir at: " + COLOR2 + INSTALLDIR + END + "\n")
 		else:
@@ -1311,8 +1311,8 @@ if __name__ == '__main__':
 				os.unlink(CONFIGFILE)
 				os._exit(1)
 
-		if not os.path.isfile(INSTALLDIR+"/ggpofba.exe"):
-			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba.exe in " + INSTALLDIR + END + "\n")
+		if not os.path.isfile(INSTALLDIR+"/ggpofba-ng.exe"):
+			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba-ng.exe in " + INSTALLDIR + END + "\n")
 
 		print_line( "\n" + COLOR4 + "-!- please specify your GGPO credentials" + END + "\n")
 		try:
@@ -1345,7 +1345,7 @@ if __name__ == '__main__':
 		configfile.write("USERNAME=" + USERNAME + "\n")
 		configfile.write("PASSWORD=" + PASSWORD + "\n")
 		configfile.write("CHANNEL=" + CHANNEL + "\n")
-		configfile.write("SERVER=ggpo.net:7000\n")
+		configfile.write("SERVER=ggpo-ng.com:7000\n")
 		configfile.write("INSTALLDIR=" + INSTALLDIR + "\n")
 		configfile.write("VERBOSE=3\n")
 		configfile.write("STARTAWAY=0\n")
