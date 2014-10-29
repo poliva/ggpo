@@ -242,7 +242,7 @@ def parse(cmd):
 				# auto-kill ggpofba when p2 quits the game
 				if (nick == USERNAME): playing_against=''
 				if (nick == playing_against):
-					args = ['pkill', '-f', 'ggpofba']
+					args = ['pkill', '-f', 'ggpofba-ng.exe.*quark:served']
 					try:
 						FNULL = open(os.devnull, 'w')
 						call(args, stdout=FNULL, stderr=FNULL)
