@@ -1185,7 +1185,7 @@ def connect_sequence(retries):
 			s.connect((ggpo_server, int(ggpo_port)))
 			connected=True
 		except Exception, e:
-			print_line ( COLOR1 + "-!- [" + str(count) + "/" + str(retries) + "] Can't connect to GGPO server: " + str(e) + END + "\n")
+			print_line ( COLOR1 + "-!- [" + str(count) + "/" + str(retries) + "] Can't connect to FightCade server: " + str(e) + END + "\n")
 			time.sleep(5)
 			connected=False
 
@@ -1225,7 +1225,7 @@ if __name__ == '__main__':
 	USERNAME=""
 	PASSWORD=""
 	CHANNEL="lobby"
-	SERVER="ggpo-ng.com:7000"
+	SERVER="fightcade.com:7000"
 	INSTALLDIR=""
 	VERBOSE=3
 	STARTAWAY=0
@@ -1254,9 +1254,9 @@ if __name__ == '__main__':
 	IGNORE=set()
 
 	END = '\033[0;m'
-	PROMPT = "\rggpo-ng" + COLOR1 + "> " + END
+	PROMPT = "\rfightcade" + COLOR1 + "> " + END
 
-	print_line ( COLOR3 + "-!- " + COLOR4 + "GGPO.PY CLIENT " + B_COLOR4 + "VERSION " + VERSION + END + "\n")
+	print_line ( COLOR3 + "-!- " + COLOR4 + "FightCade.PY CLIENT " + B_COLOR4 + "VERSION " + VERSION + END + "\n")
 	print_line ( COLOR3 + "-!- " + COLOR4 + "(c) 2014 Pau Oliva Fora (" + B_COLOR4 + "pof" + COLOR4 + "). Licensed under GPLv2+." + END + "\n")
 
 	# check for updates
@@ -1270,7 +1270,7 @@ if __name__ == '__main__':
 
 	HOMEDIR = os.path.expanduser("~")
 	CONFIGDIR= HOMEDIR + "/.config/ggpo"
-	CONFIGFILE = CONFIGDIR + "/ggpo-ng.config"
+	CONFIGFILE = CONFIGDIR + "/fightcade.config"
 
 	if not os.path.exists(CONFIGDIR):
 		os.makedirs(CONFIGDIR)
@@ -1297,14 +1297,14 @@ if __name__ == '__main__':
 
 		if (os.path.isfile(dirtest1+"/ggpofba-ng.exe")):
 			INSTALLDIR=dirtest1
-			print_line( "\n" + COLOR4 + "-!- found GGPO install dir at: " + COLOR2 + INSTALLDIR + END + "\n")
+			print_line( "\n" + COLOR4 + "-!- found FightCade install dir at: " + COLOR2 + INSTALLDIR + END + "\n")
 		elif (os.path.isfile(dirtest2+"/ggpofba-ng.exe")):
 			INSTALLDIR=dirtest2
-			print_line( "\n" + COLOR4 + "-!- found GGPO install dir at: " + COLOR2 + INSTALLDIR + END + "\n")
+			print_line( "\n" + COLOR4 + "-!- found FightCade install dir at: " + COLOR2 + INSTALLDIR + END + "\n")
 		else:
-			print_line( "\n" + COLOR4 + "-!- please specify the full path where you have unziped the official GGPO client" + END + "\n")
+			print_line( "\n" + COLOR4 + "-!- please specify the full path where you have unziped the official FightCade client" + END + "\n")
 			try:
-				INSTALLDIR = raw_input("\r" + COLOR4 + "GGPO INSTALLDIR:" + END + " ")
+				INSTALLDIR = raw_input("\r" + COLOR4 + "FightCade INSTALLDIR:" + END + " ")
 			except KeyboardInterrupt:
 				print_line( "\n" + COLOR1 + "-!- ^C interrupted." + END + "\n")
 				configfile.close()
@@ -1314,19 +1314,19 @@ if __name__ == '__main__':
 		if not os.path.isfile(INSTALLDIR+"/ggpofba-ng.exe"):
 			print_line ( COLOR3 + "-!- WARNING: cannot find ggpofba-ng.exe in " + INSTALLDIR + END + "\n")
 
-		print_line( "\n" + COLOR4 + "-!- please specify your GGPO credentials" + END + "\n")
+		print_line( "\n" + COLOR4 + "-!- please specify your FightCade credentials" + END + "\n")
 		try:
-			USERNAME = raw_input("\r" + COLOR4 + "GGPO USERNAME:" + END + " ")
-			PASSWORD = raw_input("\r" + COLOR4 + "GGPO PASSWORD:" + END + " ")
+			USERNAME = raw_input("\r" + COLOR4 + "FightCade USERNAME:" + END + " ")
+			PASSWORD = raw_input("\r" + COLOR4 + "FightCade PASSWORD:" + END + " ")
 		except KeyboardInterrupt:
 			print_line( "\n" + COLOR1 + "-!- ^C interrupted." + END + "\n")
 			configfile.close()
 			os.unlink(CONFIGFILE)
 			os._exit(1)
 
-		print_line( "\n" + COLOR4 + "-!- please specify your GGPO game room, if unsure type 'lobby'" + END + "\n")
+		print_line( "\n" + COLOR4 + "-!- please specify your FightCade game room, if unsure type 'lobby'" + END + "\n")
 		try:
-			CHANNEL = raw_input("\r" + COLOR4 + "GGPO CHANNEL:" + END + " ")
+			CHANNEL = raw_input("\r" + COLOR4 + "FightCade CHANNEL:" + END + " ")
 		except KeyboardInterrupt:
 			print_line( "\n" + COLOR1 + "-!- ^C interrupted." + END + "\n")
 			configfile.close()
@@ -1341,11 +1341,11 @@ if __name__ == '__main__':
 			os.makedirs(LOGDIR)
 		LOGFILE = LOGDIR + "/ggpo.log"
 
-		configfile.write("#GGPO configuration file\n")
+		configfile.write("#FightCade configuration file\n")
 		configfile.write("USERNAME=" + USERNAME + "\n")
 		configfile.write("PASSWORD=" + PASSWORD + "\n")
 		configfile.write("CHANNEL=" + CHANNEL + "\n")
-		configfile.write("SERVER=ggpo-ng.com:7000\n")
+		configfile.write("SERVER=fightcade.com:7000\n")
 		configfile.write("INSTALLDIR=" + INSTALLDIR + "\n")
 		configfile.write("VERBOSE=3\n")
 		configfile.write("STARTAWAY=0\n")
@@ -1516,7 +1516,7 @@ if __name__ == '__main__':
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/play [<P1|P2> <ip address>] play against cpu or p2p-netplay" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "/verbose [<flag>]\tchange verbosity level" + END + "\n")
 			print_line ( COLOR3 + "-!- " + COLOR4 + "           flag:'0' challenges, '1' chat, '2' match, '3' status" + END + "\n")
-			print_line ( COLOR3 + "-!- " + COLOR4 + "/quit \t\t\tdisconnect from ggpo server" + END + "\n")
+			print_line ( COLOR3 + "-!- " + COLOR4 + "/quit \t\t\tdisconnect from FightCade server" + END + "\n")
 
 		elif (command.startswith("/whowas ")):
 			nick = command[8:]
