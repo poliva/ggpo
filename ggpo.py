@@ -817,11 +817,9 @@ def parselist(cmd):
 
 	print_line ( COLOR3 + "-!- channel list:" + END + "\n")
 
-	i=12
+	i=16
 	while (i<pdulen):
 		try :
-			#num = int(cmd[i:i+4].encode('hex'),16)
-			i=i+4
 			len1 = int(cmd[i:i+4].encode('hex'),16)
 			i=i+4
 			name1 = cmd[i:i+len1]
@@ -830,10 +828,17 @@ def parselist(cmd):
 			i=i+4
 			name2 = cmd[i:i+len2]
 			i=i+len2
+
 			len3 = int(cmd[i:i+4].encode('hex'),16)
 			i=i+4
 			name3 = cmd[i:i+len3]
 			i=i+len3
+
+			num = int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
+			idx=int(cmd[i:i+4].encode('hex'),16)
+			i=i+4
+
 			if os.path.isfile(INSTALLDIR+"/ROMs/" + name1 + ".zip"):
 				print_line( COLOR3 + "-!- " + B_COLOR2 + str(name1) + COLOR0 + " (" + COLOR2 + str(name2) + COLOR0 + ") -- " + str(name3) + END + "\n")
 			else:
@@ -1204,8 +1209,9 @@ def connect_sequence(retries):
 
 	# authentication
 	# NOTE: this must have sequence=2 as we use the server reply to identify 'incorrect password'
-	pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4
-	s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79")
+	PROTOCOL_VERSION=33
+	pdulen = 4 + 4 + 4 + len(USERNAME) + 4 + len (PASSWORD) + 4 + 4
+	s.send( pad(chr(pdulen)) + "\x00\x00\x00\x02" + "\x00\x00\x00\x01" + pad(chr(len(USERNAME))) + USERNAME + pad(chr(len(PASSWORD))) + PASSWORD + "\x00\x00\x17\x79" + pad(chr(PROTOCOL_VERSION)))
 	sequence+=1
 
 	# choose channel
